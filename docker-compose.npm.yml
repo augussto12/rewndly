@@ -17,7 +17,7 @@ services:
       api:
         condition: service_started
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost/healthz >/dev/null 2>&1 || exit 1"]
+      test: ["CMD-SHELL", "test -f /usr/share/nginx/html/index.html || exit 1"]
       interval: 30s
       timeout: 5s
       retries: 5

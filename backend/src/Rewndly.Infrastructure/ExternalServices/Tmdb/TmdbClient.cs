@@ -239,7 +239,7 @@ public sealed class TmdbClient(
         EnsureConfigured();
 
         using var request = CreateRequest(path);
-        using var response = await httpClient.SendAsync(request, cancellationToken);
+        using var response = await SendAsync(request, path, cancellationToken);
 
         if (response.StatusCode == HttpStatusCode.NotFound)
         {
@@ -254,6 +254,27 @@ public sealed class TmdbClient(
 
         var result = await response.Content.ReadFromJsonAsync<T>(cancellationToken: cancellationToken);
         return result ?? throw new TmdbExternalException("TMDB returned an empty response.");
+    }
+
+    private async Task<HttpResponseMessage> SendAsync(
+        HttpRequestMessage request,
+        string path,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            return await httpClient.SendAsync(request, cancellationToken);
+        }
+        catch (TaskCanceledException exception) when (!cancellationToken.IsCancellationRequested)
+        {
+            logger.LogWarning(exception, "TMDB request timed out for path {Path}", path);
+            throw new TmdbExternalException("TMDB request timed out.", exception);
+        }
+        catch (HttpRequestException exception)
+        {
+            logger.LogWarning(exception, "TMDB request failed for path {Path}", path);
+            throw new TmdbExternalException("TMDB request failed.", exception);
+        }
     }
 
     private async Task<IReadOnlyDictionary<int, string>> GetMovieGenreMapAsync(CancellationToken cancellationToken)
