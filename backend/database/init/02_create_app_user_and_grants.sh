@@ -1,0 +1,65 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+if [[ -z "${REWNDLY_APP_DB_USER:-}" && -z "${REWNDLY_APP_DB_PASSWORD:-}" ]]; then
+  echo "REWNDLY_APP_DB_USER/REWNDLY_APP_DB_PASSWORD not configured. Skipping runtime app user grants."
+  exit 0
+fi
+
+if [[ -z "${REWNDLY_APP_DB_USER:-}" || -z "${REWNDLY_APP_DB_PASSWORD:-}" ]]; then
+  echo "Both REWNDLY_APP_DB_USER and REWNDLY_APP_DB_PASSWORD are required when enabling runtime app user grants." >&2
+  exit 1
+fi
+
+validate_identifier() {
+  local name="$1"
+  local value="$2"
+
+  if [[ ! "$value" =~ ^[A-Za-z_][A-Za-z0-9_]*$ ]]; then
+    echo "$name must be a simple PostgreSQL identifier." >&2
+    exit 1
+  fi
+}
+
+validate_identifier "POSTGRES_DB" "$POSTGRES_DB"
+validate_identifier "POSTGRES_USER" "$POSTGRES_USER"
+validate_identifier "REWNDLY_APP_DB_USER" "$REWNDLY_APP_DB_USER"
+
+APP_PASSWORD_SQL="${REWNDLY_APP_DB_PASSWORD//\'/\'\'}"
+
+psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" <<-EOSQL
+DO \$\$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_catalog.pg_roles WHERE rolname = '${REWNDLY_APP_DB_USER}') THEN
+        CREATE ROLE "${REWNDLY_APP_DB_USER}"
+            WITH LOGIN PASSWORD '${APP_PASSWORD_SQL}'
+            NOSUPERUSER NOCREATEDB NOCREATEROLE NOINHERIT;
+    ELSE
+        ALTER ROLE "${REWNDLY_APP_DB_USER}"
+            WITH LOGIN PASSWORD '${APP_PASSWORD_SQL}'
+            NOSUPERUSER NOCREATEDB NOCREATEROLE NOINHERIT;
+    END IF;
+END
+\$\$;
+
+REVOKE ALL ON DATABASE "${POSTGRES_DB}" FROM PUBLIC;
+REVOKE CREATE ON SCHEMA public FROM PUBLIC;
+
+GRANT CONNECT ON DATABASE "${POSTGRES_DB}" TO "${REWNDLY_APP_DB_USER}";
+GRANT USAGE ON SCHEMA public TO "${REWNDLY_APP_DB_USER}";
+
+GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO "${REWNDLY_APP_DB_USER}";
+GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO "${REWNDLY_APP_DB_USER}";
+GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA public TO "${REWNDLY_APP_DB_USER}";
+
+ALTER DEFAULT PRIVILEGES FOR ROLE "${POSTGRES_USER}" IN SCHEMA public
+    GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO "${REWNDLY_APP_DB_USER}";
+
+ALTER DEFAULT PRIVILEGES FOR ROLE "${POSTGRES_USER}" IN SCHEMA public
+    GRANT USAGE, SELECT ON SEQUENCES TO "${REWNDLY_APP_DB_USER}";
+
+ALTER DEFAULT PRIVILEGES FOR ROLE "${POSTGRES_USER}" IN SCHEMA public
+    GRANT EXECUTE ON FUNCTIONS TO "${REWNDLY_APP_DB_USER}";
+EOSQL
+
+echo "Runtime app database user '${REWNDLY_APP_DB_USER}' prepared with least-privilege grants."

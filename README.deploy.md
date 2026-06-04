@@ -2,7 +2,7 @@
 
 This runbook prepares a controlled trial deploy. It does not approve final production.
 
-`MovieSys` remains the internal technical name for services, images, database names and .NET namespaces.
+`Rewndly` is the technical name for services, images, database names and .NET namespaces.
 
 ## Target Layout
 
@@ -20,8 +20,9 @@ This runbook prepares a controlled trial deploy. It does not approve final produ
 Use a dedicated PostgreSQL database:
 
 ```txt
-Database: moviesys_db
-User: moviesys_user
+Database: rewndly_db
+Migration/bootstrap user: rewndly_owner
+Runtime app user: rewndly_app
 Exposure: Docker internal network only
 ```
 
@@ -53,6 +54,61 @@ Websockets Support: off
 Block Common Exploits: on
 Force SSL: on
 HTTP/2 Support: on
+```
+
+## Database Users and Least Privilege
+
+The PostgreSQL container initializes with the owner/bootstrap user:
+
+```txt
+POSTGRES_OWNER_USER=rewndly_owner
+POSTGRES_OWNER_PASSWORD=...
+```
+
+The runtime user is created by `backend/database/init/02_create_app_user_and_grants.sh`:
+
+```txt
+REWNDLY_APP_DB_USER=rewndly_app
+REWNDLY_APP_DB_PASSWORD=...
+```
+
+Connection strings:
+
+```txt
+MigrationConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Database=rewndly_db;Username=rewndly_owner;Password=...
+ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Database=rewndly_db;Username=rewndly_app;Password=...
+```
+
+Container usage:
+
+```txt
+Rewndly.DbMigrator -> MigrationConnectionStrings__DefaultConnection
+Rewndly.Api        -> ConnectionStrings__DefaultConnection
+Rewndly.AdminSeeder -> ConnectionStrings__DefaultConnection
+```
+
+Do not run the API with owner/bootstrap credentials.
+
+If the PostgreSQL volume already exists, Docker init scripts will not re-run. For a fresh trial deploy, start with a new project volume. For an existing volume, run equivalent grants manually using the owner user.
+
+Verify app user:
+
+```bash
+docker compose -f docker-compose.npm.yml --env-file .env.production exec -T postgres \
+  sh -c 'PGPASSWORD="$REWNDLY_APP_DB_PASSWORD" psql -h localhost -U "$REWNDLY_APP_DB_USER" -d "$POSTGRES_DB" -c "select current_user;"'
+```
+
+Verify the app user cannot create schema objects:
+
+```bash
+docker compose -f docker-compose.npm.yml --env-file .env.production exec -T postgres \
+  sh -c 'PGPASSWORD="$REWNDLY_APP_DB_PASSWORD" psql -h localhost -U "$REWNDLY_APP_DB_USER" -d "$POSTGRES_DB" -v ON_ERROR_STOP=1 -c "create table should_fail(id int);"'
+```
+
+Expected result:
+
+```txt
+ERROR: permission denied for schema public
 ```
 
 ## Commands

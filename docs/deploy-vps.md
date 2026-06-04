@@ -18,23 +18,24 @@ Public domain:
 rewndly.com
 ```
 
-Technical internal name kept for now:
+Technical project name:
 
 ```txt
-MovieSys
+Rewndly
 ```
 
 ## Deployment Strategy
 
 ```txt
 Public project name: Rewndly
-Internal compose/service name on VPS: moviesys
+Internal compose/service name on VPS: rewndly
 Suggested directory: /opt/rewndly
 Compose file with bundled reverse proxy: docker-compose.vps.yml
 Compose file for existing Nginx Proxy Manager: docker-compose.npm.yml
 PostgreSQL strategy: new dedicated PostgreSQL container and database
-Database name: moviesys_db
-Database user: moviesys_user
+Database name: rewndly_db
+Database migration/bootstrap user: rewndly_owner
+Database runtime app user: rewndly_app
 Database exposure: Docker internal network only
 Reverse proxy: Nginx Proxy Manager when already installed, otherwise bundled Nginx container
 Frontend: static React build served by Nginx container
@@ -58,7 +59,7 @@ docker-compose.vps.yml
 docker-compose.npm.yml
 .env.production
 README.deploy.md
-nginx/moviesys.conf
+nginx/rewndly.conf
 frontend/nginx.frontend.npm.conf
 scripts/deploy.sh
 scripts/deploy-npm.sh
@@ -77,18 +78,21 @@ Required:
 ```txt
 ASPNETCORE_ENVIRONMENT=Production
 ConnectionStrings__DefaultConnection=
+MigrationConnectionStrings__DefaultConnection=
 Jwt__Secret=
 Jwt__Issuer=
 Jwt__Audience=
 Cors__AllowedOrigins__0=
 Cookie__Domain=
 TMDB_ACCESS_TOKEN=
-MOVIESYS_ADMIN_USERNAME=
-MOVIESYS_ADMIN_EMAIL=
-MOVIESYS_ADMIN_INITIAL_PASSWORD=
+REWNDLY_ADMIN_USERNAME=
+REWNDLY_ADMIN_EMAIL=
+REWNDLY_ADMIN_INITIAL_PASSWORD=
 POSTGRES_DB=
-POSTGRES_USER=
-POSTGRES_PASSWORD=
+POSTGRES_OWNER_USER=
+POSTGRES_OWNER_PASSWORD=
+REWNDLY_APP_DB_USER=
+REWNDLY_APP_DB_PASSWORD=
 ```
 
 Optional:
@@ -120,7 +124,7 @@ chmod 600 .env.production
 
 Edit `.env.production` on the server. Use strong real values. Do not use `Admin123!`.
 
-If DNS is ready for Rewndly, edit `nginx/moviesys.conf` and replace `server_name _;` with:
+If DNS is ready for Rewndly, edit `nginx/rewndly.conf` and replace `server_name _;` with:
 
 ```nginx
 server_name rewndly.com;
@@ -274,8 +278,114 @@ docker compose -f docker-compose.vps.yml --env-file .env.production --profile op
 The migrator executes:
 
 ```txt
-dotnet /app/tools/dbmigrator/MovieSys.DbMigrator.dll
+dotnet /app/tools/dbmigrator/Rewndly.DbMigrator.dll
 ```
+
+In Production, `Rewndly.DbMigrator` requires:
+
+```txt
+MigrationConnectionStrings__DefaultConnection
+```
+
+This connection string must use the migration/bootstrap user:
+
+```txt
+rewndly_owner
+```
+
+The API runtime must use only:
+
+```txt
+ConnectionStrings__DefaultConnection
+```
+
+This connection string must use the limited runtime user:
+
+```txt
+rewndly_app
+```
+
+## Database Users and Least Privilege
+
+The Docker PostgreSQL entrypoint creates the database with the owner/bootstrap user:
+
+```txt
+POSTGRES_OWNER_USER=rewndly_owner
+POSTGRES_OWNER_PASSWORD=<server-only-secret>
+POSTGRES_DB=rewndly_db
+```
+
+The versioned init script creates the runtime user without hardcoded secrets:
+
+```txt
+backend/database/init/02_create_app_user_and_grants.sh
+```
+
+It reads:
+
+```txt
+REWNDLY_APP_DB_USER=rewndly_app
+REWNDLY_APP_DB_PASSWORD=<server-only-secret>
+```
+
+Runtime grants:
+
+```txt
+CONNECT on rewndly_db
+USAGE on schema public
+SELECT, INSERT, UPDATE, DELETE on tables
+USAGE, SELECT on sequences, if any
+EXECUTE on functions, if needed
+No SUPERUSER
+No CREATEDB
+No CREATEROLE
+No schema CREATE
+No structural DROP/ALTER grants
+```
+
+Container credential usage:
+
+```txt
+postgres      -> POSTGRES_OWNER_USER only for bootstrap/database ownership
+migrator      -> MigrationConnectionStrings__DefaultConnection / rewndly_owner
+api           -> ConnectionStrings__DefaultConnection / rewndly_app
+seed-admin    -> ConnectionStrings__DefaultConnection / rewndly_app
+frontend      -> no database access
+```
+
+Important: Docker init scripts run only when the PostgreSQL data volume is first created. If the volume already exists, either create a fresh trial volume or run equivalent grants manually as `rewndly_owner`.
+
+### Verify Runtime User Permissions
+
+From the VPS, after deploy and migrations:
+
+```bash
+docker compose -f docker-compose.npm.yml --env-file .env.production exec -T postgres \
+  sh -c 'PGPASSWORD="$REWNDLY_APP_DB_PASSWORD" psql -h localhost -U "$REWNDLY_APP_DB_USER" -d "$POSTGRES_DB" -c "select current_user;"'
+```
+
+The result should be:
+
+```txt
+rewndly_app
+```
+
+The runtime user must not be able to create schema objects:
+
+```bash
+docker compose -f docker-compose.npm.yml --env-file .env.production exec -T postgres \
+  sh -c 'PGPASSWORD="$REWNDLY_APP_DB_PASSWORD" psql -h localhost -U "$REWNDLY_APP_DB_USER" -d "$POSTGRES_DB" -v ON_ERROR_STOP=1 -c "create table should_fail(id int);"'
+```
+
+Expected result:
+
+```txt
+ERROR: permission denied for schema public
+```
+
+If `should_fail` is created, stop and fix grants before exposing the app.
+
+Do not test destructive commands like `DROP TABLE users` unless you are on a disposable QA database with a verified backup.
 
 ## Production-Safe Admin Seed
 
@@ -290,7 +400,7 @@ scripts/seed-admin.sh
 The seeder:
 
 ```txt
-Reads MOVIESYS_ADMIN_USERNAME, MOVIESYS_ADMIN_EMAIL and MOVIESYS_ADMIN_INITIAL_PASSWORD
+Reads REWNDLY_ADMIN_USERNAME, REWNDLY_ADMIN_EMAIL and REWNDLY_ADMIN_INITIAL_PASSWORD
 Refuses Admin123!
 Requires a 16+ character initial password
 Does not overwrite existing users
@@ -298,6 +408,7 @@ Creates role Admin
 Sets must_change_password=true
 Creates private privacy settings
 Writes a system_event bootstrap record without secrets
+Uses the limited runtime app database user
 ```
 
 ## Backups
@@ -311,7 +422,7 @@ scripts/backup-db.sh
 Restore a backup:
 
 ```bash
-scripts/restore-db.sh backups/moviesys_YYYYMMDD_HHMMSS.dump
+scripts/restore-db.sh backups/rewndly_YYYYMMDD_HHMMSS.dump
 ```
 
 Store backup copies outside the VPS as part of the final production plan.
@@ -365,6 +476,8 @@ Swagger unavailable publicly in Production
 .env.production not committed
 PostgreSQL not exposed publicly
 DB uses a dedicated user with a dedicated database
+API runtime uses the limited app database user, not the migration/bootstrap user
+Migrator uses the owner/migration connection string only
 Backups script tested
 TMDB token only server-side
 No real secrets in repository files

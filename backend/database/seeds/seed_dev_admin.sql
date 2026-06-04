@@ -17,7 +17,7 @@ INSERT INTO users (
 VALUES (
     'a663ffb8-f842-4a08-9286-bda71f984e96',
     'Colucho',
-    'colucho@moviesys.local',
+    'colucho@rewndly.local',
     'PBKDF2-SHA256$100000$V8K8WG/xxUCG+7qeIyI1PA==$BM/STLUxTb8OVm9UG9+JsyqLnABgssNNhqDRQi++XVA=',
     'Colucho',
     'Admin',

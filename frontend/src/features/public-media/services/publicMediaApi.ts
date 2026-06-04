@@ -13,6 +13,10 @@ export function getTrendingMovies() {
   return httpClient<MediaSummary[]>('/api/movies/trending')
 }
 
+export function getNowPlayingMovies() {
+  return httpClient<MediaSummary[]>('/api/movies/now-playing')
+}
+
 export function getPopularMovies() {
   return httpClient<MediaSummary[]>('/api/movies/popular')
 }

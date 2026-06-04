@@ -22,7 +22,7 @@ export function HomePage() {
         <main className="mx-auto max-w-4xl px-4 py-16 sm:px-6">
           <ErrorState
             title="Catalogo publico en espera"
-            message="TMDB todavia no esta configurado porque el nombre y dominio siguen en decision. La experiencia queda preparada para activarse sin mostrar errores tecnicos."
+            message="TMDB todavia no esta configurado o no esta disponible. La experiencia queda preparada para activarse sin mostrar errores tecnicos."
           />
         </main>
       ) : null}
@@ -32,6 +32,7 @@ export function HomePage() {
           <HeroSection item={heroItem} />
           <div className="mx-auto max-w-7xl pb-12">
             <MediaCarousel title="Peliculas en tendencia" items={data?.trendingMovies ?? []} />
+            <MediaCarousel title="Peliculas en cartelera" items={data?.nowPlayingMovies ?? []} />
             <MediaCarousel title="Peliculas populares" items={data?.popularMovies ?? []} />
             <MediaCarousel title="Proximos estrenos" items={data?.upcomingMovies ?? []} />
             <MediaCarousel title="Series en tendencia" items={data?.trendingSeries ?? []} />

@@ -2,7 +2,7 @@
 
 Rewndly is a cinematic movie and series system with public browsing, registered-user actions, an audited admin dashboard and a future React Native/Expo client.
 
-`MovieSys` remains the internal technical name for the repository, .NET projects, namespaces, services and database names until a gradual migration is explicitly approved.
+`Rewndly` is now both the public product name and the technical name for the repository, .NET projects, namespaces, services and database names.
 
 ## Stack
 
@@ -33,13 +33,13 @@ dotnet tool restore
 4. Apply migrations:
 
 ```bash
-dotnet tool run dotnet-ef database update --project src/MovieSys.Infrastructure --startup-project src/MovieSys.Api --context AppDbContext
+dotnet tool run dotnet-ef database update --project src/Rewndly.Infrastructure --startup-project src/Rewndly.Api --context AppDbContext
 ```
 
 5. Optional development admin seed:
 
 ```bash
-docker exec -i moviesys_postgres psql -U moviesys -d moviesys_dev < database/seeds/seed_dev_admin.sql
+docker exec -i rewndly_postgres psql -U rewndly -d rewndly_dev < database/seeds/seed_dev_admin.sql
 ```
 
 6. Run the backend:
@@ -47,7 +47,7 @@ docker exec -i moviesys_postgres psql -U moviesys -d moviesys_dev < database/see
 ```bash
 cd backend
 dotnet restore
-dotnet run --project src/MovieSys.Api
+dotnet run --project src/Rewndly.Api
 ```
 
 7. Run the frontend:
@@ -70,7 +70,7 @@ npm run dev
 
 - Public name: `Rewndly`.
 - Public domain: `rewndly.com`.
-- Internal technical name kept for now: `MovieSys`.
+- Technical project name: `Rewndly`.
 - All primary keys must be UUID.
 - Reviews are independent from `user_media_items`.
 - `activity_events`, `system_events` and `admin_audit_logs` have separate responsibilities.
@@ -102,7 +102,7 @@ Domain: rewndly.com
 
 ```bash
 cd backend
-dotnet test MovieSys.sln
+dotnet test Rewndly.sln
 
 cd ../frontend
 npm run build
@@ -140,7 +140,7 @@ Development email/password reset endpoints return dev tokens only in Development
 - NPM deploy runbook: `README.deploy.md`
 - VPS deploy guide: `docs/deploy-vps.md`
 - Official project status: `docs/project-status.md`
-- Nginx reverse proxy config: `nginx/moviesys.conf`
+- Nginx reverse proxy config: `nginx/rewndly.conf`
 - Operational scripts: `scripts/deploy.sh`, `scripts/run-migrations.sh`, `scripts/seed-admin.sh`, `scripts/backup-db.sh`, `scripts/restore-db.sh`
 
 Do not deploy with development secrets or the development admin password.
@@ -148,6 +148,19 @@ Do not deploy with development secrets or the development admin password.
 Current deploy state: Fase 10 is approved as preparation only. Rewndly is ready for a controlled trial deploy, but it has not been deployed remotely. Fase 10B and final production remain pending.
 
 For a VPS that already runs Nginx Proxy Manager, use `/opt/rewndly`, keep `.env.production` on the server only, and proxy `rewndly.com` to `127.0.0.1:18080`. The NPM flow serves the frontend through its container and proxies `/api/*` internally to the ASP.NET Core API, so the API and PostgreSQL are not exposed publicly.
+
+### Database Users and Least Privilege
+
+Controlled VPS deploys separate database credentials:
+
+```txt
+rewndly_owner = migration/bootstrap user, used by Rewndly.DbMigrator
+rewndly_app   = runtime API user, used by Rewndly.Api and Rewndly.AdminSeeder
+```
+
+`MigrationConnectionStrings__DefaultConnection` must use `rewndly_owner`. `ConnectionStrings__DefaultConnection` must use `rewndly_app`. The API must never run with the owner/bootstrap credentials.
+
+The Docker init script `backend/database/init/02_create_app_user_and_grants.sh` creates the runtime user and grants only runtime permissions. PostgreSQL remains internal to Docker in the VPS compose files.
 
 ## Known Operational Pending Items
 
@@ -158,4 +171,4 @@ For a VPS that already runs Nginx Proxy Manager, use `/opt/rewndly`, keep `.env.
 
 ## Phase 9 QA
 
-Use [docs/qa-phase9.md](docs/qa-phase9.md) to validate the current MovieSys technical backend for Rewndly against Docker PostgreSQL, local PostgreSQL or a remote/VPS PostgreSQL database.
+Use [docs/qa-phase9.md](docs/qa-phase9.md) to validate the current Rewndly technical backend for Rewndly against Docker PostgreSQL, local PostgreSQL or a remote/VPS PostgreSQL database.

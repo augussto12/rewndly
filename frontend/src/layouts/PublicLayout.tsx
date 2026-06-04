@@ -44,6 +44,18 @@ export function PublicLayout({ children }: PropsWithChildren) {
         </div>
       </header>
       {children}
+      <footer className="border-t border-white/10 bg-black/20">
+        <div className="mx-auto flex max-w-7xl flex-col gap-2 px-4 py-6 text-xs text-[var(--color-text-secondary)] sm:flex-row sm:items-center sm:justify-between sm:px-6">
+          <span>Rewndly</span>
+          <span>
+            Datos e imagenes provistos por{' '}
+            <a className="text-violet-200 underline-offset-4 hover:underline" href="https://www.themoviedb.org/" target="_blank" rel="noreferrer">
+              TMDB
+            </a>
+            . Rewndly no esta afiliado ni respaldado por TMDB.
+          </span>
+        </div>
+      </footer>
     </div>
   )
 }

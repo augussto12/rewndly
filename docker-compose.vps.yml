@@ -1,9 +1,9 @@
-name: moviesys
+name: rewndly
 
 services:
   reverse-proxy:
     image: nginx:1.27-alpine
-    container_name: moviesys_reverse_proxy
+    container_name: rewndly_reverse_proxy
     restart: unless-stopped
     depends_on:
       api:
@@ -14,11 +14,11 @@ services:
       - "${HTTP_PORT:-80}:80"
       - "${HTTPS_PORT:-443}:443"
     volumes:
-      - ./nginx/moviesys.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./nginx/rewndly.conf:/etc/nginx/conf.d/default.conf:ro
       - ./certbot/www:/var/www/certbot:ro
       - ./certbot/conf:/etc/letsencrypt:ro
     networks:
-      - moviesys_public
+      - rewndly_public
 
   frontend:
     build:
@@ -26,25 +26,44 @@ services:
       dockerfile: Dockerfile
       args:
         VITE_API_BASE_URL: ${VITE_API_BASE_URL:-}
-    image: moviesys-frontend:trial
-    container_name: moviesys_frontend
+    image: rewndly-frontend:trial
+    container_name: rewndly_frontend
     restart: unless-stopped
     expose:
       - "80"
     networks:
-      - moviesys_public
+      - rewndly_public
 
   api:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    image: moviesys-api:trial
-    container_name: moviesys_api
+    image: rewndly-api:trial
+    container_name: rewndly_api
     restart: unless-stopped
-    env_file:
-      - ${ENV_FILE:-.env.production}
     environment:
+      ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT:-Production}
       ASPNETCORE_URLS: http://0.0.0.0:8080
+      ConnectionStrings__DefaultConnection: ${ConnectionStrings__DefaultConnection}
+      Cors__AllowedOrigins__0: ${Cors__AllowedOrigins__0}
+      Jwt__Issuer: ${Jwt__Issuer}
+      Jwt__Audience: ${Jwt__Audience}
+      Jwt__Secret: ${Jwt__Secret}
+      Jwt__AccessTokenMinutes: ${Jwt__AccessTokenMinutes:-15}
+      Jwt__RefreshTokenDays: ${Jwt__RefreshTokenDays:-14}
+      Cookie__Domain: ${Cookie__Domain:-}
+      Cookie__SameSite: ${Cookie__SameSite:-Lax}
+      TMDB_ACCESS_TOKEN: ${TMDB_ACCESS_TOKEN:-}
+      TMDB_API_KEY: ${TMDB_API_KEY:-}
+      Tmdb__AccessToken: ${Tmdb__AccessToken:-}
+      Tmdb__ApiKey: ${Tmdb__ApiKey:-}
+      Tmdb__BaseUrl: ${Tmdb__BaseUrl:-https://api.themoviedb.org/3}
+      Tmdb__ImageBaseUrl: ${Tmdb__ImageBaseUrl:-https://image.tmdb.org/t/p}
+      Tmdb__PosterSize: ${Tmdb__PosterSize:-w500}
+      Tmdb__BackdropSize: ${Tmdb__BackdropSize:-w1280}
+      Tmdb__TimeoutSeconds: ${Tmdb__TimeoutSeconds:-10}
+      Mail__Provider: ${Mail__Provider:-}
+      Mail__ApiKey: ${Mail__ApiKey:-}
     expose:
       - "8080"
     depends_on:
@@ -57,63 +76,71 @@ services:
       retries: 5
       start_period: 30s
     networks:
-      - moviesys_public
-      - moviesys_private
+      - rewndly_public
+      - rewndly_private
 
   postgres:
     image: postgres:17
-    container_name: moviesys_postgres
+    container_name: rewndly_postgres
     restart: unless-stopped
     environment:
-      POSTGRES_DB: ${POSTGRES_DB:-moviesys_db}
-      POSTGRES_USER: ${POSTGRES_USER:-moviesys_user}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB:-rewndly_db}
+      POSTGRES_USER: ${POSTGRES_OWNER_USER:-rewndly_owner}
+      POSTGRES_PASSWORD: ${POSTGRES_OWNER_PASSWORD}
+      REWNDLY_APP_DB_USER: ${REWNDLY_APP_DB_USER:-rewndly_app}
+      REWNDLY_APP_DB_PASSWORD: ${REWNDLY_APP_DB_PASSWORD}
     volumes:
-      - moviesys_postgres_data:/var/lib/postgresql/data
+      - rewndly_postgres_data:/var/lib/postgresql/data
       - ./backups:/backups
+      - ./backend/database/init:/docker-entrypoint-initdb.d:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U \"$${POSTGRES_USER}\" -d \"$${POSTGRES_DB}\""]
       interval: 10s
       timeout: 5s
       retries: 5
     networks:
-      - moviesys_private
+      - rewndly_private
 
   migrator:
-    image: moviesys-api:trial
-    container_name: moviesys_migrator
+    image: rewndly-api:trial
+    container_name: rewndly_migrator
     profiles:
       - ops
-    env_file:
-      - ${ENV_FILE:-.env.production}
-    entrypoint: ["dotnet", "/app/tools/dbmigrator/MovieSys.DbMigrator.dll"]
+    environment:
+      ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT:-Production}
+      MigrationConnectionStrings__DefaultConnection: ${MigrationConnectionStrings__DefaultConnection}
+    entrypoint: ["dotnet", "/app/tools/dbmigrator/Rewndly.DbMigrator.dll"]
     depends_on:
       postgres:
         condition: service_healthy
     networks:
-      - moviesys_private
+      - rewndly_private
 
   seed-admin:
-    image: moviesys-api:trial
-    container_name: moviesys_seed_admin
+    image: rewndly-api:trial
+    container_name: rewndly_seed_admin
     profiles:
       - ops
-    env_file:
-      - ${ENV_FILE:-.env.production}
-    entrypoint: ["dotnet", "/app/tools/adminseeder/MovieSys.AdminSeeder.dll"]
+    environment:
+      ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT:-Production}
+      ConnectionStrings__DefaultConnection: ${ConnectionStrings__DefaultConnection}
+      REWNDLY_ADMIN_USERNAME: ${REWNDLY_ADMIN_USERNAME}
+      REWNDLY_ADMIN_EMAIL: ${REWNDLY_ADMIN_EMAIL}
+      REWNDLY_ADMIN_INITIAL_PASSWORD: ${REWNDLY_ADMIN_INITIAL_PASSWORD}
+    entrypoint: ["dotnet", "/app/tools/adminseeder/Rewndly.AdminSeeder.dll"]
     depends_on:
       postgres:
         condition: service_healthy
     networks:
-      - moviesys_private
+      - rewndly_private
 
 networks:
-  moviesys_public:
-    name: moviesys_public
-  moviesys_private:
-    name: moviesys_private
+  rewndly_public:
+    name: rewndly_public
+  rewndly_private:
+    name: rewndly_private
     internal: true
 
 volumes:
-  moviesys_postgres_data:
-    name: moviesys_postgres_data
+  rewndly_postgres_data:
+    name: rewndly_postgres_data

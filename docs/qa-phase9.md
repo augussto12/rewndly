@@ -1,6 +1,6 @@
-# MovieSys Phase 9 QA Runbook
+# Rewndly Phase 9 QA Runbook
 
-This runbook validates MovieSys with a real PostgreSQL database and optional TMDB credentials.
+This runbook validates Rewndly with a real PostgreSQL database and optional TMDB credentials.
 
 Do not paste real secrets into chat or commit them to git. Use environment variables or local `.env` files.
 
@@ -27,7 +27,7 @@ Phase 9B execution status on this machine:
 ```txt
 Date: 2026-06-04
 Docker Desktop: available after starting Docker Desktop executable
-PostgreSQL: available in Docker as moviesys_postgres
+PostgreSQL: available in Docker as rewndly_postgres
 DB port used for QA: localhost:55432 -> container 5432
 Reason for alternate port: localhost:5432 was already used by another Docker container
 Migrations applied: 20260603211325_InitialCreate, 20260604002749_AddSocialVisibilityPhase6
@@ -43,7 +43,7 @@ Frontend build: passing
 Operational note:
 
 ```txt
-Windows App Control blocked local execution/loading of MovieSys.Infrastructure.dll with error 0x800711C7.
+Windows App Control blocked local execution/loading of Rewndly.Infrastructure.dll with error 0x800711C7.
 Backend build and tests were executed successfully inside mcr.microsoft.com/dotnet/sdk:9.0.
 This is an environment policy issue, not a PostgreSQL schema issue.
 ```
@@ -51,19 +51,19 @@ This is an environment policy issue, not a PostgreSQL schema issue.
 Docker QA commands used:
 
 ```powershell
-docker run -d --name moviesys_postgres `
-  -e POSTGRES_DB=moviesys_dev `
-  -e POSTGRES_USER=moviesys `
-  -e POSTGRES_PASSWORD=moviesys_dev_password `
+docker run -d --name rewndly_postgres `
+  -e POSTGRES_DB=rewndly_dev `
+  -e POSTGRES_USER=rewndly `
+  -e POSTGRES_PASSWORD=rewndly_dev_password `
   -p 55432:5432 `
-  -v moviesys_moviesys_postgres_data:/var/lib/postgresql/data `
+  -v rewndly_rewndly_postgres_data:/var/lib/postgresql/data `
   -v "${PWD}\backend\database\init:/docker-entrypoint-initdb.d:ro" `
   postgres:17
 
 docker run --rm -v "${PWD}\backend:/work" -w /work `
-  -e ConnectionStrings__DefaultConnection="Host=host.docker.internal;Port=55432;Database=moviesys_dev;Username=moviesys;Password=moviesys_dev_password" `
+  -e ConnectionStrings__DefaultConnection="Host=host.docker.internal;Port=55432;Database=rewndly_dev;Username=rewndly;Password=rewndly_dev_password" `
   mcr.microsoft.com/dotnet/sdk:9.0 `
-  sh -c "dotnet tool restore && dotnet tool run dotnet-ef database update --project src/MovieSys.Infrastructure --startup-project src/MovieSys.Api --context AppDbContext"
+  sh -c "dotnet tool restore && dotnet tool run dotnet-ef database update --project src/Rewndly.Infrastructure --startup-project src/Rewndly.Api --context AppDbContext"
 ```
 
 Observed blocker:
@@ -93,28 +93,28 @@ Apply migrations:
 ```powershell
 cd backend
 dotnet tool restore
-dotnet tool run dotnet-ef database update --project src/MovieSys.Infrastructure --startup-project src/MovieSys.Api --context AppDbContext
+dotnet tool run dotnet-ef database update --project src/Rewndly.Infrastructure --startup-project src/Rewndly.Api --context AppDbContext
 ```
 
 Apply development admin seed:
 
 ```powershell
-Get-Content backend/database/seeds/seed_dev_admin.sql | docker exec -i moviesys_postgres psql -U moviesys -d moviesys_dev
+Get-Content backend/database/seeds/seed_dev_admin.sql | docker exec -i rewndly_postgres psql -U rewndly -d rewndly_dev
 ```
 
 If already inside `backend`, use:
 
 ```powershell
-Get-Content database/seeds/seed_dev_admin.sql | docker exec -i moviesys_postgres psql -U moviesys -d moviesys_dev
+Get-Content database/seeds/seed_dev_admin.sql | docker exec -i rewndly_postgres psql -U rewndly -d rewndly_dev
 ```
 
 Verify database objects:
 
 ```powershell
-docker exec -i moviesys_postgres psql -U moviesys -d moviesys_dev -c "\dt"
-docker exec -i moviesys_postgres psql -U moviesys -d moviesys_dev -c "\di"
-docker exec -i moviesys_postgres psql -U moviesys -d moviesys_dev -c "select * from ""__EFMigrationsHistory"";"
-docker exec -i moviesys_postgres psql -U moviesys -d moviesys_dev -c "select username, role, must_change_password from users where username = 'Colucho';"
+docker exec -i rewndly_postgres psql -U rewndly -d rewndly_dev -c "\dt"
+docker exec -i rewndly_postgres psql -U rewndly -d rewndly_dev -c "\di"
+docker exec -i rewndly_postgres psql -U rewndly -d rewndly_dev -c "select * from ""__EFMigrationsHistory"";"
+docker exec -i rewndly_postgres psql -U rewndly -d rewndly_dev -c "select username, role, must_change_password from users where username = 'Colucho';"
 ```
 
 ## Option B: Local PostgreSQL Without Docker
@@ -122,15 +122,15 @@ docker exec -i moviesys_postgres psql -U moviesys -d moviesys_dev -c "select use
 Install PostgreSQL locally, create the database and user:
 
 ```sql
-CREATE USER moviesys WITH PASSWORD 'moviesys_dev_password';
-CREATE DATABASE moviesys_dev OWNER moviesys;
-GRANT ALL PRIVILEGES ON DATABASE moviesys_dev TO moviesys;
+CREATE USER rewndly WITH PASSWORD 'rewndly_dev_password';
+CREATE DATABASE rewndly_dev OWNER rewndly;
+GRANT ALL PRIVILEGES ON DATABASE rewndly_dev TO rewndly;
 ```
 
 Set connection string for the current shell:
 
 ```powershell
-$env:ConnectionStrings__DefaultConnection="Host=localhost;Port=5432;Database=moviesys_dev;Username=moviesys;Password=moviesys_dev_password"
+$env:ConnectionStrings__DefaultConnection="Host=localhost;Port=5432;Database=rewndly_dev;Username=rewndly;Password=rewndly_dev_password"
 ```
 
 Apply migrations:
@@ -138,21 +138,21 @@ Apply migrations:
 ```powershell
 cd backend
 dotnet tool restore
-dotnet tool run dotnet-ef database update --project src/MovieSys.Infrastructure --startup-project src/MovieSys.Api --context AppDbContext
+dotnet tool run dotnet-ef database update --project src/Rewndly.Infrastructure --startup-project src/Rewndly.Api --context AppDbContext
 ```
 
 Apply seed with local `psql`:
 
 ```powershell
-psql "host=localhost port=5432 dbname=moviesys_dev user=moviesys password=moviesys_dev_password" -f backend/database/seeds/seed_dev_admin.sql
+psql "host=localhost port=5432 dbname=rewndly_dev user=rewndly password=rewndly_dev_password" -f backend/database/seeds/seed_dev_admin.sql
 ```
 
 Verify with local `psql`:
 
 ```powershell
-psql "host=localhost port=5432 dbname=moviesys_dev user=moviesys password=moviesys_dev_password" -c "\dt"
-psql "host=localhost port=5432 dbname=moviesys_dev user=moviesys password=moviesys_dev_password" -c "select * from ""__EFMigrationsHistory"";"
-psql "host=localhost port=5432 dbname=moviesys_dev user=moviesys password=moviesys_dev_password" -c "select username, role, must_change_password from users where username = 'Colucho';"
+psql "host=localhost port=5432 dbname=rewndly_dev user=rewndly password=rewndly_dev_password" -c "\dt"
+psql "host=localhost port=5432 dbname=rewndly_dev user=rewndly password=rewndly_dev_password" -c "select * from ""__EFMigrationsHistory"";"
+psql "host=localhost port=5432 dbname=rewndly_dev user=rewndly password=rewndly_dev_password" -c "select username, role, must_change_password from users where username = 'Colucho';"
 ```
 
 ## Option C: Remote PostgreSQL or VPS
@@ -172,8 +172,8 @@ SSL mode requirement
 Do not send the password in chat. Set it locally:
 
 ```powershell
-$env:MOVIESYS_DB_PASSWORD="your-password"
-$env:ConnectionStrings__DefaultConnection="Host=<host>;Port=<port>;Database=<db>;Username=<user>;Password=$env:MOVIESYS_DB_PASSWORD;SSL Mode=Require;Trust Server Certificate=true"
+$env:REWNDLY_DB_PASSWORD="your-password"
+$env:ConnectionStrings__DefaultConnection="Host=<host>;Port=<port>;Database=<db>;Username=<user>;Password=$env:REWNDLY_DB_PASSWORD;SSL Mode=Require;Trust Server Certificate=true"
 ```
 
 Then run migrations:
@@ -181,7 +181,7 @@ Then run migrations:
 ```powershell
 cd backend
 dotnet tool restore
-dotnet tool run dotnet-ef database update --project src/MovieSys.Infrastructure --startup-project src/MovieSys.Api --context AppDbContext
+dotnet tool run dotnet-ef database update --project src/Rewndly.Infrastructure --startup-project src/Rewndly.Api --context AppDbContext
 ```
 
 For seed, prefer a one-time production-safe admin seed flow using environment variables. Do not use `Admin123!` outside local development.
@@ -325,5 +325,5 @@ Recommended command once DB is available:
 
 ```powershell
 cd backend
-dotnet test MovieSys.sln
+dotnet test Rewndly.sln
 ```

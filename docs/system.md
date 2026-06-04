@@ -21,10 +21,10 @@ rewndly.com
 El nombre técnico interno se mantiene por ahora para repositorio, carpetas, namespaces, servicios y base de datos:
 
 ```txt
-MovieSys
+Rewndly
 ```
 
-No renombrar todavía proyectos .NET, namespaces, servicios Docker ni base de datos. Cualquier migración de `MovieSys` a `Rewndly` debe ser gradual y explícita para no romper builds, migraciones, seeds ni deploy.
+No renombrar todavía proyectos .NET, namespaces, servicios Docker ni base de datos. Cualquier migración de `Rewndly` a `Rewndly` debe ser gradual y explícita para no romper builds, migraciones, seeds ni deploy.
 
 ## Primary Keys
 
@@ -734,7 +734,7 @@ Esta estructura es mucho más sólida y más cercana a un producto real.
 El proyecto tendrá dos carpetas principales:
 
 ```txt
-/MovieSys
+/Rewndly
   /backend
   /frontend
   docker-compose.yml
@@ -746,14 +746,14 @@ El proyecto tendrá dos carpetas principales:
 ```txt
 /backend
   /src
-    /MovieSys.Api
-    /MovieSys.Application
-    /MovieSys.Domain
-    /MovieSys.Infrastructure
+    /Rewndly.Api
+    /Rewndly.Application
+    /Rewndly.Domain
+    /Rewndly.Infrastructure
 
   /tests
-    /MovieSys.UnitTests
-    /MovieSys.IntegrationTests
+    /Rewndly.UnitTests
+    /Rewndly.IntegrationTests
 
   /database
     /init
@@ -1313,7 +1313,7 @@ created_at
 
 El usuario cuenta con una VPS en Hostinger. El producto público será Rewndly y el dominio objetivo será `rewndly.com`.
 
-Por decisión técnica actual, `MovieSys` se mantiene como nombre interno de repositorio, servicios, namespaces y base de datos hasta una migración gradual aprobada.
+Por decisión técnica actual, `Rewndly` se mantiene como nombre interno de repositorio, servicios, namespaces y base de datos hasta una migración gradual aprobada.
 
 Para producción se evaluarán dos opciones:
 
@@ -1322,7 +1322,7 @@ Para producción se evaluarán dos opciones:
 Crear una base separada:
 
 ```txt
-moviesys_db
+rewndly_db
 ```
 
 Ventaja:
@@ -1345,7 +1345,7 @@ Crear una base nueva para este proyecto.
 Crear un schema:
 
 ```txt
-moviesys
+rewndly
 ```
 
 Ventaja:
@@ -1367,16 +1367,39 @@ Mayor riesgo de mezclar proyectos
 Usar una **base de datos nueva** dentro de PostgreSQL en la VPS.
 
 ```txt
-moviesys_db
+rewndly_db
 ```
 
-Con usuario propio:
+Con usuarios separados:
 
 ```txt
-moviesys_user
+rewndly_owner
+rewndly_app
 ```
 
-Y permisos limitados solo sobre esa base.
+Regla:
+
+```txt
+rewndly_owner = usuario de migraciones/bootstrap
+rewndly_app = usuario runtime usado por la API
+```
+
+`rewndly_owner` puede aplicar migraciones y cambios estructurales dentro de la base del proyecto.
+
+`rewndly_app` debe tener permisos limitados:
+
+```txt
+CONNECT sobre la DB
+USAGE sobre schema public
+SELECT, INSERT, UPDATE, DELETE sobre tablas necesarias
+USAGE/SELECT sobre sequences si existen
+Sin SUPERUSER
+Sin CREATEDB
+Sin CREATEROLE
+Sin CREATE/ALTER/DROP estructural
+```
+
+La API nunca debe correr con credenciales owner/bootstrap en VPS o produccion.
 
 ---
 
@@ -1389,9 +1412,9 @@ services:
   postgres:
     image: postgres
     environment:
-      POSTGRES_DB: moviesys_dev
-      POSTGRES_USER: moviesys
-      POSTGRES_PASSWORD: moviesys_dev_password
+      POSTGRES_DB: rewndly_dev
+      POSTGRES_USER: rewndly
+      POSTGRES_PASSWORD: rewndly_dev_password
     ports:
       - "5432:5432"
     volumes:
@@ -1438,8 +1461,9 @@ Después:
 
 ```txt
 Preparar VPS
-Crear base moviesys_db
-Crear usuario moviesys_user
+Crear base rewndly_db
+Crear usuario owner rewndly_owner
+Crear usuario runtime limitado rewndly_app
 Configurar variables de entorno
 Ejecutar migraciones
 Configurar backups

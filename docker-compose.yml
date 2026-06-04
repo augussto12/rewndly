@@ -1,21 +1,24 @@
+name: rewndly
+
 services:
   postgres:
     image: postgres:17
-    container_name: moviesys_postgres
+    container_name: rewndly_postgres
     environment:
-      POSTGRES_DB: moviesys_dev
-      POSTGRES_USER: moviesys
-      POSTGRES_PASSWORD: moviesys_dev_password
+      POSTGRES_DB: rewndly_dev
+      POSTGRES_USER: rewndly
+      POSTGRES_PASSWORD: rewndly_dev_password
     ports:
       - "5432:5432"
     volumes:
-      - moviesys_postgres_data:/var/lib/postgresql/data
+      - rewndly_postgres_data:/var/lib/postgresql/data
       - ./backend/database/init:/docker-entrypoint-initdb.d:ro
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U moviesys -d moviesys_dev"]
+      test: ["CMD-SHELL", "pg_isready -U rewndly -d rewndly_dev"]
       interval: 10s
       timeout: 5s
       retries: 5
 
 volumes:
-  moviesys_postgres_data:
+  rewndly_postgres_data:
+    name: rewndly_postgres_data

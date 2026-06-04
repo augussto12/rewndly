@@ -12,10 +12,10 @@ Public domain:
 rewndly.com
 ```
 
-Technical internal name kept for now:
+Technical project name:
 
 ```txt
-MovieSys
+Rewndly
 ```
 
 Do not rename .NET projects, namespaces, services or database names until a gradual migration is explicitly approved.
@@ -62,6 +62,17 @@ Prepared Nginx Proxy Manager target:
 ```txt
 rewndly.com -> http://127.0.0.1:18080
 ```
+
+Prepared database least-privilege model:
+
+```txt
+rewndly_owner = migration/bootstrap user
+rewndly_app = runtime API user
+Rewndly.DbMigrator uses MigrationConnectionStrings__DefaultConnection
+Rewndly.Api uses ConnectionStrings__DefaultConnection
+```
+
+Before Fase 10B, verify on the target database that `rewndly_app` cannot create, alter or drop schema objects.
 
 Do not:
 

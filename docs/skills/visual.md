@@ -18,7 +18,7 @@ El dominio público objetivo es:
 rewndly.com
 ```
 
-Toda interfaz visible para usuarios debe usar `Rewndly`. `MovieSys` solo debe aparecer como nombre técnico interno en documentación o código donde renombrar implique riesgo.
+Toda interfaz visible para usuarios debe usar `Rewndly`. `Rewndly` solo debe aparecer como nombre técnico interno en documentación o código donde renombrar implique riesgo.
 
 El sistema debe sentirse:
 

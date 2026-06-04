@@ -12,6 +12,7 @@ export type MediaSummary = {
 
 export type PublicHomeResponse = {
   trendingMovies: MediaSummary[]
+  nowPlayingMovies: MediaSummary[]
   popularMovies: MediaSummary[]
   upcomingMovies: MediaSummary[]
   trendingSeries: MediaSummary[]

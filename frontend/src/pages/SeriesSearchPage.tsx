@@ -16,7 +16,7 @@ export function SeriesSearchPage() {
   return (
     <PublicLayout>
       <main className="page-shell">
-        <PageHeader eyebrow="Series" title="Buscar series" subtitle="Navega series publicas con una experiencia visual lista para conectarse a TMDB real cuando se defina nombre y dominio." />
+        <PageHeader eyebrow="Series" title="Buscar series" subtitle="Navega series publicas con una experiencia visual conectada al catalogo cuando TMDB este configurado." />
         <div className="mt-8 max-w-2xl">
           <SearchInput value={query} placeholder="Buscar por nombre" onChange={setQuery} />
         </div>

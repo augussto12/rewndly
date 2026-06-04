@@ -7,7 +7,7 @@ Estas decisiones son obligatorias:
 ```txt
 Nombre público: Rewndly
 Dominio público: rewndly.com
-Nombre técnico interno: MovieSys
+Nombre técnico interno: Rewndly
 Todas las Primary Keys: UUID
 Reviews independientes de user_media_items
 activity_events separado de system_events
@@ -47,19 +47,19 @@ La estructura debe permitir:
 
 ```txt
 /src
-  /MovieSys.Api
-  /MovieSys.Application
-  /MovieSys.Domain
-  /MovieSys.Infrastructure
-  /MovieSys.Shared
+  /Rewndly.Api
+  /Rewndly.Application
+  /Rewndly.Domain
+  /Rewndly.Infrastructure
+  /Rewndly.Shared
 /tests
-  /MovieSys.UnitTests
-  /MovieSys.IntegrationTests
+  /Rewndly.UnitTests
+  /Rewndly.IntegrationTests
 ```
 
 ---
 
-# 4. MovieSys.Api
+# 4. Rewndly.Api
 
 Responsabilidad:
 
@@ -76,7 +76,7 @@ Responsabilidad:
 Ejemplo:
 
 ```txt
-MovieSys.Api
+Rewndly.Api
   /Extensions
     CorsExtensions.cs
     AuthExtensions.cs
@@ -93,7 +93,7 @@ MovieSys.Api
 
 ---
 
-# 5. MovieSys.Application
+# 5. Rewndly.Application
 
 Responsabilidad:
 
@@ -108,7 +108,7 @@ Responsabilidad:
 Estructura por módulo:
 
 ```txt
-MovieSys.Application
+Rewndly.Application
   /Modules
     /Auth
       /Register
@@ -172,7 +172,7 @@ RateMovieHandler.cs
 
 ---
 
-# 6. MovieSys.Domain
+# 6. Rewndly.Domain
 
 Responsabilidad:
 
@@ -185,7 +185,7 @@ Responsabilidad:
 Ejemplo:
 
 ```txt
-MovieSys.Domain
+Rewndly.Domain
   /Users
     User.cs
     UserRole.cs
@@ -236,7 +236,7 @@ Todas las entidades persistidas deben usar UUID como Primary Key. No usar `SERIA
 
 ---
 
-# 7. MovieSys.Infrastructure
+# 7. Rewndly.Infrastructure
 
 Responsabilidad:
 
@@ -252,7 +252,7 @@ Responsabilidad:
 Ejemplo:
 
 ```txt
-MovieSys.Infrastructure
+Rewndly.Infrastructure
   /Persistence
     AppDbContext.cs
     /Configurations
@@ -281,7 +281,7 @@ MovieSys.Infrastructure
 
 ---
 
-# 8. MovieSys.Shared
+# 8. Rewndly.Shared
 
 Responsabilidad:
 
@@ -293,7 +293,7 @@ Responsabilidad:
 Ejemplo:
 
 ```txt
-MovieSys.Shared
+Rewndly.Shared
   Result.cs
   Error.cs
   DateTimeProvider.cs
@@ -634,6 +634,6 @@ DB: PostgreSQL
 Mobile futuro: React Native consumiendo la misma API
 ```
 
-La marca pública visible debe usar `Rewndly`. `MovieSys` queda como nombre técnico interno para proyectos .NET, namespaces, servicios y base de datos hasta que se apruebe una migración gradual.
+La marca pública visible debe usar `Rewndly`. `Rewndly` queda como nombre técnico interno para proyectos .NET, namespaces, servicios y base de datos hasta que se apruebe una migración gradual.
 
 Esta estructura mantiene el proyecto ordenado desde el inicio, pero sin hacerlo innecesariamente complejo.

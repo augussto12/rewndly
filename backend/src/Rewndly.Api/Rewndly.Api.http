@@ -1,0 +1,6 @@
+@Rewndly.Api_HostAddress = http://localhost:5231
+
+GET {{Rewndly.Api_HostAddress}}/api/system/status
+Accept: application/json
+
+###
