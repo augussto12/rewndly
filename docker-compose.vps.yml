@@ -66,6 +66,8 @@ services:
       Mail__ApiKey: ${Mail__ApiKey:-}
     expose:
       - "8080"
+    volumes:
+      - rewndly_data_protection_keys:/root/.aspnet/DataProtection-Keys
     depends_on:
       postgres:
         condition: service_healthy
@@ -144,3 +146,5 @@ networks:
 volumes:
   rewndly_postgres_data:
     name: rewndly_postgres_data
+  rewndly_data_protection_keys:
+    name: rewndly_data_protection_keys
