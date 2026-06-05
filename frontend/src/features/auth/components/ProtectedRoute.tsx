@@ -1,5 +1,5 @@
 import { Navigate, Outlet } from 'react-router-dom'
-import { useAuth } from '../AuthProvider'
+import { useAuth } from '../useAuth'
 
 type ProtectedRouteProps = {
   requiredRole?: string

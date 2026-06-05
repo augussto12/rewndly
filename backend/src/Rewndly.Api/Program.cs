@@ -20,6 +20,7 @@ builder.Host.UseSerilog((context, services, configuration) =>
 });
 
 builder.Services.AddProblemDetails();
+builder.Services.AddDataProtection();
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services.AddRewndlyCors(builder.Configuration);
@@ -60,6 +61,7 @@ app.MapHealthChecks("/health");
 app.MapAuthEndpoints();
 app.MapPublicMediaEndpoints();
 app.MapUserContentEndpoints();
+app.MapTmdbAccountEndpoints();
 app.MapSocialEndpoints();
 app.MapAdminEndpoints();
 

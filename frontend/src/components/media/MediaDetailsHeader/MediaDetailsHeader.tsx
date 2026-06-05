@@ -35,13 +35,13 @@ export function MediaDetailsHeader({
             )}
           </div>
         </div>
-        <div className="self-end">
+        <div className="min-w-0 self-end">
           <div className="mb-4 flex flex-wrap items-center gap-3">
             <RatingBadge value={voteAverage ?? null} />
-            <span className="text-sm text-[var(--color-text-secondary)]">{meta.filter(Boolean).join(' / ')}</span>
+            <span className="text-resilient text-sm text-[var(--color-text-secondary)]">{meta.filter(Boolean).join(' / ')}</span>
           </div>
-          <h1 className="text-4xl font-semibold leading-tight sm:text-6xl">{title}</h1>
-          {subtitle ? <p className="mt-2 text-[var(--color-text-secondary)]">{subtitle}</p> : null}
+          <h1 className="text-resilient text-4xl font-semibold leading-tight sm:text-6xl">{title}</h1>
+          {subtitle ? <p className="text-resilient mt-2 text-[var(--color-text-secondary)]">{subtitle}</p> : null}
           <div className="mt-5 flex flex-wrap gap-2">
             {genres.map((genre) => (
               <span key={genre} className="rounded-[var(--radius-sm)] border border-white/10 bg-white/[0.06] px-3 py-1 text-xs text-violet-100">

@@ -165,3 +165,60 @@ public sealed class PasswordResetTokenConfiguration : IEntityTypeConfiguration<P
             .OnDelete(DeleteBehavior.Restrict);
     }
 }
+
+public sealed class TmdbAccountConnectionConfiguration : IEntityTypeConfiguration<TmdbAccountConnection>
+{
+    public void Configure(EntityTypeBuilder<TmdbAccountConnection> builder)
+    {
+        builder.ToTable("tmdb_account_connections");
+
+        builder.ConfigureUuidPrimaryKey();
+        builder.ConfigureAuditFields();
+
+        builder.Property(connection => connection.Username).HasMaxLength(120).IsRequired();
+        builder.Property(connection => connection.DisplayName).HasMaxLength(160);
+        builder.Property(connection => connection.AvatarUrl).HasMaxLength(2048);
+        builder.Property(connection => connection.ProtectedSessionId).HasMaxLength(2048).IsRequired();
+        builder.Property(connection => connection.ConnectedAt).HasPrecision(3).IsRequired();
+        builder.Property(connection => connection.LastSyncedAt).HasPrecision(3);
+        builder.Property(connection => connection.RevokedAt).HasPrecision(3);
+
+        builder.HasIndex(connection => connection.UserId)
+            .IsUnique()
+            .HasFilter("revoked_at IS NULL");
+        builder.HasIndex(connection => connection.TmdbAccountId);
+        builder.HasIndex(connection => connection.RevokedAt);
+
+        builder
+            .HasOne(connection => connection.User)
+            .WithMany()
+            .HasForeignKey(connection => connection.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
+    }
+}
+
+public sealed class TmdbAuthRequestConfiguration : IEntityTypeConfiguration<TmdbAuthRequest>
+{
+    public void Configure(EntityTypeBuilder<TmdbAuthRequest> builder)
+    {
+        builder.ToTable("tmdb_auth_requests");
+
+        builder.ConfigureUuidPrimaryKey();
+
+        builder.Property(request => request.RequestTokenHash).HasMaxLength(512).IsRequired();
+        builder.Property(request => request.CreatedAt).HasPrecision(3).HasDefaultValueSql("now()");
+        builder.Property(request => request.ExpiresAt).HasPrecision(3).IsRequired();
+        builder.Property(request => request.UsedAt).HasPrecision(3);
+
+        builder.HasIndex(request => request.UserId);
+        builder.HasIndex(request => request.RequestTokenHash).IsUnique();
+        builder.HasIndex(request => request.ExpiresAt);
+        builder.HasIndex(request => request.UsedAt);
+
+        builder
+            .HasOne(request => request.User)
+            .WithMany()
+            .HasForeignKey(request => request.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
+    }
+}

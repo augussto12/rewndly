@@ -1146,6 +1146,144 @@ namespace Rewndly.Infrastructure.Persistence.Migrations
                     b.ToTable("refresh_tokens", (string)null);
                 });
 
+            modelBuilder.Entity("Rewndly.Domain.Users.TmdbAccountConnection", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id")
+                        .HasDefaultValueSql("gen_random_uuid()");
+
+                    b.Property<string>("AvatarUrl")
+                        .HasMaxLength(2048)
+                        .HasColumnType("character varying(2048)")
+                        .HasColumnName("avatar_url");
+
+                    b.Property<DateTimeOffset>("ConnectedAt")
+                        .HasPrecision(3)
+                        .HasColumnType("timestamp(3) with time zone")
+                        .HasColumnName("connected_at");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasPrecision(3)
+                        .HasColumnType("timestamp(3) with time zone")
+                        .HasColumnName("created_at")
+                        .HasDefaultValueSql("now()");
+
+                    b.Property<string>("DisplayName")
+                        .HasMaxLength(160)
+                        .HasColumnType("character varying(160)")
+                        .HasColumnName("display_name");
+
+                    b.Property<DateTimeOffset?>("LastSyncedAt")
+                        .HasPrecision(3)
+                        .HasColumnType("timestamp(3) with time zone")
+                        .HasColumnName("last_synced_at");
+
+                    b.Property<string>("ProtectedSessionId")
+                        .IsRequired()
+                        .HasMaxLength(2048)
+                        .HasColumnType("character varying(2048)")
+                        .HasColumnName("protected_session_id");
+
+                    b.Property<DateTimeOffset?>("RevokedAt")
+                        .HasPrecision(3)
+                        .HasColumnType("timestamp(3) with time zone")
+                        .HasColumnName("revoked_at");
+
+                    b.Property<int>("TmdbAccountId")
+                        .HasColumnType("integer")
+                        .HasColumnName("tmdb_account_id");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasPrecision(3)
+                        .HasColumnType("timestamp(3) with time zone")
+                        .HasColumnName("updated_at")
+                        .HasDefaultValueSql("now()");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.Property<string>("Username")
+                        .IsRequired()
+                        .HasMaxLength(120)
+                        .HasColumnType("character varying(120)")
+                        .HasColumnName("username");
+
+                    b.HasKey("Id")
+                        .HasName("pk_tmdb_account_connections");
+
+                    b.HasIndex("RevokedAt")
+                        .HasDatabaseName("ix_tmdb_account_connections_revoked_at");
+
+                    b.HasIndex("TmdbAccountId")
+                        .HasDatabaseName("ix_tmdb_account_connections_tmdb_account_id");
+
+                    b.HasIndex("UserId")
+                        .IsUnique()
+                        .HasFilter("revoked_at IS NULL")
+                        .HasDatabaseName("ix_tmdb_account_connections_user_id");
+
+                    b.ToTable("tmdb_account_connections", (string)null);
+                });
+
+            modelBuilder.Entity("Rewndly.Domain.Users.TmdbAuthRequest", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id")
+                        .HasDefaultValueSql("gen_random_uuid()");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasPrecision(3)
+                        .HasColumnType("timestamp(3) with time zone")
+                        .HasColumnName("created_at")
+                        .HasDefaultValueSql("now()");
+
+                    b.Property<DateTimeOffset>("ExpiresAt")
+                        .HasPrecision(3)
+                        .HasColumnType("timestamp(3) with time zone")
+                        .HasColumnName("expires_at");
+
+                    b.Property<string>("RequestTokenHash")
+                        .IsRequired()
+                        .HasMaxLength(512)
+                        .HasColumnType("character varying(512)")
+                        .HasColumnName("request_token_hash");
+
+                    b.Property<DateTimeOffset?>("UsedAt")
+                        .HasPrecision(3)
+                        .HasColumnType("timestamp(3) with time zone")
+                        .HasColumnName("used_at");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_tmdb_auth_requests");
+
+                    b.HasIndex("ExpiresAt")
+                        .HasDatabaseName("ix_tmdb_auth_requests_expires_at");
+
+                    b.HasIndex("RequestTokenHash")
+                        .IsUnique()
+                        .HasDatabaseName("ix_tmdb_auth_requests_request_token_hash");
+
+                    b.HasIndex("UsedAt")
+                        .HasDatabaseName("ix_tmdb_auth_requests_used_at");
+
+                    b.HasIndex("UserId")
+                        .HasDatabaseName("ix_tmdb_auth_requests_user_id");
+
+                    b.ToTable("tmdb_auth_requests", (string)null);
+                });
+
             modelBuilder.Entity("Rewndly.Domain.Users.User", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1615,6 +1753,30 @@ namespace Rewndly.Infrastructure.Persistence.Migrations
                         .HasConstraintName("fk_refresh_tokens_users_user_id");
 
                     b.Navigation("ReplacedByToken");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Rewndly.Domain.Users.TmdbAccountConnection", b =>
+                {
+                    b.HasOne("Rewndly.Domain.Users.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_tmdb_account_connections_users_user_id");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Rewndly.Domain.Users.TmdbAuthRequest", b =>
+                {
+                    b.HasOne("Rewndly.Domain.Users.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_tmdb_auth_requests_users_user_id");
 
                     b.Navigation("User");
                 });

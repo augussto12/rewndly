@@ -35,6 +35,9 @@ pnpm-debug.log*
 logs/
 *.log
 
+# Local QA artifacts
+qa-*.png
+
 # Database
 *.bak
 *.dump

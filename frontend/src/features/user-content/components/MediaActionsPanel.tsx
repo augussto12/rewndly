@@ -1,6 +1,14 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { useAuth } from '../../auth/AuthProvider'
+import { useAuth } from '../../auth/useAuth'
+import {
+  useDeleteTmdbRating,
+  useSetTmdbFavorite,
+  useSetTmdbRating,
+  useSetTmdbWatchlist,
+  useTmdbConnectionStatus,
+  useTmdbMediaState,
+} from '../hooks/useTmdbAccount'
 import {
   useAddListItem,
   useCreateLibraryItem,
@@ -35,6 +43,8 @@ export function MediaActionsPanel({ mediaType, tmdbId, title }: MediaActionsPane
   const { isAuthenticated } = useAuth()
   const { data: library } = useMyLibrary(isAuthenticated)
   const { data: lists } = useMyLists(isAuthenticated)
+  const { data: tmdbConnection } = useTmdbConnectionStatus(isAuthenticated)
+  const { data: tmdbState } = useTmdbMediaState(mediaType, tmdbId, isAuthenticated && Boolean(tmdbConnection?.isConnected))
   const { data: reviews, isLoading: reviewsLoading, isError: reviewsError } = useMediaReviews(mediaType, tmdbId)
   const createLibraryItem = useCreateLibraryItem()
   const updateLibraryItem = useUpdateLibraryItem()
@@ -46,50 +56,19 @@ export function MediaActionsPanel({ mediaType, tmdbId, title }: MediaActionsPane
     [library, mediaType, tmdbId],
   )
 
-  const [status, setStatus] = useState<WatchStatus>('WantToWatch')
-  const [rating, setRating] = useState('')
-  const [isFavorite, setIsFavorite] = useState(false)
   const [reviewTitle, setReviewTitle] = useState('')
   const [reviewBody, setReviewBody] = useState('')
   const [reviewVisibility, setReviewVisibility] = useState<Visibility>('Public')
   const [containsSpoilers, setContainsSpoilers] = useState(false)
   const [selectedListId, setSelectedListId] = useState('')
 
-  useEffect(() => {
-    if (!existingItem) {
-      return
-    }
-
-    setStatus(existingItem.status)
-    setRating(existingItem.rating?.toString() ?? '')
-    setIsFavorite(existingItem.isFavorite)
-  }, [existingItem])
-
   const canSubmitReview = reviewTitle.trim().length > 0 && reviewBody.trim().length > 0
-
-  async function saveLibraryItem() {
-    const request: LibraryItemRequest = {
-      mediaType,
-      tmdbId,
-      status,
-      isFavorite,
-      rating: rating ? Number(rating) : null,
-      watchedAt: status === 'Watched' ? new Date().toISOString() : null,
-      startedAt: status === 'Watching' ? new Date().toISOString() : null,
-    }
-
-    if (existingItem) {
-      await updateLibraryItem.mutateAsync({ id: existingItem.id, request })
-    } else {
-      await createLibraryItem.mutateAsync(request)
-    }
-  }
 
   async function submitReview() {
     const request: ReviewRequest = {
       mediaType,
       tmdbId,
-      ratingSnapshot: rating ? Number(rating) : null,
+      ratingSnapshot: existingItem?.rating ?? null,
       title: reviewTitle.trim(),
       body: reviewBody.trim(),
       containsSpoilers,
@@ -144,41 +123,24 @@ export function MediaActionsPanel({ mediaType, tmdbId, title }: MediaActionsPane
   return (
     <section className="mx-auto max-w-7xl space-y-6 px-4 pb-12 sm:px-6">
       <div className="grid gap-4 lg:grid-cols-[1fr_1fr]">
-        <div className="surface-panel p-5">
-          <h2 className="text-xl font-semibold">Mi biblioteca</h2>
-          <div className="mt-4 grid gap-3 sm:grid-cols-3">
-            <label className="text-sm text-[var(--color-text-secondary)]">
-              Estado
-              <select value={status} onChange={(event) => setStatus(event.target.value as WatchStatus)} className="field mt-2">
-                {statusOptions.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label className="text-sm text-[var(--color-text-secondary)]">
-              Rating
-              <input value={rating} onChange={(event) => setRating(event.target.value)} type="number" min="1" max="10" className="field mt-2" />
-            </label>
-            <label className="flex items-end gap-3 text-sm text-[var(--color-text-secondary)]">
-              <input
-                checked={isFavorite}
-                onChange={(event) => setIsFavorite(event.target.checked)}
-                type="checkbox"
-                className="mb-2 h-4 w-4 accent-[var(--color-accent)]"
-              />
-              Favorita
-            </label>
-          </div>
-          <button
-            onClick={() => void saveLibraryItem()}
-            disabled={createLibraryItem.isPending || updateLibraryItem.isPending}
-            className="primary-action mt-5"
-          >
-            {existingItem ? 'Actualizar' : 'Guardar'}
-          </button>
-        </div>
+        <TmdbMediaControls
+          key={`${tmdbConnection?.isConnected ? 'connected' : 'disconnected'}-${tmdbState?.rating ?? 'none'}`}
+          mediaType={mediaType}
+          tmdbId={tmdbId}
+          isConnected={Boolean(tmdbConnection?.isConnected)}
+          state={tmdbState}
+        />
+
+        <LibraryControls
+          key={existingItem?.id ?? `new-${mediaType}-${tmdbId}`}
+          mediaType={mediaType}
+          tmdbId={tmdbId}
+          existingItem={existingItem}
+          createPending={createLibraryItem.isPending}
+          updatePending={updateLibraryItem.isPending}
+          onCreate={(request) => createLibraryItem.mutateAsync(request)}
+          onUpdate={(id, request) => updateLibraryItem.mutateAsync({ id, request })}
+        />
 
         <div className="surface-panel p-5">
           <h2 className="text-xl font-semibold">Agregar a lista</h2>
@@ -235,6 +197,168 @@ export function MediaActionsPanel({ mediaType, tmdbId, title }: MediaActionsPane
 
       <ReviewsBlock reviews={reviews ?? []} isLoading={reviewsLoading} isError={reviewsError} />
     </section>
+  )
+}
+
+function LibraryControls({
+  mediaType,
+  tmdbId,
+  existingItem,
+  createPending,
+  updatePending,
+  onCreate,
+  onUpdate,
+}: {
+  mediaType: MediaKind
+  tmdbId: number
+  existingItem: { id: string; status: WatchStatus; rating: number | null; isFavorite: boolean } | undefined
+  createPending: boolean
+  updatePending: boolean
+  onCreate: (request: LibraryItemRequest) => Promise<unknown>
+  onUpdate: (id: string, request: LibraryItemRequest) => Promise<unknown>
+}) {
+  const [status, setStatus] = useState<WatchStatus>(existingItem?.status ?? 'WantToWatch')
+  const [rating, setRating] = useState(existingItem?.rating?.toString() ?? '')
+  const [isFavorite, setIsFavorite] = useState(existingItem?.isFavorite ?? false)
+
+  async function saveLibraryItem() {
+    const request: LibraryItemRequest = {
+      mediaType,
+      tmdbId,
+      status,
+      isFavorite,
+      rating: rating ? Number(rating) : null,
+      watchedAt: status === 'Watched' ? new Date().toISOString() : null,
+      startedAt: status === 'Watching' ? new Date().toISOString() : null,
+    }
+
+    if (existingItem) {
+      await onUpdate(existingItem.id, request)
+    } else {
+      await onCreate(request)
+    }
+  }
+
+  return (
+    <div className="surface-panel p-5">
+      <h2 className="text-xl font-semibold">Mi biblioteca</h2>
+      <div className="mt-4 grid gap-3 sm:grid-cols-3">
+        <label className="text-sm text-[var(--color-text-secondary)]">
+          Estado
+          <select value={status} onChange={(event) => setStatus(event.target.value as WatchStatus)} className="field mt-2">
+            {statusOptions.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="text-sm text-[var(--color-text-secondary)]">
+          Rating
+          <input value={rating} onChange={(event) => setRating(event.target.value)} type="number" min="1" max="10" className="field mt-2" />
+        </label>
+        <label className="flex items-end gap-3 text-sm text-[var(--color-text-secondary)]">
+          <input
+            checked={isFavorite}
+            onChange={(event) => setIsFavorite(event.target.checked)}
+            type="checkbox"
+            className="mb-2 h-4 w-4 accent-[var(--color-accent)]"
+          />
+          Favorita
+        </label>
+      </div>
+      <button
+        onClick={() => void saveLibraryItem()}
+        disabled={createPending || updatePending}
+        className="primary-action mt-5"
+      >
+        {existingItem ? 'Actualizar' : 'Guardar'}
+      </button>
+    </div>
+  )
+}
+
+function TmdbMediaControls({
+  mediaType,
+  tmdbId,
+  isConnected,
+  state,
+}: {
+  mediaType: MediaKind
+  tmdbId: number
+  isConnected: boolean
+  state: { favorite: boolean; watchlist: boolean; rating: number | null } | undefined
+}) {
+  const favorite = useSetTmdbFavorite()
+  const watchlist = useSetTmdbWatchlist()
+  const rate = useSetTmdbRating()
+  const deleteRating = useDeleteTmdbRating()
+  const [rating, setRating] = useState(state?.rating?.toString() ?? '')
+
+  if (!isConnected) {
+    return (
+      <div className="surface-panel p-5">
+        <p className="kicker">TMDB</p>
+        <h2 className="mt-2 text-xl font-semibold">Cuenta no conectada</h2>
+        <p className="mt-3 text-sm leading-6 text-[var(--color-text-secondary)]">
+          Conecta TMDB para marcar favorito, watchlist y rating tambien en tu cuenta remota.
+        </p>
+        <Link to="/me/tmdb" className="secondary-action mt-5 inline-flex">
+          Conectar TMDB
+        </Link>
+      </div>
+    )
+  }
+
+  return (
+    <div className="surface-panel p-5">
+      <p className="kicker">TMDB</p>
+      <h2 className="mt-2 text-xl font-semibold">Sincronizar con TMDB</h2>
+      <div className="mt-4 flex flex-wrap gap-3">
+        <button
+          onClick={() => void favorite.mutateAsync({ mediaType, tmdbId, value: !state?.favorite })}
+          disabled={favorite.isPending}
+          className={state?.favorite ? 'primary-action' : 'secondary-action'}
+        >
+          {state?.favorite ? 'Quitar favorito' : 'Favorito'}
+        </button>
+        <button
+          onClick={() => void watchlist.mutateAsync({ mediaType, tmdbId, value: !state?.watchlist })}
+          disabled={watchlist.isPending}
+          className={state?.watchlist ? 'primary-action' : 'secondary-action'}
+        >
+          {state?.watchlist ? 'Quitar watchlist' : 'Watchlist'}
+        </button>
+      </div>
+      <div className="mt-4 flex flex-col gap-3 sm:flex-row">
+        <input
+          value={rating}
+          onChange={(event) => setRating(event.target.value)}
+          type="number"
+          min="0.5"
+          max="10"
+          step="0.5"
+          placeholder="Rating TMDB"
+          className="field min-w-0 flex-1"
+        />
+        <button
+          onClick={() => void rate.mutateAsync({ mediaType, tmdbId, value: Number(rating) })}
+          disabled={!rating || rate.isPending}
+          className="secondary-action"
+        >
+          Puntuar
+        </button>
+        {state?.rating ? (
+          <button
+            onClick={() => void deleteRating.mutateAsync({ mediaType, tmdbId })}
+            disabled={deleteRating.isPending}
+            className="secondary-action"
+          >
+            Borrar rating
+          </button>
+        ) : null}
+      </div>
+    </div>
   )
 }
 

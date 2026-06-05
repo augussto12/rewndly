@@ -38,13 +38,16 @@ public static class DependencyInjection
         services.AddSingleton<IRefreshTokenGenerator, RefreshTokenGenerator>();
         services.AddScoped<IAccessTokenGenerator, JwtAccessTokenGenerator>();
         services.AddMemoryCache();
-        services.AddHttpClient<IPublicMediaService, TmdbClient>((serviceProvider, client) =>
+        services.AddHttpClient<TmdbClient>((serviceProvider, client) =>
         {
             var tmdbOptions = configuration.GetSection(TmdbOptions.SectionName).Get<TmdbOptions>() ?? new TmdbOptions();
             tmdbOptions.BaseUrl = configuration["TMDB_BASE_URL"] ?? tmdbOptions.BaseUrl;
             client.BaseAddress = new Uri(tmdbOptions.BaseUrl.TrimEnd('/') + "/");
             client.Timeout = TimeSpan.FromSeconds(tmdbOptions.TimeoutSeconds);
         });
+        services.AddScoped<IPublicMediaService>(serviceProvider => serviceProvider.GetRequiredService<TmdbClient>());
+        services.AddScoped<ITmdbReadOnlyGateway>(serviceProvider => serviceProvider.GetRequiredService<TmdbClient>());
+        services.AddScoped<ITmdbAccountService>(serviceProvider => serviceProvider.GetRequiredService<TmdbClient>());
 
         return services;
     }

@@ -19,9 +19,9 @@ body {
   min-height: 100svh;
   margin: 0;
   background:
-    radial-gradient(circle at 12% -8%, rgba(124, 58, 237, 0.24), transparent 34rem),
-    radial-gradient(circle at 88% 8%, rgba(24, 24, 27, 0.92), transparent 28rem),
-    linear-gradient(180deg, #09090b 0%, #0d0d12 100%);
+    linear-gradient(125deg, rgba(45, 212, 191, 0.18) 0%, rgba(45, 212, 191, 0) 34%),
+    linear-gradient(235deg, rgba(251, 113, 133, 0.15) 0%, rgba(251, 113, 133, 0) 32%),
+    linear-gradient(180deg, #151225 0%, #0b0d16 46%, #0d121d 100%);
 }
 
 button,
@@ -46,9 +46,97 @@ a {
 }
 
 .cinema-page {
+  position: relative;
+  isolation: isolate;
   background:
-    linear-gradient(180deg, rgba(124, 58, 237, 0.08), transparent 22rem),
+    linear-gradient(160deg, rgba(45, 212, 191, 0.12), transparent 24rem),
+    linear-gradient(24deg, rgba(251, 113, 133, 0.1), transparent 26rem),
+    linear-gradient(180deg, rgba(124, 58, 237, 0.11), transparent 23rem),
     var(--color-background);
+}
+
+.cinema-page::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    linear-gradient(90deg, rgba(255, 255, 255, 0.035) 1px, transparent 1px),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.022) 1px, transparent 1px),
+    repeating-linear-gradient(110deg, transparent 0 3.2rem, rgba(45, 212, 191, 0.04) 3.2rem 3.25rem);
+  background-size:
+    4rem 4rem,
+    4rem 4rem,
+    auto;
+  mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.92), rgba(0, 0, 0, 0.2));
+}
+
+.site-header {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.11);
+  background:
+    linear-gradient(90deg, rgba(45, 212, 191, 0.1), transparent 30%),
+    linear-gradient(270deg, rgba(251, 113, 133, 0.09), transparent 34%),
+    rgba(10, 11, 20, 0.82);
+  box-shadow: 0 18px 55px rgba(0, 0, 0, 0.28);
+  backdrop-filter: blur(18px);
+}
+
+.site-header::after {
+  content: "";
+  position: absolute;
+  inset-inline: 0;
+  bottom: -1px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(45, 212, 191, 0.54), rgba(167, 139, 250, 0.64), rgba(251, 113, 133, 0.46), transparent);
+}
+
+.brand-mark {
+  position: relative;
+  display: grid;
+  width: 2.25rem;
+  height: 2.25rem;
+  flex: 0 0 auto;
+  place-items: center;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: var(--radius-md);
+  background:
+    linear-gradient(135deg, rgba(45, 212, 191, 0.9), rgba(124, 58, 237, 0.9) 54%, rgba(251, 113, 133, 0.88)),
+    #1b1630;
+  box-shadow:
+    0 0 30px rgba(45, 212, 191, 0.22),
+    0 14px 32px rgba(124, 58, 237, 0.22);
+}
+
+.brand-mark::before,
+.brand-mark::after {
+  content: "";
+  position: absolute;
+  inset-block: 0.38rem;
+  width: 0.2rem;
+  border-radius: 999px;
+  background: repeating-linear-gradient(180deg, rgba(255, 255, 255, 0.9) 0 0.18rem, transparent 0.18rem 0.42rem);
+  opacity: 0.7;
+}
+
+.brand-mark::before {
+  left: 0.32rem;
+}
+
+.brand-mark::after {
+  right: 0.32rem;
+}
+
+.brand-mark-play {
+  position: relative;
+  z-index: 1;
+  width: 0;
+  height: 0;
+  margin-left: 0.12rem;
+  border-block: 0.42rem solid transparent;
+  border-left: 0.68rem solid white;
+  filter: drop-shadow(0 2px 7px rgba(0, 0, 0, 0.32));
 }
 
 .page-shell {
@@ -64,15 +152,19 @@ a {
 }
 
 .surface-panel {
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  min-width: 0;
+  border: 1px solid rgba(255, 255, 255, 0.12);
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.018)),
+    linear-gradient(160deg, rgba(45, 212, 191, 0.035), transparent 38%),
+    linear-gradient(22deg, rgba(251, 113, 133, 0.035), transparent 44%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.052), rgba(255, 255, 255, 0.018)),
     var(--color-surface);
   box-shadow: var(--shadow-soft);
   border-radius: var(--radius-md);
 }
 
 .surface-panel-muted {
+  min-width: 0;
   border: 1px solid rgba(255, 255, 255, 0.08);
   background: rgba(18, 18, 23, 0.78);
   border-radius: var(--radius-md);
@@ -89,6 +181,7 @@ a {
 .primary-action,
 .secondary-action,
 .danger-action {
+  max-width: 100%;
   min-height: 2.75rem;
   display: inline-flex;
   align-items: center;
@@ -97,6 +190,8 @@ a {
   padding: 0.65rem 1rem;
   font-size: 0.875rem;
   font-weight: 700;
+  overflow-wrap: anywhere;
+  text-align: center;
   transition:
     transform 160ms ease,
     border-color 160ms ease,
@@ -106,10 +201,10 @@ a {
 }
 
 .primary-action {
-  border: 1px solid rgba(167, 139, 250, 0.42);
-  background: linear-gradient(180deg, #8b5cf6, #6d28d9);
+  border: 1px solid rgba(216, 180, 254, 0.46);
+  background: linear-gradient(135deg, #2dd4bf 0%, #8b5cf6 48%, #fb7185 100%);
   color: #fff;
-  box-shadow: 0 14px 30px rgba(124, 58, 237, 0.26);
+  box-shadow: 0 14px 30px rgba(124, 58, 237, 0.26), 0 0 28px rgba(45, 212, 191, 0.12);
 }
 
 .secondary-action {
@@ -139,6 +234,7 @@ a {
 }
 
 .field {
+  min-width: 0;
   min-height: 2.75rem;
   width: 100%;
   border-radius: var(--radius-sm);
@@ -151,6 +247,10 @@ a {
     border-color 160ms ease,
     box-shadow 160ms ease,
     background 160ms ease;
+}
+
+.text-resilient {
+  overflow-wrap: anywhere;
 }
 
 .field::placeholder {

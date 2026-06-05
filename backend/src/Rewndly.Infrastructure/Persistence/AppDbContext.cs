@@ -23,6 +23,10 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
 
     public DbSet<PasswordResetToken> PasswordResetTokens => Set<PasswordResetToken>();
 
+    public DbSet<TmdbAccountConnection> TmdbAccountConnections => Set<TmdbAccountConnection>();
+
+    public DbSet<TmdbAuthRequest> TmdbAuthRequests => Set<TmdbAuthRequest>();
+
     public DbSet<Movie> Movies => Set<Movie>();
 
     public DbSet<Series> Series => Set<Series>();

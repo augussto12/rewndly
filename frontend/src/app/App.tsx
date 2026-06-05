@@ -9,6 +9,8 @@ import { AdminSystemEventsPage } from '../pages/admin/AdminSystemEventsPage'
 import { AdminUserDetailsPage } from '../pages/admin/AdminUserDetailsPage'
 import { AdminUsersPage } from '../pages/admin/AdminUsersPage'
 import { HomePage } from '../pages/HomePage'
+import { CollectionDetailsPage } from '../pages/CollectionDetailsPage'
+import { CompanyDetailsPage } from '../pages/CompanyDetailsPage'
 import { LoginPage } from '../pages/LoginPage'
 import { ListDetailsPage } from '../pages/ListDetailsPage'
 import { MePage } from '../pages/MePage'
@@ -17,16 +19,26 @@ import { MoviesSearchPage } from '../pages/MoviesSearchPage'
 import { MyLibraryPage } from '../pages/MyLibraryPage'
 import { MyListsPage } from '../pages/MyListsPage'
 import { MyReviewsPage } from '../pages/MyReviewsPage'
+import { PeopleSearchPage } from '../pages/PeopleSearchPage'
+import { PersonDetailsPage } from '../pages/PersonDetailsPage'
+import { KeywordDetailsPage } from '../pages/KeywordDetailsPage'
 import { FeedPage } from '../pages/FeedPage'
 import { FriendsPage } from '../pages/FriendsPage'
 import { FriendRequestsPage } from '../pages/FriendRequestsPage'
+import { DiscoverPage } from '../pages/DiscoverPage'
+import { EpisodeDetailsPage } from '../pages/EpisodeDetailsPage'
 import { PublicListDetailsPage } from '../pages/PublicListDetailsPage'
 import { PublicListsPage } from '../pages/PublicListsPage'
 import { PublicProfilePage } from '../pages/PublicProfilePage'
 import { PublicReviewsPage } from '../pages/PublicReviewsPage'
 import { RegisterPage } from '../pages/RegisterPage'
+import { NetworkDetailsPage } from '../pages/NetworkDetailsPage'
+import { SeasonDetailsPage } from '../pages/SeasonDetailsPage'
 import { SeriesDetailsPage } from '../pages/SeriesDetailsPage'
 import { SeriesSearchPage } from '../pages/SeriesSearchPage'
+import { TmdbAccountPage } from '../pages/TmdbAccountPage'
+import { TmdbCallbackPage } from '../pages/TmdbCallbackPage'
+import { TmdbReviewDetailsPage } from '../pages/TmdbReviewDetailsPage'
 import { UserProfilePage } from '../pages/UserProfilePage'
 
 const router = createBrowserRouter([
@@ -57,6 +69,46 @@ const router = createBrowserRouter([
   {
     path: '/series/:tmdbId',
     element: <SeriesDetailsPage />,
+  },
+  {
+    path: '/series/:tmdbId/seasons/:seasonNumber',
+    element: <SeasonDetailsPage />,
+  },
+  {
+    path: '/series/:tmdbId/seasons/:seasonNumber/episodes/:episodeNumber',
+    element: <EpisodeDetailsPage />,
+  },
+  {
+    path: '/discover',
+    element: <DiscoverPage />,
+  },
+  {
+    path: '/people/search',
+    element: <PeopleSearchPage />,
+  },
+  {
+    path: '/people/:tmdbId',
+    element: <PersonDetailsPage />,
+  },
+  {
+    path: '/collections/:collectionId',
+    element: <CollectionDetailsPage />,
+  },
+  {
+    path: '/companies/:companyId',
+    element: <CompanyDetailsPage />,
+  },
+  {
+    path: '/networks/:networkId',
+    element: <NetworkDetailsPage />,
+  },
+  {
+    path: '/keywords/:keywordId',
+    element: <KeywordDetailsPage />,
+  },
+  {
+    path: '/tmdb-reviews/:reviewId',
+    element: <TmdbReviewDetailsPage />,
   },
   {
     path: '/users/:username',
@@ -100,6 +152,14 @@ const router = createBrowserRouter([
       {
         path: '/me/lists/:id',
         element: <ListDetailsPage />,
+      },
+      {
+        path: '/me/tmdb',
+        element: <TmdbAccountPage />,
+      },
+      {
+        path: '/me/tmdb/callback',
+        element: <TmdbCallbackPage />,
       },
       {
         path: '/feed',

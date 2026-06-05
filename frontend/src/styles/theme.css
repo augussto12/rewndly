@@ -1,7 +1,7 @@
 :root {
-  --color-background: #09090b;
-  --color-surface: #121217;
-  --color-surface-elevated: #1a1a22;
+  --color-background: #0b0d16;
+  --color-surface: #151621;
+  --color-surface-elevated: #202231;
   --color-text-primary: #f4f4f5;
   --color-text-secondary: #a1a1aa;
   --color-border: #27272a;
@@ -9,6 +9,9 @@
   --color-accent-light: #a78bfa;
   --color-accent-soft: rgba(124, 58, 237, 0.16);
   --color-accent-ring: rgba(167, 139, 250, 0.34);
+  --color-teal: #2dd4bf;
+  --color-rose: #fb7185;
+  --color-amber: #fbbf24;
   --color-danger: #b91c1c;
   --shadow-soft: 0 18px 55px rgba(0, 0, 0, 0.32);
   --shadow-poster: 0 22px 44px rgba(0, 0, 0, 0.42);

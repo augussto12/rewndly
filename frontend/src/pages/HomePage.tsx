@@ -3,6 +3,7 @@ import { ErrorState } from '../components/feedback/ErrorState/ErrorState'
 import { LoadingSkeleton } from '../components/feedback/LoadingSkeleton/LoadingSkeleton'
 import { HeroSection } from '../components/media/HeroSection/HeroSection'
 import { MediaCarousel } from '../components/media/MediaCarousel/MediaCarousel'
+import { PersonCarousel } from '../components/media/PersonCarousel/PersonCarousel'
 import { usePublicHome } from '../features/public-media/hooks/usePublicMedia'
 import { PublicLayout } from '../layouts/PublicLayout'
 
@@ -37,6 +38,7 @@ export function HomePage() {
             <MediaCarousel title="Proximos estrenos" items={data?.upcomingMovies ?? []} />
             <MediaCarousel title="Series en tendencia" items={data?.trendingSeries ?? []} />
             <MediaCarousel title="Series populares" items={data?.popularSeries ?? []} />
+            <PersonCarousel title="Personas en tendencia" items={data?.trendingPeople ?? []} />
           </div>
         </main>
       ) : null}

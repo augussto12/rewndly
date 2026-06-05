@@ -21,7 +21,7 @@ export function MediaCarousel({ title, items }: MediaCarouselProps) {
       </div>
       <div className="scrollbar-cinema flex gap-4 overflow-x-auto px-4 pb-4 sm:px-6">
         {items.map((item) => (
-          <PosterCard key={`${item.mediaType}-${item.tmdbId}`} item={item} />
+          <PosterCard key={`${item.mediaType}-${item.tmdbId}`} item={item} layout="carousel" />
         ))}
       </div>
     </section>

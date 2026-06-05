@@ -4,15 +4,20 @@ import type { MediaSummary } from '../../../features/public-media/types/publicMe
 
 type PosterCardProps = {
   item: MediaSummary
+  layout?: 'grid' | 'carousel'
 }
 
-export function PosterCard({ item }: PosterCardProps) {
+export function PosterCard({ item, layout = 'grid' }: PosterCardProps) {
   const href = item.mediaType === 'Movie' ? `/movies/${item.tmdbId}` : `/series/${item.tmdbId}`
+  const layoutClass =
+    layout === 'carousel'
+      ? 'min-w-[9.5rem] max-w-[9.5rem] shrink-0 sm:min-w-[11rem] sm:max-w-[11rem]'
+      : 'min-w-0 w-full'
 
   return (
     <Link
       to={href}
-      className="group block min-w-[9.5rem] max-w-[9.5rem] rounded-[var(--radius-md)] sm:min-w-[11rem] sm:max-w-[11rem]"
+      className={`group block rounded-[var(--radius-md)] ${layoutClass}`}
     >
       <div className="relative aspect-[2/3] overflow-hidden rounded-[var(--radius-md)] border border-white/10 bg-[var(--color-surface-elevated)] shadow-[var(--shadow-poster)] transition duration-300 group-hover:-translate-y-1 group-hover:border-violet-200/28">
         {item.posterUrl ? (
@@ -32,7 +37,7 @@ export function PosterCard({ item }: PosterCardProps) {
           <RatingBadge value={item.voteAverage} />
         </div>
       </div>
-      <h3 className="mt-3 line-clamp-2 text-sm font-semibold leading-snug text-white">{item.title}</h3>
+      <h3 className="mt-3 line-clamp-2 break-words text-sm font-semibold leading-snug text-white">{item.title}</h3>
       <p className="mt-1 text-xs text-[var(--color-text-secondary)]">
         {item.releaseDate?.slice(0, 4) ?? (item.mediaType === 'Movie' ? 'Pelicula' : 'Serie')}
       </p>

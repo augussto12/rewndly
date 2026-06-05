@@ -1,20 +1,10 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import type { PropsWithChildren } from 'react'
+import { AuthContext } from './authContext'
+import type { AuthContextValue } from './authContext'
 import { login, logout, me, refreshSession, register } from './services/authApi'
 import { setAccessToken } from './services/authTokenStore'
 import type { AuthUser, LoginRequest, RegisterRequest } from './types/auth.types'
-
-type AuthContextValue = {
-  user: AuthUser | null
-  isAuthenticated: boolean
-  isLoading: boolean
-  login: (request: LoginRequest) => Promise<void>
-  register: (request: RegisterRequest) => Promise<void>
-  logout: () => Promise<void>
-  reloadMe: () => Promise<void>
-}
-
-const AuthContext = createContext<AuthContextValue | null>(null)
 
 export function AuthProvider({ children }: PropsWithChildren) {
   const [user, setUser] = useState<AuthUser | null>(null)
@@ -89,13 +79,4 @@ export function AuthProvider({ children }: PropsWithChildren) {
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
-}
-
-export function useAuth() {
-  const value = useContext(AuthContext)
-  if (!value) {
-    throw new Error('useAuth must be used within AuthProvider')
-  }
-
-  return value
 }

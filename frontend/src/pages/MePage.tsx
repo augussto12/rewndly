@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { useAuth } from '../features/auth/AuthProvider'
+import { useAuth } from '../features/auth/useAuth'
 import { PublicLayout } from '../layouts/PublicLayout'
 
 export function MePage() {
@@ -12,7 +12,7 @@ export function MePage() {
           <p className="kicker">Mi cuenta</p>
           <h1 className="mt-3 text-3xl font-semibold">{user?.displayName}</h1>
           <p className="mt-2 text-[var(--color-text-secondary)]">@{user?.username}</p>
-          <nav className="mt-6 grid gap-3 sm:grid-cols-3">
+          <nav className="mt-6 grid gap-3 sm:grid-cols-4">
             <Link to="/me/library" className="secondary-action justify-start">
               Biblioteca
             </Link>
@@ -21,6 +21,9 @@ export function MePage() {
             </Link>
             <Link to="/me/lists" className="secondary-action justify-start">
               Listas
+            </Link>
+            <Link to="/me/tmdb" className="secondary-action justify-start">
+              TMDB
             </Link>
           </nav>
           {user?.mustChangePassword ? (
