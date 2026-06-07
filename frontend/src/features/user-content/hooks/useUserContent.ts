@@ -113,7 +113,13 @@ export function useCreateList() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: (request: UserListRequest) => createList(request),
-    onSuccess: () => void queryClient.invalidateQueries({ queryKey: ['my-lists'] }),
+    onSuccess: (_list, request) => {
+      void queryClient.invalidateQueries({ queryKey: ['my-lists'] })
+      if (request.visibility === 'Public') {
+        void queryClient.invalidateQueries({ queryKey: ['public-lists'] })
+        void queryClient.invalidateQueries({ queryKey: ['public-lists-pages'] })
+      }
+    },
   })
 }
 

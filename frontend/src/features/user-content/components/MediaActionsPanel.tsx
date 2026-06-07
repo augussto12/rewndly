@@ -12,6 +12,7 @@ import {
 } from '../hooks/useTmdbAccount'
 import {
   useAddListItem,
+  useCreateList,
   useCreateLibraryItem,
   useCreateReview,
   useMediaReviews,
@@ -51,6 +52,7 @@ export function MediaActionsPanel({ mediaType, tmdbId, title }: MediaActionsPane
   const updateLibraryItem = useUpdateLibraryItem()
   const createReview = useCreateReview()
   const addListItem = useAddListItem()
+  const createList = useCreateList()
 
   const existingItem = useMemo(
     () => library?.find((item) => item.mediaType === mediaType && item.tmdbId === tmdbId),
@@ -62,6 +64,8 @@ export function MediaActionsPanel({ mediaType, tmdbId, title }: MediaActionsPane
   const [reviewVisibility, setReviewVisibility] = useState<Visibility>('Public')
   const [containsSpoilers, setContainsSpoilers] = useState(false)
   const [selectedListId, setSelectedListId] = useState('')
+  const [newListTitle, setNewListTitle] = useState('')
+  const [newListVisibility, setNewListVisibility] = useState<Visibility>('Public')
   const [reviewError, setReviewError] = useState<string | null>(null)
   const [listError, setListError] = useState<string | null>(null)
 
@@ -112,9 +116,29 @@ export function MediaActionsPanel({ mediaType, tmdbId, title }: MediaActionsPane
     }
   }
 
+  async function submitQuickList() {
+    if (!newListTitle.trim()) {
+      return
+    }
+
+    setListError(null)
+
+    try {
+      const list = await createList.mutateAsync({
+        title: newListTitle.trim(),
+        description: null,
+        visibility: newListVisibility,
+      })
+      setNewListTitle('')
+      setSelectedListId(list.id)
+    } catch (error) {
+      setListError(getErrorMessage(error, 'No se pudo crear la lista. Revisa el titulo e intenta de nuevo.'))
+    }
+  }
+
   if (!isAuthenticated) {
     return (
-      <section className="mx-auto max-w-7xl px-4 pb-12 sm:px-6">
+      <section className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
         <div className="surface-panel p-6">
           <p className="kicker">Tu espacio</p>
           <h2 className="mt-3 text-2xl font-semibold">Guarda, puntua y resena {title}</h2>
@@ -136,7 +160,7 @@ export function MediaActionsPanel({ mediaType, tmdbId, title }: MediaActionsPane
   }
 
   return (
-    <section className="mx-auto max-w-7xl space-y-6 px-4 pb-12 sm:px-6">
+    <section className="mx-auto max-w-7xl space-y-6 px-4 py-8 sm:px-6">
       <div className="grid gap-4 lg:grid-cols-[1fr_1fr]">
         <TmdbMediaControls
           key={`${tmdbConnection?.isConnected ? 'connected' : 'disconnected'}-${tmdbState?.rating ?? 'none'}`}
@@ -159,6 +183,9 @@ export function MediaActionsPanel({ mediaType, tmdbId, title }: MediaActionsPane
 
         <div className="surface-panel p-5">
           <h2 className="text-xl font-semibold">Agregar a lista</h2>
+          <p className="mt-2 text-sm leading-6 text-[var(--color-text-secondary)]">
+            Crea una lista aca mismo o elegi una existente para sumar este contenido.
+          </p>
           {lists && lists.length > 0 ? (
             <div className="mt-4 flex flex-col gap-3 sm:flex-row">
               <select value={selectedListId} onChange={(event) => setSelectedListId(event.target.value)} className="field min-w-0 flex-1">
@@ -175,9 +202,30 @@ export function MediaActionsPanel({ mediaType, tmdbId, title }: MediaActionsPane
             </div>
           ) : (
             <p className="mt-3 text-sm text-[var(--color-text-secondary)]">
-              Crea una lista desde <Link to="/me/lists" className="text-[var(--color-accent-light)]">Mis listas</Link>.
+              Todavia no tenes listas. Crea una abajo o administra todas desde{' '}
+              <Link to="/me/lists" className="text-[var(--color-accent-light)]">
+                Mis listas
+              </Link>.
             </p>
           )}
+          <div className="mt-5 grid gap-3 border-t border-white/10 pt-5 sm:grid-cols-[minmax(0,1fr)_10rem_auto]">
+            <input
+              value={newListTitle}
+              onChange={(event) => setNewListTitle(event.target.value)}
+              placeholder="Nueva lista"
+              className="field"
+            />
+            <select value={newListVisibility} onChange={(event) => setNewListVisibility(event.target.value as Visibility)} className="field">
+              {visibilityOptions.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+            <button onClick={() => void submitQuickList()} disabled={!newListTitle.trim() || createList.isPending} className="secondary-action">
+              Crear lista
+            </button>
+          </div>
           {listError ? <ActionError message={listError} /> : null}
         </div>
       </div>

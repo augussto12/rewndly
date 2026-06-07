@@ -1,4 +1,4 @@
-import { Link, useParams } from 'react-router-dom'
+import { useParams } from 'react-router-dom'
 import { ErrorState } from '../components/feedback/ErrorState/ErrorState'
 import { LoadingSkeleton } from '../components/feedback/LoadingSkeleton/LoadingSkeleton'
 import { MediaDetailsExtras } from '../components/media/MediaDetailsExtras/MediaDetailsExtras'
@@ -38,12 +38,10 @@ export function MovieDetailsPage() {
             voteAverage={data.voteAverage}
             genres={data.genres}
             meta={[data.releaseDate?.slice(0, 4) ?? '', data.runtimeMinutes ? `${data.runtimeMinutes} min` : '']}
+            backHref="/movies/search"
+            backLabel="Volver a peliculas"
           />
-          <div className="mx-auto max-w-7xl px-4 pb-12 sm:px-6">
-            <Link to="/movies/search" className="secondary-action">
-              Volver a peliculas
-            </Link>
-          </div>
+          <MediaActionsPanel mediaType="Movie" tmdbId={data.tmdbId} title={data.title} />
           <MediaEntityLinks collection={data.collection} companies={data.productionCompanies} />
           <MediaDetailsExtras
             cast={data.cast}
@@ -61,7 +59,6 @@ export function MovieDetailsPage() {
             translations={data.translations}
             releaseInfo={data.releaseInfo}
           />
-          <MediaActionsPanel mediaType="Movie" tmdbId={data.tmdbId} title={data.title} />
         </main>
       ) : null}
     </PublicLayout>

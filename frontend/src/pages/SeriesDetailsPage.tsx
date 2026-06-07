@@ -1,4 +1,4 @@
-import { Link, useParams } from 'react-router-dom'
+import { useParams } from 'react-router-dom'
 import { ErrorState } from '../components/feedback/ErrorState/ErrorState'
 import { LoadingSkeleton } from '../components/feedback/LoadingSkeleton/LoadingSkeleton'
 import { MediaDetailsExtras } from '../components/media/MediaDetailsExtras/MediaDetailsExtras'
@@ -44,12 +44,10 @@ export function SeriesDetailsPage() {
               data.numberOfEpisodes ? `${data.numberOfEpisodes} episodios` : '',
               data.status ?? '',
             ]}
+            backHref="/series/search"
+            backLabel="Volver a series"
           />
-          <div className="mx-auto max-w-7xl px-4 pb-12 sm:px-6">
-            <Link to="/series/search" className="secondary-action">
-              Volver a series
-            </Link>
-          </div>
+          <MediaActionsPanel mediaType="Series" tmdbId={data.tmdbId} title={data.name} />
           <MediaEntityLinks companies={data.productionCompanies} networks={data.networks} />
           <SeriesSeasonsSection seriesTmdbId={data.tmdbId} seasons={data.seasons} />
           <MediaDetailsExtras
@@ -68,7 +66,6 @@ export function SeriesDetailsPage() {
             translations={data.translations}
             contentRatings={data.contentRatings}
           />
-          <MediaActionsPanel mediaType="Series" tmdbId={data.tmdbId} title={data.name} />
         </main>
       ) : null}
     </PublicLayout>

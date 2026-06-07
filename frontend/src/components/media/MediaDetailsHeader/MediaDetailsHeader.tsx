@@ -1,3 +1,5 @@
+import { Link } from 'react-router-dom'
+import { useAuth } from '../../../features/auth/useAuth'
 import { RatingBadge } from '../RatingBadge/RatingBadge'
 
 type MediaDetailsHeaderProps = {
@@ -9,6 +11,8 @@ type MediaDetailsHeaderProps = {
   voteAverage?: number | null
   genres: string[]
   meta: string[]
+  backHref: string
+  backLabel: string
 }
 
 export function MediaDetailsHeader({
@@ -20,7 +24,11 @@ export function MediaDetailsHeader({
   voteAverage,
   genres,
   meta,
+  backHref,
+  backLabel,
 }: MediaDetailsHeaderProps) {
+  const { isAuthenticated } = useAuth()
+
   return (
     <section className="relative overflow-hidden">
       {backdropUrl ? <img src={backdropUrl} alt="" className="absolute inset-0 h-full w-full object-cover opacity-38" /> : null}
@@ -36,6 +44,9 @@ export function MediaDetailsHeader({
           </div>
         </div>
         <div className="min-w-0 self-end">
+          <Link to={backHref} className="secondary-action mb-6 min-h-10 px-3 py-2 text-xs">
+            {backLabel}
+          </Link>
           <div className="mb-4 flex flex-wrap items-center gap-3">
             <RatingBadge value={voteAverage ?? null} />
             <span className="text-resilient text-sm text-[var(--color-text-secondary)]">{meta.filter(Boolean).join(' / ')}</span>
@@ -53,7 +64,9 @@ export function MediaDetailsHeader({
             {overview || 'Todavia no hay sinopsis disponible.'}
           </p>
           <p className="mt-6 max-w-2xl rounded-[var(--radius-md)] border border-violet-200/14 bg-[var(--color-accent-soft)] p-4 text-sm leading-6 text-violet-100/86">
-            Inicia sesion para guardar este contenido, puntuarlo, crear listas y escribir una resena independiente.
+            {isAuthenticated
+              ? 'Usa el panel de abajo para guardar este contenido, puntuarlo, crear listas y escribir una resena independiente.'
+              : 'Inicia sesion para guardar este contenido, puntuarlo, crear listas y escribir una resena independiente.'}
           </p>
         </div>
       </div>
