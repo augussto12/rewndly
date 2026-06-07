@@ -6,46 +6,48 @@ public interface IPublicMediaService
 {
     Task<PublicHomeResponse> GetHomeAsync(CancellationToken cancellationToken);
 
-    Task<IReadOnlyList<MediaSummaryResponse>> SearchMoviesAsync(string query, CancellationToken cancellationToken);
+    Task<PagedResponse<MediaSummaryResponse>> SearchMoviesAsync(string query, int page, CancellationToken cancellationToken);
 
-    Task<IReadOnlyList<MediaSummaryResponse>> GetTrendingMoviesAsync(CancellationToken cancellationToken);
+    Task<PagedResponse<MediaSummaryResponse>> GetTrendingMoviesAsync(int page, CancellationToken cancellationToken);
 
-    Task<IReadOnlyList<MediaSummaryResponse>> GetNowPlayingMoviesAsync(CancellationToken cancellationToken);
+    Task<PagedResponse<MediaSummaryResponse>> GetNowPlayingMoviesAsync(int page, CancellationToken cancellationToken);
 
-    Task<IReadOnlyList<MediaSummaryResponse>> GetPopularMoviesAsync(CancellationToken cancellationToken);
+    Task<PagedResponse<MediaSummaryResponse>> GetPopularMoviesAsync(int page, CancellationToken cancellationToken);
 
-    Task<IReadOnlyList<MediaSummaryResponse>> GetUpcomingMoviesAsync(CancellationToken cancellationToken);
+    Task<PagedResponse<MediaSummaryResponse>> GetUpcomingMoviesAsync(int page, CancellationToken cancellationToken);
 
-    Task<IReadOnlyList<MediaSummaryResponse>> GetTopRatedMoviesAsync(CancellationToken cancellationToken);
+    Task<PagedResponse<MediaSummaryResponse>> GetTopRatedMoviesAsync(int page, CancellationToken cancellationToken);
 
-    Task<IReadOnlyList<MediaSummaryResponse>> DiscoverMoviesAsync(
+    Task<PagedResponse<MediaSummaryResponse>> DiscoverMoviesAsync(
         int? genreId,
         int? year,
         int? watchProviderId,
         string? sortBy,
         decimal? minVoteAverage,
+        int page,
         CancellationToken cancellationToken);
 
     Task<MovieDetailsResponse?> GetMovieDetailsAsync(int tmdbId, CancellationToken cancellationToken);
 
-    Task<IReadOnlyList<MediaSummaryResponse>> SearchSeriesAsync(string query, CancellationToken cancellationToken);
+    Task<PagedResponse<MediaSummaryResponse>> SearchSeriesAsync(string query, int page, CancellationToken cancellationToken);
 
-    Task<IReadOnlyList<MediaSummaryResponse>> GetTrendingSeriesAsync(CancellationToken cancellationToken);
+    Task<PagedResponse<MediaSummaryResponse>> GetTrendingSeriesAsync(int page, CancellationToken cancellationToken);
 
-    Task<IReadOnlyList<MediaSummaryResponse>> GetPopularSeriesAsync(CancellationToken cancellationToken);
+    Task<PagedResponse<MediaSummaryResponse>> GetPopularSeriesAsync(int page, CancellationToken cancellationToken);
 
-    Task<IReadOnlyList<MediaSummaryResponse>> GetTopRatedSeriesAsync(CancellationToken cancellationToken);
+    Task<PagedResponse<MediaSummaryResponse>> GetTopRatedSeriesAsync(int page, CancellationToken cancellationToken);
 
-    Task<IReadOnlyList<MediaSummaryResponse>> GetAiringTodaySeriesAsync(CancellationToken cancellationToken);
+    Task<PagedResponse<MediaSummaryResponse>> GetAiringTodaySeriesAsync(int page, CancellationToken cancellationToken);
 
-    Task<IReadOnlyList<MediaSummaryResponse>> GetOnTheAirSeriesAsync(CancellationToken cancellationToken);
+    Task<PagedResponse<MediaSummaryResponse>> GetOnTheAirSeriesAsync(int page, CancellationToken cancellationToken);
 
-    Task<IReadOnlyList<MediaSummaryResponse>> DiscoverSeriesAsync(
+    Task<PagedResponse<MediaSummaryResponse>> DiscoverSeriesAsync(
         int? genreId,
         int? year,
         int? watchProviderId,
         string? sortBy,
         decimal? minVoteAverage,
+        int page,
         CancellationToken cancellationToken);
 
     Task<SeriesDetailsResponse?> GetSeriesDetailsAsync(int tmdbId, CancellationToken cancellationToken);
@@ -66,11 +68,11 @@ public interface IPublicMediaService
 
     Task<IReadOnlyList<WatchProviderOptionResponse>> GetSeriesWatchProvidersAsync(CancellationToken cancellationToken);
 
-    Task<IReadOnlyList<PersonSummaryResponse>> SearchPeopleAsync(string query, CancellationToken cancellationToken);
+    Task<PagedResponse<PersonSummaryResponse>> SearchPeopleAsync(string query, int page, CancellationToken cancellationToken);
 
-    Task<IReadOnlyList<PersonSummaryResponse>> GetTrendingPeopleAsync(CancellationToken cancellationToken);
+    Task<PagedResponse<PersonSummaryResponse>> GetTrendingPeopleAsync(int page, CancellationToken cancellationToken);
 
-    Task<IReadOnlyList<PersonSummaryResponse>> GetPopularPeopleAsync(CancellationToken cancellationToken);
+    Task<PagedResponse<PersonSummaryResponse>> GetPopularPeopleAsync(int page, CancellationToken cancellationToken);
 
     Task<PersonDetailsResponse?> GetPersonDetailsAsync(int tmdbId, CancellationToken cancellationToken);
 

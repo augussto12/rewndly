@@ -10,6 +10,7 @@ import type {
   MediaReview,
   MovieDetails,
   NetworkDetails,
+  PagedResponse,
   PersonDetails,
   PersonSummary,
   PublicHomeResponse,
@@ -22,64 +23,64 @@ export function getPublicHome() {
   return httpClient<PublicHomeResponse>('/api/public/home')
 }
 
-export function searchMovies(query: string) {
-  return httpClient<MediaSummary[]>(`/api/movies/search?query=${encodeURIComponent(query)}`)
+export function searchMovies(query: string, page = 1) {
+  return httpClient<PagedResponse<MediaSummary>>(`/api/movies/search?query=${encodeURIComponent(query)}&page=${page}`)
 }
 
-export function getTrendingMovies() {
-  return httpClient<MediaSummary[]>('/api/movies/trending')
+export function getTrendingMovies(page = 1) {
+  return httpClient<PagedResponse<MediaSummary>>(`/api/movies/trending?page=${page}`)
 }
 
-export function getNowPlayingMovies() {
-  return httpClient<MediaSummary[]>('/api/movies/now-playing')
+export function getNowPlayingMovies(page = 1) {
+  return httpClient<PagedResponse<MediaSummary>>(`/api/movies/now-playing?page=${page}`)
 }
 
-export function getPopularMovies() {
-  return httpClient<MediaSummary[]>('/api/movies/popular')
+export function getPopularMovies(page = 1) {
+  return httpClient<PagedResponse<MediaSummary>>(`/api/movies/popular?page=${page}`)
 }
 
-export function getUpcomingMovies() {
-  return httpClient<MediaSummary[]>('/api/movies/upcoming')
+export function getUpcomingMovies(page = 1) {
+  return httpClient<PagedResponse<MediaSummary>>(`/api/movies/upcoming?page=${page}`)
 }
 
-export function getTopRatedMovies() {
-  return httpClient<MediaSummary[]>('/api/movies/top-rated')
+export function getTopRatedMovies(page = 1) {
+  return httpClient<PagedResponse<MediaSummary>>(`/api/movies/top-rated?page=${page}`)
 }
 
-export function discoverMovies(filters: Omit<DiscoverFilters, 'mediaType'>) {
-  return httpClient<MediaSummary[]>(`/api/movies/discover?${toSearchParams(filters)}`)
+export function discoverMovies(filters: Omit<DiscoverFilters, 'mediaType'>, page = 1) {
+  return httpClient<PagedResponse<MediaSummary>>(`/api/movies/discover?${toSearchParams({ ...filters, page })}`)
 }
 
 export function getMovieDetails(tmdbId: number) {
   return httpClient<MovieDetails>(`/api/movies/${tmdbId}`)
 }
 
-export function searchSeries(query: string) {
-  return httpClient<MediaSummary[]>(`/api/series/search?query=${encodeURIComponent(query)}`)
+export function searchSeries(query: string, page = 1) {
+  return httpClient<PagedResponse<MediaSummary>>(`/api/series/search?query=${encodeURIComponent(query)}&page=${page}`)
 }
 
-export function getTrendingSeries() {
-  return httpClient<MediaSummary[]>('/api/series/trending')
+export function getTrendingSeries(page = 1) {
+  return httpClient<PagedResponse<MediaSummary>>(`/api/series/trending?page=${page}`)
 }
 
-export function getPopularSeries() {
-  return httpClient<MediaSummary[]>('/api/series/popular')
+export function getPopularSeries(page = 1) {
+  return httpClient<PagedResponse<MediaSummary>>(`/api/series/popular?page=${page}`)
 }
 
-export function getTopRatedSeries() {
-  return httpClient<MediaSummary[]>('/api/series/top-rated')
+export function getTopRatedSeries(page = 1) {
+  return httpClient<PagedResponse<MediaSummary>>(`/api/series/top-rated?page=${page}`)
 }
 
-export function getAiringTodaySeries() {
-  return httpClient<MediaSummary[]>('/api/series/airing-today')
+export function getAiringTodaySeries(page = 1) {
+  return httpClient<PagedResponse<MediaSummary>>(`/api/series/airing-today?page=${page}`)
 }
 
-export function getOnTheAirSeries() {
-  return httpClient<MediaSummary[]>('/api/series/on-the-air')
+export function getOnTheAirSeries(page = 1) {
+  return httpClient<PagedResponse<MediaSummary>>(`/api/series/on-the-air?page=${page}`)
 }
 
-export function discoverSeries(filters: Omit<DiscoverFilters, 'mediaType'>) {
-  return httpClient<MediaSummary[]>(`/api/series/discover?${toSearchParams(filters)}`)
+export function discoverSeries(filters: Omit<DiscoverFilters, 'mediaType'>, page = 1) {
+  return httpClient<PagedResponse<MediaSummary>>(`/api/series/discover?${toSearchParams({ ...filters, page })}`)
 }
 
 export function getSeriesDetails(tmdbId: number) {
@@ -110,16 +111,16 @@ export function getSeriesWatchProviders() {
   return httpClient<WatchProviderOption[]>('/api/watch-providers/series')
 }
 
-export function searchPeople(query: string) {
-  return httpClient<PersonSummary[]>(`/api/people/search?query=${encodeURIComponent(query)}`)
+export function searchPeople(query: string, page = 1) {
+  return httpClient<PagedResponse<PersonSummary>>(`/api/people/search?query=${encodeURIComponent(query)}&page=${page}`)
 }
 
-export function getTrendingPeople() {
-  return httpClient<PersonSummary[]>('/api/people/trending')
+export function getTrendingPeople(page = 1) {
+  return httpClient<PagedResponse<PersonSummary>>(`/api/people/trending?page=${page}`)
 }
 
-export function getPopularPeople() {
-  return httpClient<PersonSummary[]>('/api/people/popular')
+export function getPopularPeople(page = 1) {
+  return httpClient<PagedResponse<PersonSummary>>(`/api/people/popular?page=${page}`)
 }
 
 export function getPersonDetails(tmdbId: number) {
@@ -146,7 +147,7 @@ export function getTmdbReviewDetails(reviewId: string) {
   return httpClient<MediaReview>(`/api/tmdb-reviews/${encodeURIComponent(reviewId)}`)
 }
 
-function toSearchParams(filters: Omit<DiscoverFilters, 'mediaType'>) {
+function toSearchParams(filters: Record<string, string | number | undefined | null>) {
   const params = new URLSearchParams()
 
   Object.entries(filters).forEach(([key, value]) => {

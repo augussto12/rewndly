@@ -1,6 +1,7 @@
 import { env } from '../lib/env'
 import { getAccessToken, setAccessToken } from '../features/auth/services/authTokenStore'
 import type { AuthResponse } from '../features/auth/types/auth.types'
+import { createApiError } from './apiError'
 
 type RequestOptions = RequestInit & {
   authToken?: string
@@ -26,7 +27,11 @@ export async function httpClient<TResponse>(
       })
 
       if (!retryResponse.ok) {
-        throw new Error(`Request failed with status ${retryResponse.status}`)
+        throw await createApiError(retryResponse)
+      }
+
+      if (retryResponse.status === 204) {
+        return undefined as TResponse
       }
 
       return retryResponse.json() as Promise<TResponse>
@@ -34,7 +39,7 @@ export async function httpClient<TResponse>(
   }
 
   if (!response.ok) {
-    throw new Error(`Request failed with status ${response.status}`)
+    throw await createApiError(response)
   }
 
   if (response.status === 204) {
@@ -57,9 +62,13 @@ async function sendRequest(path: string, options: RequestOptions = {}) {
     headers.set('Authorization', `Bearer ${authToken}`)
   }
 
-  return fetch(`${env.apiBaseUrl}${path}`, {
-    ...options,
-    credentials: 'include',
-    headers,
-  })
+  try {
+    return await fetch(`${env.apiBaseUrl}${path}`, {
+      ...options,
+      credentials: 'include',
+      headers,
+    })
+  } catch {
+    throw new Error('No pudimos conectar con el servidor. Revisa que la API este levantada e intenta de nuevo.')
+  }
 }

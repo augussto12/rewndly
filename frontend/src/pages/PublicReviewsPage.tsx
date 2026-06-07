@@ -2,11 +2,14 @@ import { EmptyState } from '../components/feedback/EmptyState/EmptyState'
 import { ErrorState } from '../components/feedback/ErrorState/ErrorState'
 import { LoadingSkeleton } from '../components/feedback/LoadingSkeleton/LoadingSkeleton'
 import { ReviewCard } from '../features/social/components/ReviewCard'
-import { usePublicReviews } from '../features/social/hooks/useSocial'
+import { usePublicReviewsPages } from '../features/social/hooks/useSocial'
+import type { PublicReview } from '../features/social/types/social.types'
+import { flattenUniqueArrayPages } from '../lib/pagination'
 import { PublicLayout } from '../layouts/PublicLayout'
 
 export function PublicReviewsPage() {
-  const { data, isError, isLoading } = usePublicReviews()
+  const reviews = usePublicReviewsPages()
+  const data = flattenUniqueArrayPages<PublicReview>(reviews.data, (review) => review.id)
 
   return (
     <PublicLayout>
@@ -16,13 +19,32 @@ export function PublicReviewsPage() {
           <h1 className="mt-3 text-4xl font-semibold">Resenas publicas</h1>
           <p className="mt-3 text-[var(--color-text-secondary)]">Lecturas cortas y opiniones visibles para todos.</p>
         </header>
-        {isLoading ? <LoadingSkeleton /> : null}
-        {isError ? <ErrorState /> : null}
-        {!isLoading && !isError && data?.length === 0 ? <EmptyState title="Sin resenas publicas" message="Todavia no hay resenas visibles." /> : null}
+        {reviews.isLoading ? <LoadingSkeleton /> : null}
+        {reviews.isError ? <ErrorState /> : null}
+        {!reviews.isLoading && !reviews.isError && data.length === 0 ? <EmptyState title="Sin resenas publicas" message="Todavia no hay resenas visibles." /> : null}
         <div className="grid gap-4">
-          {data?.map((review) => <ReviewCard key={review.id} review={review} />)}
+          {data.map((review) => <ReviewCard key={review.id} review={review} />)}
         </div>
+        <LoadMoreButton
+          hasMore={Boolean(reviews.hasNextPage)}
+          isLoading={reviews.isFetchingNextPage}
+          onClick={() => void reviews.fetchNextPage()}
+        />
       </main>
     </PublicLayout>
+  )
+}
+
+function LoadMoreButton({ hasMore, isLoading, onClick }: { hasMore: boolean; isLoading: boolean; onClick: () => void }) {
+  if (!hasMore) {
+    return null
+  }
+
+  return (
+    <div className="mt-8 flex justify-center">
+      <button type="button" onClick={onClick} disabled={isLoading} className="secondary-action">
+        {isLoading ? 'Cargando...' : 'Mostrar mas'}
+      </button>
+    </div>
   )
 }

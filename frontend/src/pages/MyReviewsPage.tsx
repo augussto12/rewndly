@@ -1,12 +1,25 @@
+import { useState } from 'react'
 import { EmptyState } from '../components/feedback/EmptyState/EmptyState'
 import { ErrorState } from '../components/feedback/ErrorState/ErrorState'
 import { LoadingSkeleton } from '../components/feedback/LoadingSkeleton/LoadingSkeleton'
 import { useDeleteReview, useMyReviews } from '../features/user-content/hooks/useUserContent'
 import { PublicLayout } from '../layouts/PublicLayout'
+import { getErrorMessage } from '../services/apiError'
 
 export function MyReviewsPage() {
   const { data, isError, isLoading } = useMyReviews()
   const deleteReview = useDeleteReview()
+  const [actionError, setActionError] = useState<string | null>(null)
+
+  async function removeReview(id: string) {
+    setActionError(null)
+
+    try {
+      await deleteReview.mutateAsync(id)
+    } catch (error) {
+      setActionError(getErrorMessage(error, 'No se pudo eliminar la resena. Puede que ya no exista o no pertenezca a tu cuenta.'))
+    }
+  }
 
   return (
     <PublicLayout>
@@ -18,6 +31,7 @@ export function MyReviewsPage() {
         </header>
         {isLoading ? <LoadingSkeleton /> : null}
         {isError ? <ErrorState /> : null}
+        {actionError ? <ActionError message={actionError} /> : null}
         {!isLoading && !isError && data?.length === 0 ? (
           <EmptyState title="Sin resenas" message="Crea una resena desde el detalle de una pelicula o serie." />
         ) : null}
@@ -31,7 +45,7 @@ export function MyReviewsPage() {
               </div>
               <h2 className="mt-3 text-xl font-semibold">{review.title}</h2>
               <p className="mt-3 text-sm leading-6 text-[var(--color-text-secondary)]">{review.body}</p>
-              <button onClick={() => void deleteReview.mutateAsync(review.id)} className="secondary-action mt-4">
+              <button onClick={() => void removeReview(review.id)} className="secondary-action mt-4">
                 Eliminar
               </button>
             </article>
@@ -40,4 +54,8 @@ export function MyReviewsPage() {
       </main>
     </PublicLayout>
   )
+}
+
+function ActionError({ message }: { message: string }) {
+  return <p className="mb-6 rounded-[var(--radius-sm)] border border-red-300/20 bg-red-950/25 px-3 py-2 text-sm text-red-200">{message}</p>
 }

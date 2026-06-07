@@ -4,6 +4,7 @@ import { ErrorState } from '../components/feedback/ErrorState/ErrorState'
 import { LoadingSkeleton } from '../components/feedback/LoadingSkeleton/LoadingSkeleton'
 import { useCompleteTmdbConnection } from '../features/user-content/hooks/useTmdbAccount'
 import { PublicLayout } from '../layouts/PublicLayout'
+import { getErrorMessage } from '../services/apiError'
 
 const pendingTokenKey = 'rewndly.tmdb.requestToken'
 
@@ -22,9 +23,12 @@ export function TmdbCallbackPage() {
       return
     }
 
-    void complete.mutateAsync(requestToken).then(() => {
-      sessionStorage.removeItem(pendingTokenKey)
-    })
+    void complete
+      .mutateAsync(requestToken)
+      .then(() => {
+        sessionStorage.removeItem(pendingTokenKey)
+      })
+      .catch(() => undefined)
   }, [complete, denied, requestToken])
 
   return (
@@ -49,7 +53,10 @@ export function TmdbCallbackPage() {
         ) : null}
 
         {complete.isError ? (
-          <ErrorState title="No pudimos completar la conexion" message="El token puede haber expirado o TMDB no pudo crear la sesion." />
+          <ErrorState
+            title="No pudimos completar la conexion"
+            message={getErrorMessage(complete.error, 'El token puede haber expirado o TMDB no pudo crear la sesion.')}
+          />
         ) : null}
 
         {complete.isSuccess ? (

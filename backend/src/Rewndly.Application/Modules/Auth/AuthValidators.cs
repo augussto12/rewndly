@@ -42,6 +42,28 @@ public sealed class LoginRequestValidator : AbstractValidator<LoginRequest>
     }
 }
 
+public sealed class ChangePasswordRequestValidator : AbstractValidator<ChangePasswordRequest>
+{
+    public ChangePasswordRequestValidator()
+    {
+        RuleFor(request => request.CurrentPassword)
+            .NotEmpty();
+
+        RuleFor(request => request.NewPassword)
+            .NotEmpty()
+            .MinimumLength(8)
+            .Matches("[A-Z]").WithMessage("Password must contain an uppercase letter.")
+            .Matches("[a-z]").WithMessage("Password must contain a lowercase letter.")
+            .Matches("[0-9]").WithMessage("Password must contain a number.")
+            .Matches("[^a-zA-Z0-9]").WithMessage("Password must contain a symbol.");
+
+        RuleFor(request => request.ConfirmNewPassword)
+            .NotEmpty()
+            .Equal(request => request.NewPassword)
+            .WithMessage("Password confirmation does not match.");
+    }
+}
+
 public sealed class EmailVerificationRequestValidator : AbstractValidator<EmailVerificationRequest>
 {
     public EmailVerificationRequestValidator()

@@ -29,6 +29,7 @@ public static class AuthEndpoints
         group.MapPost("/logout", LogoutAsync).RequireAuthorization(AuthPolicies.RequireUser);
         group.MapPost("/logout-all", LogoutAllAsync).RequireAuthorization(AuthPolicies.RequireUser);
         group.MapGet("/me", MeAsync).RequireAuthorization(AuthPolicies.RequireUser);
+        group.MapPost("/change-password", ChangePasswordAsync).RequireAuthorization(AuthPolicies.RequireUser);
 
         group.MapPost("/request-email-verification", RequestEmailVerificationAsync).AllowAnonymous();
         group.MapPost("/verify-email", VerifyEmailAsync).AllowAnonymous();
@@ -60,15 +61,20 @@ public static class AuthEndpoints
         var username = request.Username.Trim();
         var email = request.Email.Trim().ToLowerInvariant();
 
-        var exists = await dbContext.Users
-            .AnyAsync(user =>
-                user.Username.ToLower() == username.ToLowerInvariant() ||
-                user.Email.ToLower() == email,
-                cancellationToken);
+        var usernameExists = await dbContext.Users
+            .AnyAsync(user => user.Username.ToLower() == username.ToLowerInvariant(), cancellationToken);
 
-        if (exists)
+        if (usernameExists)
         {
-            return Results.Conflict(new { message = "Username or email is already registered." });
+            return Results.Conflict(new { message = "Username is already registered." });
+        }
+
+        var emailExists = await dbContext.Users
+            .AnyAsync(user => user.Email.ToLower() == email, cancellationToken);
+
+        if (emailExists)
+        {
+            return Results.Conflict(new { message = "Email is already registered." });
         }
 
         var user = new User
@@ -287,6 +293,53 @@ public static class AuthEndpoints
         return user is null || user.IsDisabled
             ? Results.Unauthorized()
             : Results.Ok(ToUserResponse(user));
+    }
+
+    private static async Task<IResult> ChangePasswordAsync(
+        ChangePasswordRequest request,
+        IValidator<ChangePasswordRequest> validator,
+        AppDbContext dbContext,
+        ICurrentUserService currentUser,
+        IPasswordHasher passwordHasher,
+        HttpContext httpContext,
+        CancellationToken cancellationToken)
+    {
+        if (currentUser.UserId is null)
+        {
+            return Results.Unauthorized();
+        }
+
+        var validation = await validator.ValidateAsync(request, cancellationToken);
+        if (!validation.IsValid)
+        {
+            return Results.ValidationProblem(validation.ToDictionary());
+        }
+
+        var user = await dbContext.Users
+            .FirstOrDefaultAsync(candidate => candidate.Id == currentUser.UserId.Value, cancellationToken);
+
+        if (user is null || user.IsDisabled || user.IsDeleted)
+        {
+            return Results.Unauthorized();
+        }
+
+        if (!passwordHasher.VerifyPassword(request.CurrentPassword, user.PasswordHash))
+        {
+            return Results.BadRequest(new { message = "Current password is incorrect." });
+        }
+
+        if (passwordHasher.VerifyPassword(request.NewPassword, user.PasswordHash))
+        {
+            return Results.BadRequest(new { message = "New password must be different from current password." });
+        }
+
+        user.PasswordHash = passwordHasher.HashPassword(request.NewPassword);
+        user.MustChangePassword = false;
+
+        await AddSystemEventAsync(dbContext, SystemEventType.PasswordChanged, user.Id, httpContext, cancellationToken);
+        await dbContext.SaveChangesAsync(cancellationToken);
+
+        return Results.Ok(ToUserResponse(user));
     }
 
     private static async Task<IResult> RequestEmailVerificationAsync(

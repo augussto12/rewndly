@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { EmptyState } from '../components/feedback/EmptyState/EmptyState'
 import { ErrorState } from '../components/feedback/ErrorState/ErrorState'
@@ -11,6 +12,7 @@ import {
   useTmdbRemoteLibrary,
 } from '../features/user-content/hooks/useTmdbAccount'
 import { PublicLayout } from '../layouts/PublicLayout'
+import { getErrorMessage } from '../services/apiError'
 
 const pendingTokenKey = 'rewndly.tmdb.requestToken'
 
@@ -20,11 +22,38 @@ export function TmdbAccountPage() {
   const disconnect = useDisconnectTmdbAccount()
   const sync = useSyncTmdbLibrary()
   const remoteLibrary = useTmdbRemoteLibrary(Boolean(status.data?.isConnected))
+  const [actionError, setActionError] = useState<string | null>(null)
 
   async function startConnection() {
-    const response = await connect.mutateAsync()
-    sessionStorage.setItem(pendingTokenKey, response.requestToken)
-    window.location.href = response.authorizationUrl
+    setActionError(null)
+
+    try {
+      const response = await connect.mutateAsync()
+      sessionStorage.setItem(pendingTokenKey, response.requestToken)
+      window.location.href = response.authorizationUrl
+    } catch (error) {
+      setActionError(getErrorMessage(error, 'No se pudo iniciar la conexion con TMDB. Proba nuevamente.'))
+    }
+  }
+
+  async function syncLibrary() {
+    setActionError(null)
+
+    try {
+      await sync.mutateAsync()
+    } catch (error) {
+      setActionError(getErrorMessage(error, 'No se pudo sincronizar tu biblioteca TMDB. Proba nuevamente.'))
+    }
+  }
+
+  async function disconnectAccount() {
+    setActionError(null)
+
+    try {
+      await disconnect.mutateAsync()
+    } catch (error) {
+      setActionError(getErrorMessage(error, 'No se pudo desconectar TMDB. Proba nuevamente.'))
+    }
   }
 
   return (
@@ -65,10 +94,10 @@ export function TmdbAccountPage() {
               <div className="flex flex-wrap gap-3">
                 {status.data.isConnected ? (
                   <>
-                    <button onClick={() => void sync.mutateAsync()} disabled={sync.isPending} className="primary-action">
+                    <button onClick={() => void syncLibrary()} disabled={sync.isPending} className="primary-action">
                       Sincronizar
                     </button>
-                    <button onClick={() => void disconnect.mutateAsync()} disabled={disconnect.isPending} className="secondary-action">
+                    <button onClick={() => void disconnectAccount()} disabled={disconnect.isPending} className="secondary-action">
                       Desconectar
                     </button>
                   </>
@@ -85,6 +114,7 @@ export function TmdbAccountPage() {
                 Sync completa: {sync.data.imported} importados, {sync.data.updated} actualizados.
               </p>
             ) : null}
+            {actionError ? <ActionError message={actionError} /> : null}
           </section>
         ) : null}
 
@@ -112,6 +142,10 @@ export function TmdbAccountPage() {
       </main>
     </PublicLayout>
   )
+}
+
+function ActionError({ message }: { message: string }) {
+  return <p className="mt-5 rounded-[var(--radius-sm)] border border-red-300/20 bg-red-950/25 px-3 py-2 text-sm text-red-200">{message}</p>
 }
 
 function RemoteSection({ title, items }: { title: string; items: Parameters<typeof MediaGrid>[0]['items'] }) {

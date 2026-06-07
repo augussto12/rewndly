@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { getErrorMessage } from '../../../services/apiError'
 import { useAuth } from '../../auth/useAuth'
 import {
   useDeleteTmdbRating,
@@ -61,6 +62,8 @@ export function MediaActionsPanel({ mediaType, tmdbId, title }: MediaActionsPane
   const [reviewVisibility, setReviewVisibility] = useState<Visibility>('Public')
   const [containsSpoilers, setContainsSpoilers] = useState(false)
   const [selectedListId, setSelectedListId] = useState('')
+  const [reviewError, setReviewError] = useState<string | null>(null)
+  const [listError, setListError] = useState<string | null>(null)
 
   const canSubmitReview = reviewTitle.trim().length > 0 && reviewBody.trim().length > 0
 
@@ -75,10 +78,16 @@ export function MediaActionsPanel({ mediaType, tmdbId, title }: MediaActionsPane
       visibility: reviewVisibility,
     }
 
-    await createReview.mutateAsync(request)
-    setReviewTitle('')
-    setReviewBody('')
-    setContainsSpoilers(false)
+    setReviewError(null)
+
+    try {
+      await createReview.mutateAsync(request)
+      setReviewTitle('')
+      setReviewBody('')
+      setContainsSpoilers(false)
+    } catch (error) {
+      setReviewError(getErrorMessage(error, 'No se pudo publicar la resena. Revisa los datos e intenta de nuevo.'))
+    }
   }
 
   async function submitListItem() {
@@ -86,15 +95,21 @@ export function MediaActionsPanel({ mediaType, tmdbId, title }: MediaActionsPane
       return
     }
 
-    await addListItem.mutateAsync({
-      id: selectedListId,
-      request: {
-        mediaType,
-        tmdbId,
-        position: null,
-        note: null,
-      },
-    })
+    setListError(null)
+
+    try {
+      await addListItem.mutateAsync({
+        id: selectedListId,
+        request: {
+          mediaType,
+          tmdbId,
+          position: null,
+          note: null,
+        },
+      })
+    } catch (error) {
+      setListError(getErrorMessage(error, 'No se pudo agregar a la lista. Revisa la lista seleccionada e intenta de nuevo.'))
+    }
   }
 
   if (!isAuthenticated) {
@@ -163,6 +178,7 @@ export function MediaActionsPanel({ mediaType, tmdbId, title }: MediaActionsPane
               Crea una lista desde <Link to="/me/lists" className="text-[var(--color-accent-light)]">Mis listas</Link>.
             </p>
           )}
+          {listError ? <ActionError message={listError} /> : null}
         </div>
       </div>
 
@@ -193,6 +209,7 @@ export function MediaActionsPanel({ mediaType, tmdbId, title }: MediaActionsPane
             </button>
           </div>
         </div>
+        {reviewError ? <ActionError message={reviewError} /> : null}
       </div>
 
       <ReviewsBlock reviews={reviews ?? []} isLoading={reviewsLoading} isError={reviewsError} />
@@ -220,6 +237,7 @@ function LibraryControls({
   const [status, setStatus] = useState<WatchStatus>(existingItem?.status ?? 'WantToWatch')
   const [rating, setRating] = useState(existingItem?.rating?.toString() ?? '')
   const [isFavorite, setIsFavorite] = useState(existingItem?.isFavorite ?? false)
+  const [error, setError] = useState<string | null>(null)
 
   async function saveLibraryItem() {
     const request: LibraryItemRequest = {
@@ -232,10 +250,16 @@ function LibraryControls({
       startedAt: status === 'Watching' ? new Date().toISOString() : null,
     }
 
-    if (existingItem) {
-      await onUpdate(existingItem.id, request)
-    } else {
-      await onCreate(request)
+    setError(null)
+
+    try {
+      if (existingItem) {
+        await onUpdate(existingItem.id, request)
+      } else {
+        await onCreate(request)
+      }
+    } catch (actionError) {
+      setError(getErrorMessage(actionError, 'No se pudo guardar en tu biblioteca. Revisa los datos e intenta de nuevo.'))
     }
   }
 
@@ -274,6 +298,7 @@ function LibraryControls({
       >
         {existingItem ? 'Actualizar' : 'Guardar'}
       </button>
+      {error ? <ActionError message={error} /> : null}
     </div>
   )
 }
@@ -294,6 +319,17 @@ function TmdbMediaControls({
   const rate = useSetTmdbRating()
   const deleteRating = useDeleteTmdbRating()
   const [rating, setRating] = useState(state?.rating?.toString() ?? '')
+  const [error, setError] = useState<string | null>(null)
+
+  async function runTmdbAction(action: () => Promise<unknown>) {
+    setError(null)
+
+    try {
+      await action()
+    } catch (actionError) {
+      setError(getErrorMessage(actionError, 'No se pudo sincronizar con TMDB. Proba nuevamente.'))
+    }
+  }
 
   if (!isConnected) {
     return (
@@ -316,14 +352,14 @@ function TmdbMediaControls({
       <h2 className="mt-2 text-xl font-semibold">Sincronizar con TMDB</h2>
       <div className="mt-4 flex flex-wrap gap-3">
         <button
-          onClick={() => void favorite.mutateAsync({ mediaType, tmdbId, value: !state?.favorite })}
+          onClick={() => void runTmdbAction(() => favorite.mutateAsync({ mediaType, tmdbId, value: !state?.favorite }))}
           disabled={favorite.isPending}
           className={state?.favorite ? 'primary-action' : 'secondary-action'}
         >
           {state?.favorite ? 'Quitar favorito' : 'Favorito'}
         </button>
         <button
-          onClick={() => void watchlist.mutateAsync({ mediaType, tmdbId, value: !state?.watchlist })}
+          onClick={() => void runTmdbAction(() => watchlist.mutateAsync({ mediaType, tmdbId, value: !state?.watchlist }))}
           disabled={watchlist.isPending}
           className={state?.watchlist ? 'primary-action' : 'secondary-action'}
         >
@@ -342,7 +378,7 @@ function TmdbMediaControls({
           className="field min-w-0 flex-1"
         />
         <button
-          onClick={() => void rate.mutateAsync({ mediaType, tmdbId, value: Number(rating) })}
+          onClick={() => void runTmdbAction(() => rate.mutateAsync({ mediaType, tmdbId, value: Number(rating) }))}
           disabled={!rating || rate.isPending}
           className="secondary-action"
         >
@@ -350,7 +386,7 @@ function TmdbMediaControls({
         </button>
         {state?.rating ? (
           <button
-            onClick={() => void deleteRating.mutateAsync({ mediaType, tmdbId })}
+            onClick={() => void runTmdbAction(() => deleteRating.mutateAsync({ mediaType, tmdbId }))}
             disabled={deleteRating.isPending}
             className="secondary-action"
           >
@@ -358,8 +394,13 @@ function TmdbMediaControls({
           </button>
         ) : null}
       </div>
+      {error ? <ActionError message={error} /> : null}
     </div>
   )
+}
+
+function ActionError({ message }: { message: string }) {
+  return <p className="mt-4 rounded-[var(--radius-sm)] border border-red-300/20 bg-red-950/25 px-3 py-2 text-sm text-red-200">{message}</p>
 }
 
 function ReviewsBlock({

@@ -1,4 +1,6 @@
-import { createBrowserRouter, RouterProvider } from 'react-router-dom'
+import type { ReactNode } from 'react'
+import { Navigate, createBrowserRouter, RouterProvider } from 'react-router-dom'
+import { ScrollToTop } from './ScrollToTop'
 import { ProtectedRoute } from '../features/auth/components/ProtectedRoute'
 import { AdminActivityEventsPage } from '../pages/admin/AdminActivityEventsPage'
 import { AdminAuditLogsPage } from '../pages/admin/AdminAuditLogsPage'
@@ -41,97 +43,109 @@ import { TmdbCallbackPage } from '../pages/TmdbCallbackPage'
 import { TmdbReviewDetailsPage } from '../pages/TmdbReviewDetailsPage'
 import { UserProfilePage } from '../pages/UserProfilePage'
 
+function withScroll(element: ReactNode) {
+  return <ScrollToTop>{element}</ScrollToTop>
+}
+
 const router = createBrowserRouter([
   {
     path: '/',
-    element: <HomePage />,
+    element: withScroll(<HomePage />),
   },
   {
     path: '/login',
-    element: <LoginPage />,
+    element: withScroll(<LoginPage />),
   },
   {
     path: '/register',
-    element: <RegisterPage />,
+    element: withScroll(<RegisterPage />),
   },
   {
     path: '/movies/search',
-    element: <MoviesSearchPage />,
+    element: withScroll(<MoviesSearchPage />),
+  },
+  {
+    path: '/movies',
+    element: withScroll(<Navigate to="/movies/search" replace />),
   },
   {
     path: '/movies/:tmdbId',
-    element: <MovieDetailsPage />,
+    element: withScroll(<MovieDetailsPage />),
   },
   {
     path: '/series/search',
-    element: <SeriesSearchPage />,
+    element: withScroll(<SeriesSearchPage />),
+  },
+  {
+    path: '/series',
+    element: withScroll(<Navigate to="/series/search" replace />),
   },
   {
     path: '/series/:tmdbId',
-    element: <SeriesDetailsPage />,
+    element: withScroll(<SeriesDetailsPage />),
   },
   {
     path: '/series/:tmdbId/seasons/:seasonNumber',
-    element: <SeasonDetailsPage />,
+    element: withScroll(<SeasonDetailsPage />),
   },
   {
     path: '/series/:tmdbId/seasons/:seasonNumber/episodes/:episodeNumber',
-    element: <EpisodeDetailsPage />,
+    element: withScroll(<EpisodeDetailsPage />),
   },
   {
     path: '/discover',
-    element: <DiscoverPage />,
+    element: withScroll(<DiscoverPage />),
   },
   {
     path: '/people/search',
-    element: <PeopleSearchPage />,
+    element: withScroll(<PeopleSearchPage />),
   },
   {
     path: '/people/:tmdbId',
-    element: <PersonDetailsPage />,
+    element: withScroll(<PersonDetailsPage />),
   },
   {
     path: '/collections/:collectionId',
-    element: <CollectionDetailsPage />,
+    element: withScroll(<CollectionDetailsPage />),
   },
   {
     path: '/companies/:companyId',
-    element: <CompanyDetailsPage />,
+    element: withScroll(<CompanyDetailsPage />),
   },
   {
     path: '/networks/:networkId',
-    element: <NetworkDetailsPage />,
+    element: withScroll(<NetworkDetailsPage />),
   },
   {
     path: '/keywords/:keywordId',
-    element: <KeywordDetailsPage />,
+    element: withScroll(<KeywordDetailsPage />),
   },
   {
     path: '/tmdb-reviews/:reviewId',
-    element: <TmdbReviewDetailsPage />,
+    element: withScroll(<TmdbReviewDetailsPage />),
   },
   {
     path: '/users/:username',
-    element: <UserProfilePage />,
+    element: withScroll(<UserProfilePage />),
   },
   {
     path: '/profiles/:username',
-    element: <PublicProfilePage />,
+    element: withScroll(<PublicProfilePage />),
   },
   {
     path: '/lists/public',
-    element: <PublicListsPage />,
+    element: withScroll(<PublicListsPage />),
   },
   {
     path: '/lists/:id',
-    element: <PublicListDetailsPage />,
+    element: withScroll(<PublicListDetailsPage />),
   },
   {
     path: '/reviews/public',
-    element: <PublicReviewsPage />,
+    element: withScroll(<PublicReviewsPage />),
   },
   {
-    element: <ProtectedRoute />,
+    element: withScroll(<ProtectedRoute />),
     children: [
       {
         path: '/me',
@@ -176,7 +190,7 @@ const router = createBrowserRouter([
     ],
   },
   {
-    element: <ProtectedRoute requiredRole="Admin" />,
+    element: withScroll(<ProtectedRoute requiredRole="Admin" />),
     children: [
       {
         path: '/admin',

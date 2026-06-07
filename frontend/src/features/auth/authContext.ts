@@ -1,5 +1,5 @@
 import { createContext } from 'react'
-import type { AuthUser, LoginRequest, RegisterRequest } from './types/auth.types'
+import type { AuthUser, ChangePasswordRequest, LoginRequest, RegisterRequest } from './types/auth.types'
 
 export type AuthContextValue = {
   user: AuthUser | null
@@ -7,6 +7,7 @@ export type AuthContextValue = {
   isLoading: boolean
   login: (request: LoginRequest) => Promise<void>
   register: (request: RegisterRequest) => Promise<void>
+  changePassword: (request: ChangePasswordRequest) => Promise<void>
   logout: () => Promise<void>
   reloadMe: () => Promise<void>
 }

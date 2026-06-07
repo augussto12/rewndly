@@ -182,6 +182,7 @@ public static class PublicMediaEndpoints
 
     private static async Task<IResult> SearchMoviesAsync(
         string query,
+        int page,
         IPublicMediaService mediaService,
         CancellationToken cancellationToken)
     {
@@ -190,32 +191,32 @@ public static class PublicMediaEndpoints
             return Results.BadRequest(new { message = "Search query must contain at least 2 characters." });
         }
 
-        return await ExecuteTmdbAsync(() => mediaService.SearchMoviesAsync(query, cancellationToken));
+        return await ExecuteTmdbAsync(() => mediaService.SearchMoviesAsync(query, NormalizePage(page), cancellationToken));
     }
 
-    private static async Task<IResult> GetTrendingMoviesAsync(IPublicMediaService mediaService, CancellationToken cancellationToken)
+    private static async Task<IResult> GetTrendingMoviesAsync(int page, IPublicMediaService mediaService, CancellationToken cancellationToken)
     {
-        return await ExecuteTmdbAsync(() => mediaService.GetTrendingMoviesAsync(cancellationToken));
+        return await ExecuteTmdbAsync(() => mediaService.GetTrendingMoviesAsync(NormalizePage(page), cancellationToken));
     }
 
-    private static async Task<IResult> GetNowPlayingMoviesAsync(IPublicMediaService mediaService, CancellationToken cancellationToken)
+    private static async Task<IResult> GetNowPlayingMoviesAsync(int page, IPublicMediaService mediaService, CancellationToken cancellationToken)
     {
-        return await ExecuteTmdbAsync(() => mediaService.GetNowPlayingMoviesAsync(cancellationToken));
+        return await ExecuteTmdbAsync(() => mediaService.GetNowPlayingMoviesAsync(NormalizePage(page), cancellationToken));
     }
 
-    private static async Task<IResult> GetPopularMoviesAsync(IPublicMediaService mediaService, CancellationToken cancellationToken)
+    private static async Task<IResult> GetPopularMoviesAsync(int page, IPublicMediaService mediaService, CancellationToken cancellationToken)
     {
-        return await ExecuteTmdbAsync(() => mediaService.GetPopularMoviesAsync(cancellationToken));
+        return await ExecuteTmdbAsync(() => mediaService.GetPopularMoviesAsync(NormalizePage(page), cancellationToken));
     }
 
-    private static async Task<IResult> GetUpcomingMoviesAsync(IPublicMediaService mediaService, CancellationToken cancellationToken)
+    private static async Task<IResult> GetUpcomingMoviesAsync(int page, IPublicMediaService mediaService, CancellationToken cancellationToken)
     {
-        return await ExecuteTmdbAsync(() => mediaService.GetUpcomingMoviesAsync(cancellationToken));
+        return await ExecuteTmdbAsync(() => mediaService.GetUpcomingMoviesAsync(NormalizePage(page), cancellationToken));
     }
 
-    private static async Task<IResult> GetTopRatedMoviesAsync(IPublicMediaService mediaService, CancellationToken cancellationToken)
+    private static async Task<IResult> GetTopRatedMoviesAsync(int page, IPublicMediaService mediaService, CancellationToken cancellationToken)
     {
-        return await ExecuteTmdbAsync(() => mediaService.GetTopRatedMoviesAsync(cancellationToken));
+        return await ExecuteTmdbAsync(() => mediaService.GetTopRatedMoviesAsync(NormalizePage(page), cancellationToken));
     }
 
     private static async Task<IResult> DiscoverMoviesAsync(
@@ -224,10 +225,11 @@ public static class PublicMediaEndpoints
         int? watchProviderId,
         string? sortBy,
         decimal? minVoteAverage,
+        int page,
         IPublicMediaService mediaService,
         CancellationToken cancellationToken)
     {
-        return await ExecuteTmdbAsync(() => mediaService.DiscoverMoviesAsync(genreId, year, watchProviderId, sortBy, minVoteAverage, cancellationToken));
+        return await ExecuteTmdbAsync(() => mediaService.DiscoverMoviesAsync(genreId, year, watchProviderId, sortBy, minVoteAverage, NormalizePage(page), cancellationToken));
     }
 
     private static async Task<IResult> GetMovieDetailsAsync(
@@ -244,6 +246,7 @@ public static class PublicMediaEndpoints
 
     private static async Task<IResult> SearchSeriesAsync(
         string query,
+        int page,
         IPublicMediaService mediaService,
         CancellationToken cancellationToken)
     {
@@ -252,32 +255,32 @@ public static class PublicMediaEndpoints
             return Results.BadRequest(new { message = "Search query must contain at least 2 characters." });
         }
 
-        return await ExecuteTmdbAsync(() => mediaService.SearchSeriesAsync(query, cancellationToken));
+        return await ExecuteTmdbAsync(() => mediaService.SearchSeriesAsync(query, NormalizePage(page), cancellationToken));
     }
 
-    private static async Task<IResult> GetTrendingSeriesAsync(IPublicMediaService mediaService, CancellationToken cancellationToken)
+    private static async Task<IResult> GetTrendingSeriesAsync(int page, IPublicMediaService mediaService, CancellationToken cancellationToken)
     {
-        return await ExecuteTmdbAsync(() => mediaService.GetTrendingSeriesAsync(cancellationToken));
+        return await ExecuteTmdbAsync(() => mediaService.GetTrendingSeriesAsync(NormalizePage(page), cancellationToken));
     }
 
-    private static async Task<IResult> GetPopularSeriesAsync(IPublicMediaService mediaService, CancellationToken cancellationToken)
+    private static async Task<IResult> GetPopularSeriesAsync(int page, IPublicMediaService mediaService, CancellationToken cancellationToken)
     {
-        return await ExecuteTmdbAsync(() => mediaService.GetPopularSeriesAsync(cancellationToken));
+        return await ExecuteTmdbAsync(() => mediaService.GetPopularSeriesAsync(NormalizePage(page), cancellationToken));
     }
 
-    private static async Task<IResult> GetTopRatedSeriesAsync(IPublicMediaService mediaService, CancellationToken cancellationToken)
+    private static async Task<IResult> GetTopRatedSeriesAsync(int page, IPublicMediaService mediaService, CancellationToken cancellationToken)
     {
-        return await ExecuteTmdbAsync(() => mediaService.GetTopRatedSeriesAsync(cancellationToken));
+        return await ExecuteTmdbAsync(() => mediaService.GetTopRatedSeriesAsync(NormalizePage(page), cancellationToken));
     }
 
-    private static async Task<IResult> GetAiringTodaySeriesAsync(IPublicMediaService mediaService, CancellationToken cancellationToken)
+    private static async Task<IResult> GetAiringTodaySeriesAsync(int page, IPublicMediaService mediaService, CancellationToken cancellationToken)
     {
-        return await ExecuteTmdbAsync(() => mediaService.GetAiringTodaySeriesAsync(cancellationToken));
+        return await ExecuteTmdbAsync(() => mediaService.GetAiringTodaySeriesAsync(NormalizePage(page), cancellationToken));
     }
 
-    private static async Task<IResult> GetOnTheAirSeriesAsync(IPublicMediaService mediaService, CancellationToken cancellationToken)
+    private static async Task<IResult> GetOnTheAirSeriesAsync(int page, IPublicMediaService mediaService, CancellationToken cancellationToken)
     {
-        return await ExecuteTmdbAsync(() => mediaService.GetOnTheAirSeriesAsync(cancellationToken));
+        return await ExecuteTmdbAsync(() => mediaService.GetOnTheAirSeriesAsync(NormalizePage(page), cancellationToken));
     }
 
     private static async Task<IResult> DiscoverSeriesAsync(
@@ -286,10 +289,11 @@ public static class PublicMediaEndpoints
         int? watchProviderId,
         string? sortBy,
         decimal? minVoteAverage,
+        int page,
         IPublicMediaService mediaService,
         CancellationToken cancellationToken)
     {
-        return await ExecuteTmdbAsync(() => mediaService.DiscoverSeriesAsync(genreId, year, watchProviderId, sortBy, minVoteAverage, cancellationToken));
+        return await ExecuteTmdbAsync(() => mediaService.DiscoverSeriesAsync(genreId, year, watchProviderId, sortBy, minVoteAverage, NormalizePage(page), cancellationToken));
     }
 
     private static async Task<IResult> GetSeriesDetailsAsync(
@@ -333,6 +337,7 @@ public static class PublicMediaEndpoints
 
     private static async Task<IResult> SearchPeopleAsync(
         string query,
+        int page,
         IPublicMediaService mediaService,
         CancellationToken cancellationToken)
     {
@@ -341,17 +346,17 @@ public static class PublicMediaEndpoints
             return Results.BadRequest(new { message = "Search query must contain at least 2 characters." });
         }
 
-        return await ExecuteTmdbAsync(() => mediaService.SearchPeopleAsync(query, cancellationToken));
+        return await ExecuteTmdbAsync(() => mediaService.SearchPeopleAsync(query, NormalizePage(page), cancellationToken));
     }
 
-    private static async Task<IResult> GetTrendingPeopleAsync(IPublicMediaService mediaService, CancellationToken cancellationToken)
+    private static async Task<IResult> GetTrendingPeopleAsync(int page, IPublicMediaService mediaService, CancellationToken cancellationToken)
     {
-        return await ExecuteTmdbAsync(() => mediaService.GetTrendingPeopleAsync(cancellationToken));
+        return await ExecuteTmdbAsync(() => mediaService.GetTrendingPeopleAsync(NormalizePage(page), cancellationToken));
     }
 
-    private static async Task<IResult> GetPopularPeopleAsync(IPublicMediaService mediaService, CancellationToken cancellationToken)
+    private static async Task<IResult> GetPopularPeopleAsync(int page, IPublicMediaService mediaService, CancellationToken cancellationToken)
     {
-        return await ExecuteTmdbAsync(() => mediaService.GetPopularPeopleAsync(cancellationToken));
+        return await ExecuteTmdbAsync(() => mediaService.GetPopularPeopleAsync(NormalizePage(page), cancellationToken));
     }
 
     private static async Task<IResult> GetPersonDetailsAsync(
@@ -479,5 +484,10 @@ public static class PublicMediaEndpoints
                 detail: "Movie and series data is temporarily unavailable.",
                 statusCode: StatusCodes.Status503ServiceUnavailable);
         }
+    }
+
+    private static int NormalizePage(int page)
+    {
+        return page <= 0 ? 1 : Math.Min(page, 500);
     }
 }

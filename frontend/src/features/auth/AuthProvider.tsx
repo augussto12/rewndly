@@ -2,9 +2,9 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import type { PropsWithChildren } from 'react'
 import { AuthContext } from './authContext'
 import type { AuthContextValue } from './authContext'
-import { login, logout, me, refreshSession, register } from './services/authApi'
+import { changePassword, login, logout, me, refreshSession, register } from './services/authApi'
 import { setAccessToken } from './services/authTokenStore'
-import type { AuthUser, LoginRequest, RegisterRequest } from './types/auth.types'
+import type { AuthUser, ChangePasswordRequest, LoginRequest, RegisterRequest } from './types/auth.types'
 
 export function AuthProvider({ children }: PropsWithChildren) {
   const [user, setUser] = useState<AuthUser | null>(null)
@@ -56,6 +56,11 @@ export function AuthProvider({ children }: PropsWithChildren) {
     setUser(auth.user)
   }, [])
 
+  const handleChangePassword = useCallback(async (request: ChangePasswordRequest) => {
+    const updatedUser = await changePassword(request)
+    setUser(updatedUser)
+  }, [])
+
   const handleLogout = useCallback(async () => {
     try {
       await logout()
@@ -72,10 +77,11 @@ export function AuthProvider({ children }: PropsWithChildren) {
       isLoading,
       login: handleLogin,
       register: handleRegister,
+      changePassword: handleChangePassword,
       logout: handleLogout,
       reloadMe,
     }),
-    [handleLogin, handleLogout, handleRegister, isLoading, reloadMe, user],
+    [handleChangePassword, handleLogin, handleLogout, handleRegister, isLoading, reloadMe, user],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

@@ -51,26 +51,26 @@ export function getUserStats(username: string) {
   return httpClient<UserStats>(`/api/users/${encodeURIComponent(username)}/stats`)
 }
 
-export function getUserLists(username: string) {
-  return httpClient<PublicList[]>(`/api/users/${encodeURIComponent(username)}/lists?page=1&pageSize=24`)
+export function getUserLists(username: string, page = 1, pageSize = 24) {
+  return httpClient<PublicList[]>(`/api/users/${encodeURIComponent(username)}/lists?page=${page}&pageSize=${pageSize}`)
 }
 
-export function getUserReviews(username: string) {
-  return httpClient<PublicReview[]>(`/api/users/${encodeURIComponent(username)}/reviews?page=1&pageSize=24`)
+export function getUserReviews(username: string, page = 1, pageSize = 24) {
+  return httpClient<PublicReview[]>(`/api/users/${encodeURIComponent(username)}/reviews?page=${page}&pageSize=${pageSize}`)
 }
 
-export function getPublicReviews() {
-  return httpClient<PublicReview[]>('/api/reviews/public?page=1&pageSize=30')
+export function getPublicReviews(page = 1, pageSize = 30) {
+  return httpClient<PublicReview[]>(`/api/reviews/public?page=${page}&pageSize=${pageSize}`)
 }
 
-export function getPublicLists() {
-  return httpClient<PublicList[]>('/api/lists/public?page=1&pageSize=30')
+export function getPublicLists(page = 1, pageSize = 30) {
+  return httpClient<PublicList[]>(`/api/lists/public?page=${page}&pageSize=${pageSize}`)
 }
 
 export function getPublicListDetails(id: string) {
   return httpClient<PublicListDetails>(`/api/lists/${id}`)
 }
 
-export function getFeed() {
-  return httpClient<FeedResponse>('/api/feed?page=1&pageSize=30')
+export function getFeed(page = 1, pageSize = 30) {
+  return httpClient<FeedResponse>(`/api/feed?page=${page}&pageSize=${pageSize}`)
 }

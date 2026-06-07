@@ -1,11 +1,12 @@
 import { useMemo, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { EmptyState } from '../components/feedback/EmptyState/EmptyState'
 import { ErrorState } from '../components/feedback/ErrorState/ErrorState'
 import { LoadingSkeleton } from '../components/feedback/LoadingSkeleton/LoadingSkeleton'
 import { MediaGrid } from '../components/media/MediaGrid/MediaGrid'
 import {
   useAiringTodaySeries,
-  useDiscoverMedia,
+  useDiscoverMediaPages,
   useDiscoverOptions,
   useOnTheAirSeries,
   useTopRatedMovies,
@@ -13,6 +14,7 @@ import {
 } from '../features/public-media/hooks/usePublicMedia'
 import type { DiscoverFilters } from '../features/public-media/types/publicMedia.types'
 import type { MediaSummary } from '../features/public-media/types/publicMedia.types'
+import { flattenUniquePages } from '../lib/pagination'
 import { PublicLayout } from '../layouts/PublicLayout'
 
 const movieSortOptions = [
@@ -48,7 +50,8 @@ export function DiscoverPage() {
     [genreId, mediaType, minVoteAverage, sortBy, watchProviderId, year],
   )
 
-  const { data, isError, isLoading } = useDiscoverMedia(filters)
+  const results = useDiscoverMediaPages(filters)
+  const data = flattenUniquePages<MediaSummary>(results.data, (item) => `${item.mediaType}-${item.tmdbId}`)
   const { genres, watchProviders } = useDiscoverOptions(mediaType)
   const topRatedMovies = useTopRatedMovies()
   const topRatedSeries = useTopRatedSeries()
@@ -158,21 +161,50 @@ export function DiscoverPage() {
               <h2 className="mt-2 text-2xl font-semibold">{mediaType === 'Movie' ? 'Peliculas encontradas' : 'Series encontradas'}</h2>
             </div>
           </div>
-          {isLoading ? <LoadingSkeleton /> : null}
-          {isError ? <ErrorState title="No pudimos cargar discovery" /> : null}
-          {!isLoading && !isError && data?.length === 0 ? (
+          {results.isLoading ? <LoadingSkeleton /> : null}
+          {results.isError ? <ErrorState title="No pudimos cargar discovery" /> : null}
+          {!results.isLoading && !results.isError && data.length === 0 ? (
             <EmptyState title="Sin resultados" message="Proba cambiar filtros o bajar el rating minimo." />
           ) : null}
-          {!isLoading && !isError && data && data.length > 0 ? <MediaGrid items={data} /> : null}
+          {!results.isLoading && !results.isError && data.length > 0 ? (
+            <>
+              <MediaGrid items={data} />
+              <LoadMoreButton
+                hasMore={Boolean(results.hasNextPage)}
+                isLoading={results.isFetchingNextPage}
+                onClick={() => void results.fetchNextPage()}
+              />
+            </>
+          ) : null}
         </section>
 
         {mediaType === 'Movie' ? (
-          <QuickShelf title="Peliculas mejor valoradas" items={topRatedMovies.data ?? []} isLoading={topRatedMovies.isLoading} />
+          <QuickShelf
+            title="Peliculas mejor valoradas"
+            items={topRatedMovies.data?.items ?? []}
+            isLoading={topRatedMovies.isLoading}
+            viewAllHref="/movies/search?category=top-rated"
+          />
         ) : (
           <>
-            <QuickShelf title="Series mejor valoradas" items={topRatedSeries.data ?? []} isLoading={topRatedSeries.isLoading} />
-            <QuickShelf title="Series que se emiten hoy" items={airingToday.data ?? []} isLoading={airingToday.isLoading} />
-            <QuickShelf title="Series al aire" items={onTheAir.data ?? []} isLoading={onTheAir.isLoading} />
+            <QuickShelf
+              title="Series mejor valoradas"
+              items={topRatedSeries.data?.items ?? []}
+              isLoading={topRatedSeries.isLoading}
+              viewAllHref="/series/search?category=top-rated"
+            />
+            <QuickShelf
+              title="Series que se emiten hoy"
+              items={airingToday.data?.items ?? []}
+              isLoading={airingToday.isLoading}
+              viewAllHref="/series/search?category=airing-today"
+            />
+            <QuickShelf
+              title="Series al aire"
+              items={onTheAir.data?.items ?? []}
+              isLoading={onTheAir.isLoading}
+              viewAllHref="/series/search?category=on-the-air"
+            />
           </>
         )}
       </main>
@@ -180,7 +212,7 @@ export function DiscoverPage() {
   )
 }
 
-function QuickShelf({ title, items, isLoading }: { title: string; items: MediaSummary[]; isLoading: boolean }) {
+function QuickShelf({ title, items, isLoading, viewAllHref }: { title: string; items: MediaSummary[]; isLoading: boolean; viewAllHref: string }) {
   if (isLoading) {
     return null
   }
@@ -191,12 +223,33 @@ function QuickShelf({ title, items, isLoading }: { title: string; items: MediaSu
 
   return (
     <section className="mt-12">
-      <p className="kicker">Listas</p>
-      <h2 className="mt-2 text-2xl font-semibold">{title}</h2>
-      <div className="mt-6">
+      <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <p className="kicker">Listas</p>
+          <h2 className="mt-2 text-2xl font-semibold">{title}</h2>
+        </div>
+        <Link to={viewAllHref} className="secondary-action min-h-9 px-3 py-2 text-xs">
+          Ver todo
+        </Link>
+      </div>
+      <div>
         <MediaGrid items={items.slice(0, 12)} />
       </div>
     </section>
+  )
+}
+
+function LoadMoreButton({ hasMore, isLoading, onClick }: { hasMore: boolean; isLoading: boolean; onClick: () => void }) {
+  if (!hasMore) {
+    return null
+  }
+
+  return (
+    <div className="mt-8 flex justify-center">
+      <button type="button" onClick={onClick} disabled={isLoading} className="secondary-action">
+        {isLoading ? 'Cargando...' : 'Mostrar mas'}
+      </button>
+    </div>
   )
 }
 

@@ -5,6 +5,7 @@ import { LoadingSkeleton } from '../components/feedback/LoadingSkeleton/LoadingS
 import { FriendRequestCard } from '../features/social/components/FriendRequestCard'
 import { useAcceptFriendRequest, useFriendRequests, useRejectFriendRequest, useSendFriendRequest } from '../features/social/hooks/useSocial'
 import { PublicLayout } from '../layouts/PublicLayout'
+import { getErrorMessage } from '../services/apiError'
 
 export function FriendRequestsPage() {
   const [username, setUsername] = useState('')
@@ -12,14 +13,41 @@ export function FriendRequestsPage() {
   const sendRequest = useSendFriendRequest()
   const acceptRequest = useAcceptFriendRequest()
   const rejectRequest = useRejectFriendRequest()
+  const [actionError, setActionError] = useState<string | null>(null)
 
   async function submit() {
     if (!username.trim()) {
       return
     }
 
-    await sendRequest.mutateAsync(username.trim())
-    setUsername('')
+    setActionError(null)
+
+    try {
+      await sendRequest.mutateAsync(username.trim())
+      setUsername('')
+    } catch (error) {
+      setActionError(getErrorMessage(error, 'No se pudo enviar la solicitud. Revisa el username e intenta de nuevo.'))
+    }
+  }
+
+  async function accept(id: string) {
+    setActionError(null)
+
+    try {
+      await acceptRequest.mutateAsync(id)
+    } catch (error) {
+      setActionError(getErrorMessage(error, 'No se pudo aceptar la solicitud. Puede que ya no este pendiente.'))
+    }
+  }
+
+  async function reject(id: string) {
+    setActionError(null)
+
+    try {
+      await rejectRequest.mutateAsync(id)
+    } catch (error) {
+      setActionError(getErrorMessage(error, 'No se pudo rechazar la solicitud. Puede que ya no este pendiente.'))
+    }
   }
 
   return (
@@ -38,18 +66,23 @@ export function FriendRequestsPage() {
         </section>
         {isLoading ? <LoadingSkeleton /> : null}
         {isError ? <ErrorState /> : null}
+        {actionError ? <ActionError message={actionError} /> : null}
         {!isLoading && !isError && data?.length === 0 ? <EmptyState title="Sin solicitudes" message="Las solicitudes entrantes y salientes apareceran aca." /> : null}
         <div className="grid gap-4 sm:grid-cols-2">
           {data?.map((request) => (
             <FriendRequestCard
               key={request.id}
               request={request}
-              onAccept={(id) => void acceptRequest.mutateAsync(id)}
-              onReject={(id) => void rejectRequest.mutateAsync(id)}
+              onAccept={(id) => void accept(id)}
+              onReject={(id) => void reject(id)}
             />
           ))}
         </div>
       </main>
     </PublicLayout>
   )
+}
+
+function ActionError({ message }: { message: string }) {
+  return <p className="mb-6 rounded-[var(--radius-sm)] border border-red-300/20 bg-red-950/25 px-3 py-2 text-sm text-red-200">{message}</p>
 }

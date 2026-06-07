@@ -6,15 +6,19 @@ import { ProfileHeader } from '../features/social/components/ProfileHeader'
 import { ProfileStats } from '../features/social/components/ProfileStats'
 import { PublicListCard } from '../features/social/components/PublicListCard'
 import { ReviewCard } from '../features/social/components/ReviewCard'
-import { useUserLists, useUserProfile, useUserReviews, useUserStats } from '../features/social/hooks/useSocial'
+import { useUserListsPages, useUserProfile, useUserReviewsPages, useUserStats } from '../features/social/hooks/useSocial'
+import type { PublicList, PublicReview } from '../features/social/types/social.types'
+import { flattenUniqueArrayPages } from '../lib/pagination'
 import { PublicLayout } from '../layouts/PublicLayout'
 
 export function UserProfilePage() {
   const { username } = useParams()
   const profile = useUserProfile(username)
   const stats = useUserStats(username)
-  const lists = useUserLists(username)
-  const reviews = useUserReviews(username)
+  const lists = useUserListsPages(username)
+  const reviews = useUserReviewsPages(username)
+  const visibleLists = flattenUniqueArrayPages<PublicList>(lists.data, (list) => list.id)
+  const visibleReviews = flattenUniqueArrayPages<PublicReview>(reviews.data, (review) => review.id)
 
   return (
     <PublicLayout>
@@ -35,21 +39,49 @@ export function UserProfilePage() {
             {stats.data ? <ProfileStats stats={stats.data} /> : null}
             <section>
               <h2 className="mb-4 text-2xl font-semibold">Listas visibles</h2>
-              {lists.data?.length === 0 ? <EmptyState title="Sin listas visibles" message="No hay listas para mostrar." /> : null}
+              {lists.isLoading ? <LoadingSkeleton /> : null}
+              {!lists.isLoading && visibleLists.length === 0 ? <EmptyState title="Sin listas visibles" message="No hay listas para mostrar." /> : null}
               <div className="grid gap-4 md:grid-cols-2">
-                {lists.data?.map((list) => <PublicListCard key={list.id} list={list} />)}
+                {visibleLists.map((list) => <PublicListCard key={list.id} list={list} />)}
               </div>
+              <LoadMoreButton
+                hasMore={Boolean(lists.hasNextPage)}
+                isLoading={lists.isFetchingNextPage}
+                onClick={() => void lists.fetchNextPage()}
+              />
             </section>
             <section>
-              <h2 className="mb-4 text-2xl font-semibold">Reseñas visibles</h2>
-              {reviews.data?.length === 0 ? <EmptyState title="Sin reseñas visibles" message="No hay reseñas para mostrar." /> : null}
+              <h2 className="mb-4 text-2xl font-semibold">Resenas visibles</h2>
+              {reviews.isLoading ? <LoadingSkeleton /> : null}
+              {!reviews.isLoading && visibleReviews.length === 0 ? (
+                <EmptyState title="Sin resenas visibles" message="No hay resenas para mostrar." />
+              ) : null}
               <div className="grid gap-4">
-                {reviews.data?.map((review) => <ReviewCard key={review.id} review={review} />)}
+                {visibleReviews.map((review) => <ReviewCard key={review.id} review={review} />)}
               </div>
+              <LoadMoreButton
+                hasMore={Boolean(reviews.hasNextPage)}
+                isLoading={reviews.isFetchingNextPage}
+                onClick={() => void reviews.fetchNextPage()}
+              />
             </section>
           </main>
         </>
       ) : null}
     </PublicLayout>
+  )
+}
+
+function LoadMoreButton({ hasMore, isLoading, onClick }: { hasMore: boolean; isLoading: boolean; onClick: () => void }) {
+  if (!hasMore) {
+    return null
+  }
+
+  return (
+    <div className="mt-6 flex justify-center">
+      <button type="button" onClick={onClick} disabled={isLoading} className="secondary-action">
+        {isLoading ? 'Cargando...' : 'Mostrar mas'}
+      </button>
+    </div>
   )
 }

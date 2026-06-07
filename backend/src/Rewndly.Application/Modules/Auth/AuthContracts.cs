@@ -10,6 +10,11 @@ public sealed record LoginRequest(
     string Identifier,
     string Password);
 
+public sealed record ChangePasswordRequest(
+    string CurrentPassword,
+    string NewPassword,
+    string ConfirmNewPassword);
+
 public sealed record AuthResponse(
     string AccessToken,
     DateTimeOffset AccessTokenExpiresAt,

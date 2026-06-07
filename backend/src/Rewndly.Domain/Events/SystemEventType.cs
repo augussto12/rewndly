@@ -36,5 +36,6 @@ public enum SystemEventType
     AdminViewedDashboard = 32,
     AdminViewedUser = 33,
     AdminReviewSoftDeleted = 34,
-    AdminListSoftDeleted = 35
+    AdminListSoftDeleted = 35,
+    PasswordChanged = 36
 }

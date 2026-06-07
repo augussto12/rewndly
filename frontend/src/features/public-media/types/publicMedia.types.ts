@@ -10,6 +10,14 @@ export type MediaSummary = {
   mediaType: 'Movie' | 'Series'
 }
 
+export type PagedResponse<TItem> = {
+  items: TItem[]
+  page: number
+  totalPages: number
+  totalResults: number
+  hasMore: boolean
+}
+
 export type PublicHomeResponse = {
   trendingMovies: MediaSummary[]
   nowPlayingMovies: MediaSummary[]

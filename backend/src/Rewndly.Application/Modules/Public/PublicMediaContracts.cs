@@ -9,6 +9,13 @@ public sealed record PublicHomeResponse(
     IReadOnlyList<MediaSummaryResponse> PopularSeries,
     IReadOnlyList<PersonSummaryResponse> TrendingPeople);
 
+public sealed record PagedResponse<T>(
+    IReadOnlyList<T> Items,
+    int Page,
+    int TotalPages,
+    int TotalResults,
+    bool HasMore);
+
 public sealed record MediaSummaryResponse(
     int TmdbId,
     string Title,

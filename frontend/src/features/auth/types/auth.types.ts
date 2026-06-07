@@ -26,3 +26,9 @@ export type LoginRequest = {
   identifier: string
   password: string
 }
+
+export type ChangePasswordRequest = {
+  currentPassword: string
+  newPassword: string
+  confirmNewPassword: string
+}

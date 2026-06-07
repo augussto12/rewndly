@@ -79,78 +79,93 @@ public sealed class TmdbClient(
 
     public async Task<PublicHomeResponse> GetHomeAsync(CancellationToken cancellationToken)
     {
-        var trendingMovies = await GetTrendingMoviesAsync(cancellationToken);
-        var nowPlayingMovies = await GetNowPlayingMoviesAsync(cancellationToken);
-        var popularMovies = await GetPopularMoviesAsync(cancellationToken);
-        var upcomingMovies = await GetUpcomingMoviesAsync(cancellationToken);
-        var trendingSeries = await GetTrendingSeriesAsync(cancellationToken);
-        var popularSeries = await GetPopularSeriesAsync(cancellationToken);
-        var trendingPeople = await GetTrendingPeopleAsync(cancellationToken);
+        var trendingMovies = await GetTrendingMoviesAsync(1, cancellationToken);
+        var nowPlayingMovies = await GetNowPlayingMoviesAsync(1, cancellationToken);
+        var popularMovies = await GetPopularMoviesAsync(1, cancellationToken);
+        var upcomingMovies = await GetUpcomingMoviesAsync(1, cancellationToken);
+        var trendingSeries = await GetTrendingSeriesAsync(1, cancellationToken);
+        var popularSeries = await GetPopularSeriesAsync(1, cancellationToken);
+        var trendingPeople = await GetTrendingPeopleAsync(1, cancellationToken);
 
-        return new PublicHomeResponse(trendingMovies, nowPlayingMovies, popularMovies, upcomingMovies, trendingSeries, popularSeries, trendingPeople);
+        return new PublicHomeResponse(
+            trendingMovies.Items,
+            nowPlayingMovies.Items,
+            popularMovies.Items,
+            upcomingMovies.Items,
+            trendingSeries.Items,
+            popularSeries.Items,
+            trendingPeople.Items);
     }
 
-    public Task<IReadOnlyList<MediaSummaryResponse>> SearchMoviesAsync(string query, CancellationToken cancellationToken)
+    public Task<PagedResponse<MediaSummaryResponse>> SearchMoviesAsync(string query, int page, CancellationToken cancellationToken)
     {
         var normalized = NormalizeQuery(query);
-        return GetCachedAsync<IReadOnlyList<MediaSummaryResponse>>(
-            $"tmdb:movies:search:{normalized}",
+        var normalizedPage = NormalizePage(page);
+        return GetCachedAsync<PagedResponse<MediaSummaryResponse>>(
+            $"tmdb:movies:search:{normalized}:{normalizedPage}",
             SearchTtl,
             async () =>
             {
                 var genres = await GetMovieGenreMapAsync(cancellationToken);
                 var response = await GetAsync<TmdbSearchResponseDto<TmdbMovieDto>>(
-                    $"search/movie?query={Uri.EscapeDataString(normalized)}&include_adult=false&language={Language}&region={Region}&page=1",
+                    $"search/movie?query={Uri.EscapeDataString(normalized)}&include_adult=false&language={Language}&region={Region}&page={normalizedPage}",
                     cancellationToken);
-                return response.Results.Select(movie => MapMovieSummary(movie, genres)).ToList();
+                return ToPagedResponse(response, response.Results.Select(movie => MapMovieSummary(movie, genres)).ToList());
             });
     }
 
-    public Task<IReadOnlyList<MediaSummaryResponse>> GetTrendingMoviesAsync(CancellationToken cancellationToken)
+    public Task<PagedResponse<MediaSummaryResponse>> GetTrendingMoviesAsync(int page, CancellationToken cancellationToken)
     {
-        return GetMovieListAsync("tmdb:movies:trending", $"trending/movie/week?language={Language}", TrendingTtl, cancellationToken);
+        var normalizedPage = NormalizePage(page);
+        return GetMovieListAsync("tmdb:movies:trending", $"trending/movie/week?language={Language}&page={normalizedPage}", normalizedPage, TrendingTtl, cancellationToken);
     }
 
-    public Task<IReadOnlyList<MediaSummaryResponse>> GetNowPlayingMoviesAsync(CancellationToken cancellationToken)
+    public Task<PagedResponse<MediaSummaryResponse>> GetNowPlayingMoviesAsync(int page, CancellationToken cancellationToken)
     {
-        return GetMovieListAsync("tmdb:movies:now-playing", $"movie/now_playing?language={Language}&region={Region}&page=1", PopularTtl, cancellationToken);
+        var normalizedPage = NormalizePage(page);
+        return GetMovieListAsync("tmdb:movies:now-playing", $"movie/now_playing?language={Language}&region={Region}&page={normalizedPage}", normalizedPage, PopularTtl, cancellationToken);
     }
 
-    public Task<IReadOnlyList<MediaSummaryResponse>> GetPopularMoviesAsync(CancellationToken cancellationToken)
+    public Task<PagedResponse<MediaSummaryResponse>> GetPopularMoviesAsync(int page, CancellationToken cancellationToken)
     {
-        return GetMovieListAsync("tmdb:movies:popular", $"movie/popular?language={Language}&region={Region}&page=1", PopularTtl, cancellationToken);
+        var normalizedPage = NormalizePage(page);
+        return GetMovieListAsync("tmdb:movies:popular", $"movie/popular?language={Language}&region={Region}&page={normalizedPage}", normalizedPage, PopularTtl, cancellationToken);
     }
 
-    public Task<IReadOnlyList<MediaSummaryResponse>> GetUpcomingMoviesAsync(CancellationToken cancellationToken)
+    public Task<PagedResponse<MediaSummaryResponse>> GetUpcomingMoviesAsync(int page, CancellationToken cancellationToken)
     {
-        return GetMovieListAsync("tmdb:movies:upcoming", $"movie/upcoming?language={Language}&region={Region}&page=1", PopularTtl, cancellationToken);
+        var normalizedPage = NormalizePage(page);
+        return GetMovieListAsync("tmdb:movies:upcoming", $"movie/upcoming?language={Language}&region={Region}&page={normalizedPage}", normalizedPage, PopularTtl, cancellationToken);
     }
 
-    public Task<IReadOnlyList<MediaSummaryResponse>> GetTopRatedMoviesAsync(CancellationToken cancellationToken)
+    public Task<PagedResponse<MediaSummaryResponse>> GetTopRatedMoviesAsync(int page, CancellationToken cancellationToken)
     {
-        return GetMovieListAsync("tmdb:movies:top-rated", $"movie/top_rated?language={Language}&region={Region}&page=1", PopularTtl, cancellationToken);
+        var normalizedPage = NormalizePage(page);
+        return GetMovieListAsync("tmdb:movies:top-rated", $"movie/top_rated?language={Language}&region={Region}&page={normalizedPage}", normalizedPage, PopularTtl, cancellationToken);
     }
 
-    public Task<IReadOnlyList<MediaSummaryResponse>> DiscoverMoviesAsync(
+    public Task<PagedResponse<MediaSummaryResponse>> DiscoverMoviesAsync(
         int? genreId,
         int? year,
         int? watchProviderId,
         string? sortBy,
         decimal? minVoteAverage,
+        int page,
         CancellationToken cancellationToken)
     {
         var normalizedSort = NormalizeSort(sortBy, MovieSortOptions, "popularity.desc");
-        var cacheKey = $"tmdb:movies:discover:{genreId}:{year}:{watchProviderId}:{normalizedSort}:{minVoteAverage}";
+        var normalizedPage = NormalizePage(page);
+        var cacheKey = $"tmdb:movies:discover:{genreId}:{year}:{watchProviderId}:{normalizedSort}:{minVoteAverage}:{normalizedPage}";
 
-        return GetCachedAsync<IReadOnlyList<MediaSummaryResponse>>(
+        return GetCachedAsync<PagedResponse<MediaSummaryResponse>>(
             cacheKey,
             DiscoverTtl,
             async () =>
             {
                 var genres = await GetMovieGenreMapAsync(cancellationToken);
-                var query = BuildDiscoverQuery(normalizedSort, genreId, year, watchProviderId, minVoteAverage, isMovie: true);
+                var query = BuildDiscoverQuery(normalizedSort, genreId, year, watchProviderId, minVoteAverage, normalizedPage, isMovie: true);
                 var response = await GetAsync<TmdbSearchResponseDto<TmdbMovieDto>>($"discover/movie?{query}", cancellationToken);
-                return response.Results.Select(movie => MapMovieSummary(movie, genres)).ToList();
+                return ToPagedResponse(response, response.Results.Select(movie => MapMovieSummary(movie, genres)).ToList());
             });
     }
 
@@ -205,67 +220,75 @@ public sealed class TmdbClient(
             });
     }
 
-    public Task<IReadOnlyList<MediaSummaryResponse>> SearchSeriesAsync(string query, CancellationToken cancellationToken)
+    public Task<PagedResponse<MediaSummaryResponse>> SearchSeriesAsync(string query, int page, CancellationToken cancellationToken)
     {
         var normalized = NormalizeQuery(query);
-        return GetCachedAsync<IReadOnlyList<MediaSummaryResponse>>(
-            $"tmdb:series:search:{normalized}",
+        var normalizedPage = NormalizePage(page);
+        return GetCachedAsync<PagedResponse<MediaSummaryResponse>>(
+            $"tmdb:series:search:{normalized}:{normalizedPage}",
             SearchTtl,
             async () =>
             {
                 var genres = await GetSeriesGenreMapAsync(cancellationToken);
                 var response = await GetAsync<TmdbSearchResponseDto<TmdbSeriesDto>>(
-                    $"search/tv?query={Uri.EscapeDataString(normalized)}&include_adult=false&language={Language}&page=1",
+                    $"search/tv?query={Uri.EscapeDataString(normalized)}&include_adult=false&language={Language}&page={normalizedPage}",
                     cancellationToken);
-                return response.Results.Select(series => MapSeriesSummary(series, genres)).ToList();
+                return ToPagedResponse(response, response.Results.Select(series => MapSeriesSummary(series, genres)).ToList());
             });
     }
 
-    public Task<IReadOnlyList<MediaSummaryResponse>> GetTrendingSeriesAsync(CancellationToken cancellationToken)
+    public Task<PagedResponse<MediaSummaryResponse>> GetTrendingSeriesAsync(int page, CancellationToken cancellationToken)
     {
-        return GetSeriesListAsync("tmdb:series:trending", $"trending/tv/week?language={Language}", TrendingTtl, cancellationToken);
+        var normalizedPage = NormalizePage(page);
+        return GetSeriesListAsync("tmdb:series:trending", $"trending/tv/week?language={Language}&page={normalizedPage}", normalizedPage, TrendingTtl, cancellationToken);
     }
 
-    public Task<IReadOnlyList<MediaSummaryResponse>> GetPopularSeriesAsync(CancellationToken cancellationToken)
+    public Task<PagedResponse<MediaSummaryResponse>> GetPopularSeriesAsync(int page, CancellationToken cancellationToken)
     {
-        return GetSeriesListAsync("tmdb:series:popular", $"tv/popular?language={Language}&page=1", PopularTtl, cancellationToken);
+        var normalizedPage = NormalizePage(page);
+        return GetSeriesListAsync("tmdb:series:popular", $"tv/popular?language={Language}&page={normalizedPage}", normalizedPage, PopularTtl, cancellationToken);
     }
 
-    public Task<IReadOnlyList<MediaSummaryResponse>> GetTopRatedSeriesAsync(CancellationToken cancellationToken)
+    public Task<PagedResponse<MediaSummaryResponse>> GetTopRatedSeriesAsync(int page, CancellationToken cancellationToken)
     {
-        return GetSeriesListAsync("tmdb:series:top-rated", $"tv/top_rated?language={Language}&page=1", PopularTtl, cancellationToken);
+        var normalizedPage = NormalizePage(page);
+        return GetSeriesListAsync("tmdb:series:top-rated", $"tv/top_rated?language={Language}&page={normalizedPage}", normalizedPage, PopularTtl, cancellationToken);
     }
 
-    public Task<IReadOnlyList<MediaSummaryResponse>> GetAiringTodaySeriesAsync(CancellationToken cancellationToken)
+    public Task<PagedResponse<MediaSummaryResponse>> GetAiringTodaySeriesAsync(int page, CancellationToken cancellationToken)
     {
-        return GetSeriesListAsync("tmdb:series:airing-today", $"tv/airing_today?language={Language}&timezone=America/Argentina/Buenos_Aires&page=1", PopularTtl, cancellationToken);
+        var normalizedPage = NormalizePage(page);
+        return GetSeriesListAsync("tmdb:series:airing-today", $"tv/airing_today?language={Language}&timezone=America/Argentina/Buenos_Aires&page={normalizedPage}", normalizedPage, PopularTtl, cancellationToken);
     }
 
-    public Task<IReadOnlyList<MediaSummaryResponse>> GetOnTheAirSeriesAsync(CancellationToken cancellationToken)
+    public Task<PagedResponse<MediaSummaryResponse>> GetOnTheAirSeriesAsync(int page, CancellationToken cancellationToken)
     {
-        return GetSeriesListAsync("tmdb:series:on-the-air", $"tv/on_the_air?language={Language}&timezone=America/Argentina/Buenos_Aires&page=1", PopularTtl, cancellationToken);
+        var normalizedPage = NormalizePage(page);
+        return GetSeriesListAsync("tmdb:series:on-the-air", $"tv/on_the_air?language={Language}&timezone=America/Argentina/Buenos_Aires&page={normalizedPage}", normalizedPage, PopularTtl, cancellationToken);
     }
 
-    public Task<IReadOnlyList<MediaSummaryResponse>> DiscoverSeriesAsync(
+    public Task<PagedResponse<MediaSummaryResponse>> DiscoverSeriesAsync(
         int? genreId,
         int? year,
         int? watchProviderId,
         string? sortBy,
         decimal? minVoteAverage,
+        int page,
         CancellationToken cancellationToken)
     {
         var normalizedSort = NormalizeSort(sortBy, SeriesSortOptions, "popularity.desc");
-        var cacheKey = $"tmdb:series:discover:{genreId}:{year}:{watchProviderId}:{normalizedSort}:{minVoteAverage}";
+        var normalizedPage = NormalizePage(page);
+        var cacheKey = $"tmdb:series:discover:{genreId}:{year}:{watchProviderId}:{normalizedSort}:{minVoteAverage}:{normalizedPage}";
 
-        return GetCachedAsync<IReadOnlyList<MediaSummaryResponse>>(
+        return GetCachedAsync<PagedResponse<MediaSummaryResponse>>(
             cacheKey,
             DiscoverTtl,
             async () =>
             {
                 var genres = await GetSeriesGenreMapAsync(cancellationToken);
-                var query = BuildDiscoverQuery(normalizedSort, genreId, year, watchProviderId, minVoteAverage, isMovie: false);
+                var query = BuildDiscoverQuery(normalizedSort, genreId, year, watchProviderId, minVoteAverage, normalizedPage, isMovie: false);
                 var response = await GetAsync<TmdbSearchResponseDto<TmdbSeriesDto>>($"discover/tv?{query}", cancellationToken);
-                return response.Results.Select(series => MapSeriesSummary(series, genres)).ToList();
+                return ToPagedResponse(response, response.Results.Select(series => MapSeriesSummary(series, genres)).ToList());
             });
     }
 
@@ -453,29 +476,32 @@ public sealed class TmdbClient(
             });
     }
 
-    public Task<IReadOnlyList<PersonSummaryResponse>> SearchPeopleAsync(string query, CancellationToken cancellationToken)
+    public Task<PagedResponse<PersonSummaryResponse>> SearchPeopleAsync(string query, int page, CancellationToken cancellationToken)
     {
         var normalized = NormalizeQuery(query);
-        return GetCachedAsync<IReadOnlyList<PersonSummaryResponse>>(
-            $"tmdb:people:search:{normalized}",
+        var normalizedPage = NormalizePage(page);
+        return GetCachedAsync<PagedResponse<PersonSummaryResponse>>(
+            $"tmdb:people:search:{normalized}:{normalizedPage}",
             SearchTtl,
             async () =>
             {
                 var response = await GetAsync<TmdbSearchResponseDto<TmdbPersonDto>>(
-                    $"search/person?query={Uri.EscapeDataString(normalized)}&include_adult=false&language={Language}&page=1",
+                    $"search/person?query={Uri.EscapeDataString(normalized)}&include_adult=false&language={Language}&page={normalizedPage}",
                     cancellationToken);
-                return await MapPeopleAsync(response.Results, cancellationToken);
+                return ToPagedResponse(response, await MapPeopleAsync(response.Results, cancellationToken));
             });
     }
 
-    public Task<IReadOnlyList<PersonSummaryResponse>> GetTrendingPeopleAsync(CancellationToken cancellationToken)
+    public Task<PagedResponse<PersonSummaryResponse>> GetTrendingPeopleAsync(int page, CancellationToken cancellationToken)
     {
-        return GetPeopleListAsync("tmdb:people:trending", $"trending/person/week?language={Language}", TrendingTtl, cancellationToken);
+        var normalizedPage = NormalizePage(page);
+        return GetPeopleListAsync("tmdb:people:trending", $"trending/person/week?language={Language}&page={normalizedPage}", normalizedPage, TrendingTtl, cancellationToken);
     }
 
-    public Task<IReadOnlyList<PersonSummaryResponse>> GetPopularPeopleAsync(CancellationToken cancellationToken)
+    public Task<PagedResponse<PersonSummaryResponse>> GetPopularPeopleAsync(int page, CancellationToken cancellationToken)
     {
-        return GetPeopleListAsync("tmdb:people:popular", $"person/popular?language={Language}&page=1", PopularTtl, cancellationToken);
+        var normalizedPage = NormalizePage(page);
+        return GetPeopleListAsync("tmdb:people:popular", $"person/popular?language={Language}&page={normalizedPage}", normalizedPage, PopularTtl, cancellationToken);
     }
 
     public Task<PersonDetailsResponse?> GetPersonDetailsAsync(int tmdbId, CancellationToken cancellationToken)
@@ -821,53 +847,56 @@ public sealed class TmdbClient(
             ratedSeries.Results.Select(series => MapSeriesSummary(series, seriesGenres)).Take(24).ToList());
     }
 
-    private Task<IReadOnlyList<MediaSummaryResponse>> GetMovieListAsync(
+    private Task<PagedResponse<MediaSummaryResponse>> GetMovieListAsync(
         string cacheKey,
         string path,
+        int page,
         TimeSpan ttl,
         CancellationToken cancellationToken)
     {
-        return GetCachedAsync<IReadOnlyList<MediaSummaryResponse>>(
-            cacheKey,
+        return GetCachedAsync<PagedResponse<MediaSummaryResponse>>(
+            $"{cacheKey}:{page}",
             ttl,
             async () =>
             {
                 var genres = await GetMovieGenreMapAsync(cancellationToken);
                 var response = await GetAsync<TmdbSearchResponseDto<TmdbMovieDto>>(path, cancellationToken);
-                return response.Results.Select(movie => MapMovieSummary(movie, genres)).ToList();
+                return ToPagedResponse(response, response.Results.Select(movie => MapMovieSummary(movie, genres)).ToList());
             });
     }
 
-    private Task<IReadOnlyList<MediaSummaryResponse>> GetSeriesListAsync(
+    private Task<PagedResponse<MediaSummaryResponse>> GetSeriesListAsync(
         string cacheKey,
         string path,
+        int page,
         TimeSpan ttl,
         CancellationToken cancellationToken)
     {
-        return GetCachedAsync<IReadOnlyList<MediaSummaryResponse>>(
-            cacheKey,
+        return GetCachedAsync<PagedResponse<MediaSummaryResponse>>(
+            $"{cacheKey}:{page}",
             ttl,
             async () =>
             {
                 var genres = await GetSeriesGenreMapAsync(cancellationToken);
                 var response = await GetAsync<TmdbSearchResponseDto<TmdbSeriesDto>>(path, cancellationToken);
-                return response.Results.Select(series => MapSeriesSummary(series, genres)).ToList();
+                return ToPagedResponse(response, response.Results.Select(series => MapSeriesSummary(series, genres)).ToList());
             });
     }
 
-    private Task<IReadOnlyList<PersonSummaryResponse>> GetPeopleListAsync(
+    private Task<PagedResponse<PersonSummaryResponse>> GetPeopleListAsync(
         string cacheKey,
         string path,
+        int page,
         TimeSpan ttl,
         CancellationToken cancellationToken)
     {
-        return GetCachedAsync<IReadOnlyList<PersonSummaryResponse>>(
-            cacheKey,
+        return GetCachedAsync<PagedResponse<PersonSummaryResponse>>(
+            $"{cacheKey}:{page}",
             ttl,
             async () =>
             {
                 var response = await GetAsync<TmdbSearchResponseDto<TmdbPersonDto>>(path, cancellationToken);
-                return await MapPeopleAsync(response.Results, cancellationToken);
+                return ToPagedResponse(response, await MapPeopleAsync(response.Results, cancellationToken));
             });
     }
 
@@ -1611,19 +1640,39 @@ public sealed class TmdbClient(
             : fallback;
     }
 
+    private static int NormalizePage(int page)
+    {
+        return page <= 0 ? 1 : Math.Min(page, 500);
+    }
+
+    private static PagedResponse<TResponse> ToPagedResponse<TDto, TResponse>(
+        TmdbSearchResponseDto<TDto> response,
+        IReadOnlyList<TResponse> items)
+    {
+        var page = response.Page <= 0 ? 1 : response.Page;
+        var totalPages = response.TotalPages <= 0 ? page : Math.Min(response.TotalPages, 500);
+        return new PagedResponse<TResponse>(
+            items,
+            page,
+            totalPages,
+            response.TotalResults,
+            page < totalPages);
+    }
+
     private static string BuildDiscoverQuery(
         string sortBy,
         int? genreId,
         int? year,
         int? watchProviderId,
         decimal? minVoteAverage,
+        int page,
         bool isMovie)
     {
         var query = new List<KeyValuePair<string, string>>
         {
             new("language", Language),
             new("region", Region),
-            new("page", "1"),
+            new("page", page.ToString()),
             new("include_adult", "false"),
             new("sort_by", sortBy),
         };

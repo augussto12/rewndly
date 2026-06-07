@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query'
+import { useInfiniteQuery, useQuery } from '@tanstack/react-query'
 import {
   discoverMovies,
   discoverSeries,
@@ -8,10 +8,16 @@ import {
   getMovieGenres,
   getMovieDetails,
   getMovieWatchProviders,
+  getNowPlayingMovies,
+  getTrendingMovies,
+  getUpcomingMovies,
   getKeywordDetails,
   getNetworkDetails,
   getPersonDetails,
   getOnTheAirSeries,
+  getPopularMovies,
+  getPopularPeople,
+  getPopularSeries,
   getPublicHome,
   getSeriesDetails,
   getSeriesGenres,
@@ -19,6 +25,8 @@ import {
   getSeasonDetails,
   getTopRatedMovies,
   getTopRatedSeries,
+  getTrendingPeople,
+  getTrendingSeries,
   getEpisodeDetails,
   getTmdbReviewDetails,
   searchPeople,
@@ -26,6 +34,10 @@ import {
   searchSeries,
 } from '../services/publicMediaApi'
 import type { DiscoverFilters } from '../types/publicMedia.types'
+
+export type MovieBrowseCategory = 'popular' | 'trending' | 'now-playing' | 'upcoming' | 'top-rated'
+export type SeriesBrowseCategory = 'popular' | 'trending' | 'airing-today' | 'on-the-air' | 'top-rated'
+export type PeopleBrowseCategory = 'popular' | 'trending'
 
 export function usePublicHome() {
   return useQuery({
@@ -37,16 +49,54 @@ export function usePublicHome() {
 export function useMovieSearch(query: string) {
   return useQuery({
     queryKey: ['movies-search', query],
-    queryFn: () => searchMovies(query),
+    queryFn: () => searchMovies(query, 1),
     enabled: query.trim().length >= 2,
+  })
+}
+
+export function useMovieBrowse(category: MovieBrowseCategory) {
+  return useInfiniteQuery({
+    queryKey: ['movies-browse', category],
+    queryFn: ({ pageParam }) => getMovieBrowsePage(category, pageParam),
+    initialPageParam: 1,
+    getNextPageParam: (lastPage) => (lastPage.hasMore ? lastPage.page + 1 : undefined),
+  })
+}
+
+export function useMovieSearchPages(query: string) {
+  return useInfiniteQuery({
+    queryKey: ['movies-search-pages', query],
+    queryFn: ({ pageParam }) => searchMovies(query, pageParam),
+    initialPageParam: 1,
+    enabled: query.trim().length >= 2,
+    getNextPageParam: (lastPage) => (lastPage.hasMore ? lastPage.page + 1 : undefined),
   })
 }
 
 export function useSeriesSearch(query: string) {
   return useQuery({
     queryKey: ['series-search', query],
-    queryFn: () => searchSeries(query),
+    queryFn: () => searchSeries(query, 1),
     enabled: query.trim().length >= 2,
+  })
+}
+
+export function useSeriesBrowse(category: SeriesBrowseCategory) {
+  return useInfiniteQuery({
+    queryKey: ['series-browse', category],
+    queryFn: ({ pageParam }) => getSeriesBrowsePage(category, pageParam),
+    initialPageParam: 1,
+    getNextPageParam: (lastPage) => (lastPage.hasMore ? lastPage.page + 1 : undefined),
+  })
+}
+
+export function useSeriesSearchPages(query: string) {
+  return useInfiniteQuery({
+    queryKey: ['series-search-pages', query],
+    queryFn: ({ pageParam }) => searchSeries(query, pageParam),
+    initialPageParam: 1,
+    enabled: query.trim().length >= 2,
+    getNextPageParam: (lastPage) => (lastPage.hasMore ? lastPage.page + 1 : undefined),
   })
 }
 
@@ -61,7 +111,7 @@ export function useMovieDetails(tmdbId: number) {
 export function useTopRatedMovies() {
   return useQuery({
     queryKey: ['movies-top-rated'],
-    queryFn: getTopRatedMovies,
+    queryFn: () => getTopRatedMovies(1),
   })
 }
 
@@ -92,21 +142,21 @@ export function useEpisodeDetails(seriesTmdbId: number, seasonNumber: number, ep
 export function useTopRatedSeries() {
   return useQuery({
     queryKey: ['series-top-rated'],
-    queryFn: getTopRatedSeries,
+    queryFn: () => getTopRatedSeries(1),
   })
 }
 
 export function useAiringTodaySeries() {
   return useQuery({
     queryKey: ['series-airing-today'],
-    queryFn: getAiringTodaySeries,
+    queryFn: () => getAiringTodaySeries(1),
   })
 }
 
 export function useOnTheAirSeries() {
   return useQuery({
     queryKey: ['series-on-the-air'],
-    queryFn: getOnTheAirSeries,
+    queryFn: () => getOnTheAirSeries(1),
   })
 }
 
@@ -115,8 +165,20 @@ export function useDiscoverMedia(filters: DiscoverFilters) {
     queryKey: ['discover-media', filters],
     queryFn: () => {
       const { mediaType, ...request } = filters
-      return mediaType === 'Movie' ? discoverMovies(request) : discoverSeries(request)
+      return mediaType === 'Movie' ? discoverMovies(request, 1) : discoverSeries(request, 1)
     },
+  })
+}
+
+export function useDiscoverMediaPages(filters: DiscoverFilters) {
+  return useInfiniteQuery({
+    queryKey: ['discover-media-pages', filters],
+    queryFn: ({ pageParam }) => {
+      const { mediaType, ...request } = filters
+      return mediaType === 'Movie' ? discoverMovies(request, pageParam) : discoverSeries(request, pageParam)
+    },
+    initialPageParam: 1,
+    getNextPageParam: (lastPage) => (lastPage.hasMore ? lastPage.page + 1 : undefined),
   })
 }
 
@@ -137,8 +199,27 @@ export function useDiscoverOptions(mediaType: 'Movie' | 'Series') {
 export function usePeopleSearch(query: string) {
   return useQuery({
     queryKey: ['people-search', query],
-    queryFn: () => searchPeople(query),
+    queryFn: () => searchPeople(query, 1),
     enabled: query.trim().length >= 2,
+  })
+}
+
+export function usePeopleBrowse(category: PeopleBrowseCategory) {
+  return useInfiniteQuery({
+    queryKey: ['people-browse', category],
+    queryFn: ({ pageParam }) => (category === 'trending' ? getTrendingPeople(pageParam) : getPopularPeople(pageParam)),
+    initialPageParam: 1,
+    getNextPageParam: (lastPage) => (lastPage.hasMore ? lastPage.page + 1 : undefined),
+  })
+}
+
+export function usePeopleSearchPages(query: string) {
+  return useInfiniteQuery({
+    queryKey: ['people-search-pages', query],
+    queryFn: ({ pageParam }) => searchPeople(query, pageParam),
+    initialPageParam: 1,
+    enabled: query.trim().length >= 2,
+    getNextPageParam: (lastPage) => (lastPage.hasMore ? lastPage.page + 1 : undefined),
   })
 }
 
@@ -188,4 +269,36 @@ export function useTmdbReviewDetails(reviewId: string | undefined) {
     queryFn: () => getTmdbReviewDetails(reviewId ?? ''),
     enabled: Boolean(reviewId?.trim()),
   })
+}
+
+function getMovieBrowsePage(category: MovieBrowseCategory, page: number) {
+  switch (category) {
+    case 'trending':
+      return getTrendingMovies(page)
+    case 'now-playing':
+      return getNowPlayingMovies(page)
+    case 'upcoming':
+      return getUpcomingMovies(page)
+    case 'top-rated':
+      return getTopRatedMovies(page)
+    case 'popular':
+    default:
+      return getPopularMovies(page)
+  }
+}
+
+function getSeriesBrowsePage(category: SeriesBrowseCategory, page: number) {
+  switch (category) {
+    case 'trending':
+      return getTrendingSeries(page)
+    case 'airing-today':
+      return getAiringTodaySeries(page)
+    case 'on-the-air':
+      return getOnTheAirSeries(page)
+    case 'top-rated':
+      return getTopRatedSeries(page)
+    case 'popular':
+    default:
+      return getPopularSeries(page)
+  }
 }

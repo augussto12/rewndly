@@ -1,5 +1,5 @@
 import { httpClient } from '../../../services/httpClient'
-import type { AuthResponse, AuthUser, LoginRequest, RegisterRequest } from '../types/auth.types'
+import type { AuthResponse, AuthUser, ChangePasswordRequest, LoginRequest, RegisterRequest } from '../types/auth.types'
 
 export function register(request: RegisterRequest) {
   return httpClient<AuthResponse>('/api/auth/register', {
@@ -30,6 +30,13 @@ export function logout() {
 export function logoutAll() {
   return httpClient<void>('/api/auth/logout-all', {
     method: 'POST',
+  })
+}
+
+export function changePassword(request: ChangePasswordRequest) {
+  return httpClient<AuthUser>('/api/auth/change-password', {
+    method: 'POST',
+    body: JSON.stringify(request),
   })
 }
 

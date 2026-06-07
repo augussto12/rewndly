@@ -9,7 +9,7 @@ services:
       POSTGRES_USER: rewndly
       POSTGRES_PASSWORD: rewndly_dev_password
     ports:
-      - "5432:5432"
+      - "${POSTGRES_HOST_PORT:-5432}:5432"
     volumes:
       - rewndly_postgres_data:/var/lib/postgresql/data
       - ./backend/database/init:/docker-entrypoint-initdb.d:ro

@@ -32,12 +32,12 @@ export function HomePage() {
         <main>
           <HeroSection item={heroItem} />
           <div className="mx-auto max-w-7xl pb-12">
-            <MediaCarousel title="Peliculas en tendencia" items={data?.trendingMovies ?? []} />
-            <MediaCarousel title="Peliculas en cartelera" items={data?.nowPlayingMovies ?? []} />
-            <MediaCarousel title="Peliculas populares" items={data?.popularMovies ?? []} />
-            <MediaCarousel title="Proximos estrenos" items={data?.upcomingMovies ?? []} />
-            <MediaCarousel title="Series en tendencia" items={data?.trendingSeries ?? []} />
-            <MediaCarousel title="Series populares" items={data?.popularSeries ?? []} />
+            <MediaCarousel title="Peliculas en tendencia" items={data?.trendingMovies ?? []} viewAllHref="/movies/search?category=trending" />
+            <MediaCarousel title="Peliculas en cartelera" items={data?.nowPlayingMovies ?? []} viewAllHref="/movies/search?category=now-playing" />
+            <MediaCarousel title="Peliculas populares" items={data?.popularMovies ?? []} viewAllHref="/movies/search?category=popular" />
+            <MediaCarousel title="Proximos estrenos" items={data?.upcomingMovies ?? []} viewAllHref="/movies/search?category=upcoming" />
+            <MediaCarousel title="Series en tendencia" items={data?.trendingSeries ?? []} viewAllHref="/series/search?category=trending" />
+            <MediaCarousel title="Series populares" items={data?.popularSeries ?? []} viewAllHref="/series/search?category=popular" />
             <PersonCarousel title="Personas en tendencia" items={data?.trendingPeople ?? []} />
           </div>
         </main>
