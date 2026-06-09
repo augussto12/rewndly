@@ -448,6 +448,26 @@ textarea.field {
   background: rgba(124, 58, 237, 0.62);
 }
 
+.scrollbar-cinema-visible {
+  scrollbar-color: rgba(124, 58, 237, 0.62) rgba(255, 255, 255, 0.05);
+  scrollbar-width: thin;
+}
+
+.scrollbar-cinema-visible::-webkit-scrollbar {
+  width: 0.55rem;
+  height: 0.55rem;
+}
+
+.scrollbar-cinema-visible::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 999px;
+}
+
+.scrollbar-cinema-visible::-webkit-scrollbar-thumb {
+  background: rgba(124, 58, 237, 0.62);
+  border-radius: 999px;
+}
+
 @media (max-width: 767px) {
   .primary-action,
   .secondary-action,
@@ -480,6 +500,11 @@ textarea.field {
   .scrollbar-cinema:active::-webkit-scrollbar,
   .scrollbar-cinema:focus::-webkit-scrollbar,
   .scrollbar-cinema:focus-within::-webkit-scrollbar {
+    width: 0.45rem;
+    height: 0.45rem;
+  }
+
+  .scrollbar-cinema-visible::-webkit-scrollbar {
     width: 0.45rem;
     height: 0.45rem;
   }

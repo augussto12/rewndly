@@ -27,7 +27,7 @@ export function MediaCarousel({ title, items, viewAllHref, rankLabels }: MediaCa
           </Link>
         ) : null}
       </div>
-      <div className="scrollbar-cinema flex gap-4 overflow-x-auto px-4 pb-4 sm:px-6">
+      <div className="scrollbar-cinema-visible flex gap-4 overflow-x-auto px-4 pb-4 sm:px-6">
         {items.map((item) => (
           <PosterCard key={`${item.mediaType}-${item.tmdbId}`} item={item} layout="carousel" rankLabel={rankLabels?.get(getMediaKey(item))} />
         ))}

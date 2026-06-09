@@ -114,7 +114,7 @@ export function PosterGamePage() {
   const revealedTileCount = isRevealed ? posterTileCount : getRevealedTiles(revealLevel).size
   const hasWon = storedGame.solved
   const progressLabel = `${guesses.length}/${maxAttempts}`
-  const suggestionsList = suggestions.data?.items.slice(0, 6) ?? []
+  const suggestionsList = suggestions.data?.items ?? []
   const guessResults = guesses.map((guess, index) => ({
     guess,
     detail: guessDetails[index]?.data as GameDetails | undefined,
@@ -285,7 +285,7 @@ export function PosterGamePage() {
                   </label>
 
                   {suggestionsList.length > 0 ? (
-                    <div className="mt-3 grid gap-2">
+                    <div className="scrollbar-cinema-visible mt-3 grid max-h-[19rem] gap-2 overflow-y-auto pr-1">
                       {suggestionsList.map((movie) => (
                         <button
                           key={`${movie.mediaType}-${movie.tmdbId}`}
