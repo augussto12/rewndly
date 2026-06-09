@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { EmptyState } from '../components/feedback/EmptyState/EmptyState'
 import { ErrorState } from '../components/feedback/ErrorState/ErrorState'
 import { LoadingSkeleton } from '../components/feedback/LoadingSkeleton/LoadingSkeleton'
+import { toast } from '../components/feedback/Toast/toastStore'
 import { useCreateList, useDeleteList, useMyLists } from '../features/user-content/hooks/useUserContent'
 import type { Visibility } from '../features/user-content/types/userContent.types'
 import { PublicLayout } from '../layouts/PublicLayout'
@@ -19,6 +20,7 @@ export function MyListsPage() {
 
   async function submitList() {
     if (!title.trim()) {
+      toast.error('Falta el titulo', 'Escribi un nombre para crear la lista.')
       return
     }
 

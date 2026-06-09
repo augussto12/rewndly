@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import type { PropsWithChildren } from 'react'
+import { toast } from '../../components/feedback/Toast/toastStore'
+import { getErrorMessage } from '../../services/apiError'
 import { AuthContext } from './authContext'
 import type { AuthContextValue } from './authContext'
 import { changePassword, login, logout, me, refreshSession, register } from './services/authApi'
@@ -45,25 +47,46 @@ export function AuthProvider({ children }: PropsWithChildren) {
   }, [])
 
   const handleLogin = useCallback(async (request: LoginRequest) => {
-    const auth = await login(request)
-    setAccessToken(auth.accessToken)
-    setUser(auth.user)
+    try {
+      const auth = await login(request)
+      setAccessToken(auth.accessToken)
+      setUser(auth.user)
+      toast.success('Sesion iniciada', `Hola, ${auth.user.displayName}.`)
+    } catch (error) {
+      toast.error('No se pudo iniciar sesion', getErrorMessage(error, 'Revisa tus credenciales e intenta de nuevo.'))
+      throw error
+    }
   }, [])
 
   const handleRegister = useCallback(async (request: RegisterRequest) => {
-    const auth = await register(request)
-    setAccessToken(auth.accessToken)
-    setUser(auth.user)
+    try {
+      const auth = await register(request)
+      setAccessToken(auth.accessToken)
+      setUser(auth.user)
+      toast.success('Cuenta creada', 'Ya podes empezar a guardar contenido.')
+    } catch (error) {
+      toast.error('No se pudo crear la cuenta', getErrorMessage(error, 'Revisa los datos e intenta de nuevo.'))
+      throw error
+    }
   }, [])
 
   const handleChangePassword = useCallback(async (request: ChangePasswordRequest) => {
-    const updatedUser = await changePassword(request)
-    setUser(updatedUser)
+    try {
+      const updatedUser = await changePassword(request)
+      setUser(updatedUser)
+      toast.success('Password actualizado', 'Tu cuenta quedo con el nuevo password.')
+    } catch (error) {
+      toast.error('No se pudo cambiar el password', getErrorMessage(error, 'Revisa los datos e intenta de nuevo.'))
+      throw error
+    }
   }, [])
 
   const handleLogout = useCallback(async () => {
     try {
       await logout()
+      toast.success('Sesion cerrada', 'Volves a navegar como visitante.')
+    } catch (error) {
+      toast.error('No pudimos cerrar sesion en el servidor', getErrorMessage(error, 'La sesion local se va a limpiar igual.'))
     } finally {
       setAccessToken(null)
       setUser(null)

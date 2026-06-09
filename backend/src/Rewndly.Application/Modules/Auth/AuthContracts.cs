@@ -21,6 +21,18 @@ public sealed record AuthResponse(
     AuthUserResponse User,
     bool MustChangePassword);
 
+public sealed record MobileAuthResponse(
+    string AccessToken,
+    DateTimeOffset AccessTokenExpiresAt,
+    string RefreshToken,
+    DateTimeOffset RefreshTokenExpiresAt,
+    AuthUserResponse User,
+    bool MustChangePassword);
+
+public sealed record MobileRefreshRequest(string RefreshToken);
+
+public sealed record MobileLogoutRequest(string? RefreshToken);
+
 public sealed record AuthUserResponse(
     Guid Id,
     string Username,

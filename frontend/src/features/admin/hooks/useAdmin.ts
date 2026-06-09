@@ -1,4 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { toast } from '../../../components/feedback/Toast/toastStore'
+import { getErrorMessage } from '../../../services/apiError'
 import {
   deleteAdminList,
   deleteAdminReview,
@@ -32,9 +34,11 @@ export function useDisableAdminUser() {
   return useMutation({
     mutationFn: ({ id, reason }: { id: string; reason: string | null }) => disableAdminUser(id, reason),
     onSuccess: (_user, args) => {
+      toast.success('Usuario deshabilitado', 'El cambio quedo registrado en auditoria.')
       void queryClient.invalidateQueries({ queryKey: ['admin-users'] })
       void queryClient.invalidateQueries({ queryKey: ['admin-user', args.id] })
     },
+    onError: (error) => notifyAdminError(error, 'No se pudo deshabilitar el usuario.'),
   })
 }
 
@@ -43,9 +47,11 @@ export function useEnableAdminUser() {
   return useMutation({
     mutationFn: ({ id, reason }: { id: string; reason: string | null }) => enableAdminUser(id, reason),
     onSuccess: (_user, args) => {
+      toast.success('Usuario habilitado', 'El usuario puede volver a usar la cuenta.')
       void queryClient.invalidateQueries({ queryKey: ['admin-users'] })
       void queryClient.invalidateQueries({ queryKey: ['admin-user', args.id] })
     },
+    onError: (error) => notifyAdminError(error, 'No se pudo habilitar el usuario.'),
   })
 }
 
@@ -53,7 +59,11 @@ export function useDeleteAdminUser() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: ({ id, reason }: { id: string; reason: string | null }) => deleteAdminUser(id, reason),
-    onSuccess: () => void queryClient.invalidateQueries({ queryKey: ['admin-users'] }),
+    onSuccess: () => {
+      toast.success('Usuario eliminado', 'El soft delete quedo aplicado.')
+      void queryClient.invalidateQueries({ queryKey: ['admin-users'] })
+    },
+    onError: (error) => notifyAdminError(error, 'No se pudo eliminar el usuario.'),
   })
 }
 
@@ -65,7 +75,11 @@ export function useDeleteAdminReview() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: ({ id, reason }: { id: string; reason: string | null }) => deleteAdminReview(id, reason),
-    onSuccess: () => void queryClient.invalidateQueries({ queryKey: ['admin-reviews'] }),
+    onSuccess: () => {
+      toast.success('Review eliminada', 'La accion administrativa quedo guardada.')
+      void queryClient.invalidateQueries({ queryKey: ['admin-reviews'] })
+    },
+    onError: (error) => notifyAdminError(error, 'No se pudo eliminar la review.'),
   })
 }
 
@@ -77,7 +91,11 @@ export function useDeleteAdminList() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: ({ id, reason }: { id: string; reason: string | null }) => deleteAdminList(id, reason),
-    onSuccess: () => void queryClient.invalidateQueries({ queryKey: ['admin-lists'] }),
+    onSuccess: () => {
+      toast.success('Lista eliminada', 'La accion administrativa quedo guardada.')
+      void queryClient.invalidateQueries({ queryKey: ['admin-lists'] })
+    },
+    onError: (error) => notifyAdminError(error, 'No se pudo eliminar la lista.'),
   })
 }
 
@@ -91,4 +109,8 @@ export function useAdminActivityEvents() {
 
 export function useAdminAuditLogs() {
   return useQuery({ queryKey: ['admin-audit-logs'], queryFn: getAdminAuditLogs })
+}
+
+function notifyAdminError(error: unknown, fallback: string) {
+  toast.error('No se pudo completar la accion admin', getErrorMessage(error, fallback))
 }

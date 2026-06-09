@@ -17,7 +17,7 @@ export function MyReviewsPage() {
     try {
       await deleteReview.mutateAsync(id)
     } catch (error) {
-      setActionError(getErrorMessage(error, 'No se pudo eliminar la resena. Puede que ya no exista o no pertenezca a tu cuenta.'))
+      setActionError(getErrorMessage(error, 'No se pudo eliminar la reseña. Puede que ya no exista o no pertenezca a tu cuenta.'))
     }
   }
 
@@ -25,15 +25,15 @@ export function MyReviewsPage() {
     <PublicLayout>
       <main className="mx-auto max-w-5xl px-4 py-10 sm:px-6">
         <header className="mb-8">
-          <p className="kicker">Resenas</p>
-          <h1 className="mt-3 text-4xl font-semibold">Mis resenas</h1>
+          <p className="kicker">Reseñas</p>
+          <h1 className="mt-3 text-4xl font-semibold">Mis reseñas</h1>
           <p className="mt-3 text-[var(--color-text-secondary)]">Textos independientes de tu biblioteca personal.</p>
         </header>
         {isLoading ? <LoadingSkeleton /> : null}
         {isError ? <ErrorState /> : null}
         {actionError ? <ActionError message={actionError} /> : null}
         {!isLoading && !isError && data?.length === 0 ? (
-          <EmptyState title="Sin resenas" message="Crea una resena desde el detalle de una pelicula o serie." />
+          <EmptyState title="Sin reseñas" message="Crea una reseña desde el detalle de una pelicula o serie." />
         ) : null}
         <div className="grid gap-4">
           {data?.map((review) => (

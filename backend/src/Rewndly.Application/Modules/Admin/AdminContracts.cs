@@ -63,7 +63,7 @@ public sealed record AdminReviewResponse(
     string MediaType,
     int TmdbId,
     string MediaTitle,
-    int? RatingSnapshot,
+    decimal? RatingSnapshot,
     string Title,
     bool ContainsSpoilers,
     string Visibility,

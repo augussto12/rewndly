@@ -9,11 +9,12 @@ public sealed class UserContentValidatorTests
     [InlineData("Bad", "Watched", 5, false)]
     [InlineData("Movie", "Invalid", 5, false)]
     [InlineData("Movie", "Watched", 0, false)]
+    [InlineData("Movie", "Watched", 9.8, true)]
     [InlineData("Series", "WantToWatch", 10, true)]
-    public void LibraryItemValidator_EnforcesMediaStatusAndRating(string mediaType, string status, int rating, bool expectedValid)
+    public void LibraryItemValidator_EnforcesMediaStatusAndRating(string mediaType, string status, double rating, bool expectedValid)
     {
         var validator = new LibraryItemRequestValidator();
-        var request = new LibraryItemRequest(mediaType, 123, status, false, rating, null, null);
+        var request = new LibraryItemRequest(mediaType, 123, status, false, Convert.ToDecimal(rating), null, null);
 
         var result = validator.Validate(request);
 

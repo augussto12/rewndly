@@ -13,6 +13,19 @@ CREATE TABLE genres (
     CONSTRAINT pk_genres PRIMARY KEY (id)
 );
 
+CREATE TABLE external_media_ratings (
+    id uuid NOT NULL DEFAULT (gen_random_uuid()),
+    media_type character varying(20) NOT NULL,
+    tmdb_id integer NOT NULL,
+    source character varying(40) NOT NULL,
+    value numeric(6,2),
+    votes integer,
+    scale numeric(6,2),
+    fetched_at timestamp(3) with time zone NOT NULL,
+    expires_at timestamp(3) with time zone NOT NULL,
+    CONSTRAINT pk_external_media_ratings PRIMARY KEY (id)
+);
+
 CREATE TABLE movies (
     id uuid NOT NULL DEFAULT (gen_random_uuid()),
     tmdb_id integer NOT NULL,
@@ -204,7 +217,7 @@ CREATE TABLE reviews (
     media_type character varying(20) NOT NULL,
     movie_id uuid,
     series_id uuid,
-    rating_snapshot integer,
+    rating_snapshot numeric(3,1),
     title character varying(180) NOT NULL,
     body character varying(8000) NOT NULL,
     contains_spoilers boolean NOT NULL,
@@ -243,7 +256,7 @@ CREATE TABLE user_media_items (
     series_id uuid,
     status character varying(30) NOT NULL,
     is_favorite boolean NOT NULL,
-    rating integer,
+    rating numeric(3,1),
     watched_at timestamp(3) with time zone,
     started_at timestamp(3) with time zone,
     created_at timestamp(3) with time zone NOT NULL DEFAULT (now()),
@@ -318,6 +331,10 @@ CREATE UNIQUE INDEX ux_friendships_unordered_pair
 ON friendships (LEAST(requester_id, receiver_id), GREATEST(requester_id, receiver_id));
 
 CREATE UNIQUE INDEX ix_genres_tmdb_id_media_type ON genres (tmdb_id, media_type);
+
+CREATE INDEX ix_external_media_ratings_media_type_tmdb_id_expires_at ON external_media_ratings (media_type, tmdb_id, expires_at);
+
+CREATE UNIQUE INDEX ix_external_media_ratings_media_type_tmdb_id_source ON external_media_ratings (media_type, tmdb_id, source);
 
 CREATE INDEX ix_list_items_list_id ON list_items (list_id);
 

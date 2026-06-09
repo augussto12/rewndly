@@ -2,6 +2,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Rewndly.Application.Common.Interfaces;
+using Rewndly.Infrastructure.ExternalServices;
+using Rewndly.Infrastructure.ExternalServices.MdbList;
 using Rewndly.Infrastructure.Authentication;
 using Rewndly.Infrastructure.ExternalServices.Tmdb;
 using Rewndly.Infrastructure.Persistence;
@@ -25,6 +27,16 @@ public static class DependencyInjection
         });
 
         services.Configure<JwtOptions>(configuration.GetSection(JwtOptions.SectionName));
+        services.Configure<MdbListOptions>(configuration.GetSection(MdbListOptions.SectionName));
+        services.PostConfigure<MdbListOptions>(options =>
+        {
+            options.ApiKey = FirstNonBlank(configuration["MDBLIST_API_KEY"], options.ApiKey);
+            options.BaseUrl = FirstNonBlank(configuration["MDBLIST_BASE_URL"], options.BaseUrl);
+            if (options.Enabled && string.IsNullOrWhiteSpace(options.ApiKey))
+            {
+                options.Enabled = false;
+            }
+        });
         services.Configure<TmdbOptions>(configuration.GetSection(TmdbOptions.SectionName));
         services.PostConfigure<TmdbOptions>(options =>
         {
@@ -45,7 +57,17 @@ public static class DependencyInjection
             client.BaseAddress = new Uri(tmdbOptions.BaseUrl.TrimEnd('/') + "/");
             client.Timeout = TimeSpan.FromSeconds(tmdbOptions.TimeoutSeconds);
         });
-        services.AddScoped<IPublicMediaService>(serviceProvider => serviceProvider.GetRequiredService<TmdbClient>());
+        services.AddHttpClient<MdbListClient>((serviceProvider, client) =>
+        {
+            var mdbListOptions = configuration.GetSection(MdbListOptions.SectionName).Get<MdbListOptions>() ?? new MdbListOptions();
+            mdbListOptions.BaseUrl = configuration["MDBLIST_BASE_URL"] ?? mdbListOptions.BaseUrl;
+            client.BaseAddress = new Uri(mdbListOptions.BaseUrl.TrimEnd('/') + "/");
+            client.Timeout = TimeSpan.FromSeconds(Math.Clamp(mdbListOptions.TimeoutSeconds, 1, 30));
+        });
+        services.AddScoped<MdbListRatingsService>();
+        services.AddScoped<IExternalMediaRankingService, MdbListRankingService>();
+        services.AddScoped<IExternalMediaRatingsService>(serviceProvider => serviceProvider.GetRequiredService<MdbListRatingsService>());
+        services.AddScoped<IPublicMediaService, EnrichedPublicMediaService>();
         services.AddScoped<ITmdbReadOnlyGateway>(serviceProvider => serviceProvider.GetRequiredService<TmdbClient>());
         services.AddScoped<ITmdbAccountService>(serviceProvider => serviceProvider.GetRequiredService<TmdbClient>());
 

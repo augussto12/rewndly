@@ -18,23 +18,29 @@ export function MediaEntityLinks({ collection, companies = [], networks = [] }: 
   }
 
   return (
-    <section className="mx-auto max-w-7xl px-4 pb-12 sm:px-6">
-      <div className="surface-panel p-4 sm:p-5">
-        <p className="kicker">Universo TMDB</p>
-        <div className="mt-4 grid gap-5 lg:grid-cols-3">
+    <section className="relative z-10 mx-auto -mt-10 max-w-7xl px-4 pb-12 pt-16 sm:-mt-14 sm:px-6 sm:pt-20">
+      <div className="surface-panel overflow-hidden p-4 sm:p-5">
+        <div className="flex items-center gap-3">
+          <span className="h-px flex-1 bg-gradient-to-r from-transparent via-white/12 to-transparent" aria-hidden="true" />
+          <p className="kicker shrink-0">Universo TMDB</p>
+          <span className="h-px flex-1 bg-gradient-to-r from-transparent via-white/12 to-transparent" aria-hidden="true" />
+        </div>
+        <div className="mt-4 space-y-6">
           {collection ? (
-            <EntityGroup title="Saga o coleccion">
+            <div>
+              <h2 className="text-sm font-semibold text-white">Saga o coleccion</h2>
               <EntityTile
                 to={`/collections/${collection.tmdbId}`}
                 title={collection.name}
                 imageUrl={collection.posterUrl ?? collection.backdropUrl}
                 fallback="Coleccion"
+                variant="wide"
               />
-            </EntityGroup>
+            </div>
           ) : null}
 
           {companies.length > 0 ? (
-            <EntityGroup title="Productoras">
+            <EntityRail title="Productoras">
               {companies.slice(0, 6).map((company) => (
                 <EntityTile
                   key={company.tmdbId}
@@ -45,11 +51,11 @@ export function MediaEntityLinks({ collection, companies = [], networks = [] }: 
                   fallback="Compania"
                 />
               ))}
-            </EntityGroup>
+            </EntityRail>
           ) : null}
 
           {networks.length > 0 ? (
-            <EntityGroup title="Networks">
+            <EntityRail title="Networks">
               {networks.slice(0, 6).map((network) => (
                 <EntityTile
                   key={network.tmdbId}
@@ -60,7 +66,7 @@ export function MediaEntityLinks({ collection, companies = [], networks = [] }: 
                   fallback="Network"
                 />
               ))}
-            </EntityGroup>
+            </EntityRail>
           ) : null}
         </div>
       </div>
@@ -68,11 +74,15 @@ export function MediaEntityLinks({ collection, companies = [], networks = [] }: 
   )
 }
 
-function EntityGroup({ title, children }: { title: string; children: ReactNode }) {
+function EntityRail({ title, children }: { title: string; children: ReactNode }) {
   return (
     <div>
       <h2 className="text-sm font-semibold text-white">{title}</h2>
-      <div className="mt-3 grid gap-3">{children}</div>
+      <div className="relative mt-3">
+        <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-8 bg-gradient-to-r from-[var(--color-surface)] to-transparent" />
+        <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-8 bg-gradient-to-l from-[var(--color-surface)] to-transparent" />
+        <div className="scrollbar-cinema flex gap-3 overflow-x-auto pb-4">{children}</div>
+      </div>
     </div>
   )
 }
@@ -83,20 +93,28 @@ function EntityTile({
   subtitle,
   imageUrl,
   fallback,
+  variant = 'rail',
 }: {
   to: string
   title: string
   subtitle?: string | null
   imageUrl?: string | null
   fallback: string
+  variant?: 'rail' | 'wide'
 }) {
   return (
     <Link
       to={to}
-      className="flex min-h-16 items-center gap-3 rounded-[var(--radius-md)] border border-white/10 bg-white/[0.035] p-3 transition hover:-translate-y-0.5 hover:border-violet-200/28"
+      className={`group flex min-h-24 items-center gap-3 rounded-[var(--radius-md)] border border-white/10 bg-white/[0.035] p-3 transition hover:-translate-y-0.5 hover:border-violet-200/28 hover:bg-white/[0.06] ${
+        variant === 'wide' ? 'mt-3 max-w-xl' : 'min-w-[13.5rem] max-w-[13.5rem]'
+      }`}
     >
-      <div className="grid h-11 w-11 shrink-0 place-items-center overflow-hidden rounded-[var(--radius-sm)] bg-white/[0.06]">
-        {imageUrl ? <img src={imageUrl} alt="" className="h-full w-full object-contain p-1" loading="lazy" /> : <span className="px-1 text-center text-[10px] text-[var(--color-text-secondary)]">{fallback}</span>}
+      <div className="grid h-16 w-16 shrink-0 place-items-center overflow-hidden rounded-[var(--radius-sm)] bg-white/[0.08]">
+        {imageUrl ? (
+          <img src={imageUrl} alt="" className="h-full w-full object-contain p-2 transition group-hover:scale-105" loading="lazy" />
+        ) : (
+          <span className="px-1 text-center text-[10px] text-[var(--color-text-secondary)]">{fallback}</span>
+        )}
       </div>
       <div className="min-w-0">
         <h3 className="line-clamp-2 text-sm font-semibold leading-snug">{title}</h3>

@@ -42,7 +42,7 @@ public sealed record PublicReviewResponse(
     string MediaType,
     int TmdbId,
     string MediaTitle,
-    int? RatingSnapshot,
+    decimal? RatingSnapshot,
     string Title,
     string Body,
     bool ContainsSpoilers,

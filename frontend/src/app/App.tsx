@@ -11,6 +11,7 @@ import { AdminSystemEventsPage } from '../pages/admin/AdminSystemEventsPage'
 import { AdminUserDetailsPage } from '../pages/admin/AdminUserDetailsPage'
 import { AdminUsersPage } from '../pages/admin/AdminUsersPage'
 import { HomePage } from '../pages/HomePage'
+import { ComparePage } from '../pages/ComparePage'
 import { CollectionDetailsPage } from '../pages/CollectionDetailsPage'
 import { CompanyDetailsPage } from '../pages/CompanyDetailsPage'
 import { LoginPage } from '../pages/LoginPage'
@@ -23,6 +24,7 @@ import { MyListsPage } from '../pages/MyListsPage'
 import { MyReviewsPage } from '../pages/MyReviewsPage'
 import { PeopleSearchPage } from '../pages/PeopleSearchPage'
 import { PersonDetailsPage } from '../pages/PersonDetailsPage'
+import { PosterGamePage } from '../pages/PosterGamePage'
 import { KeywordDetailsPage } from '../pages/KeywordDetailsPage'
 import { FeedPage } from '../pages/FeedPage'
 import { FriendsPage } from '../pages/FriendsPage'
@@ -95,6 +97,14 @@ const router = createBrowserRouter([
   {
     path: '/discover',
     element: withScroll(<DiscoverPage />),
+  },
+  {
+    path: '/compare',
+    element: withScroll(<ComparePage />),
+  },
+  {
+    path: '/games/poster',
+    element: withScroll(<PosterGamePage />),
   },
   {
     path: '/people/search',

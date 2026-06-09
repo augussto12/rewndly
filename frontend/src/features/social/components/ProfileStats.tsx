@@ -4,7 +4,7 @@ export function ProfileStats({ stats }: { stats: UserStats }) {
   const items = [
     ['Biblioteca', stats.libraryItems],
     ['Vistas', stats.watched],
-    ['Resenas', stats.reviews],
+    ['Reseñas', stats.reviews],
     ['Listas', stats.lists],
     ['Amigos', stats.friends],
   ]

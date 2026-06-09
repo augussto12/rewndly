@@ -42,6 +42,15 @@ public sealed class LoginRequestValidator : AbstractValidator<LoginRequest>
     }
 }
 
+public sealed class MobileRefreshRequestValidator : AbstractValidator<MobileRefreshRequest>
+{
+    public MobileRefreshRequestValidator()
+    {
+        RuleFor(request => request.RefreshToken)
+            .NotEmpty();
+    }
+}
+
 public sealed class ChangePasswordRequestValidator : AbstractValidator<ChangePasswordRequest>
 {
     public ChangePasswordRequestValidator()

@@ -1,9 +1,10 @@
 import { useMemo, useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { useParams } from 'react-router-dom'
 import { EmptyState } from '../components/feedback/EmptyState/EmptyState'
 import { ErrorState } from '../components/feedback/ErrorState/ErrorState'
 import { LoadingSkeleton } from '../components/feedback/LoadingSkeleton/LoadingSkeleton'
 import { MediaGrid } from '../components/media/MediaGrid/MediaGrid'
+import { BackButton } from '../components/navigation/BackButton'
 import { usePersonDetails } from '../features/public-media/hooks/usePublicMedia'
 import type { MediaExternalLink, MediaSummary, MediaTranslation, PersonImage, PersonTaggedImage } from '../features/public-media/types/publicMedia.types'
 import { PublicLayout } from '../layouts/PublicLayout'
@@ -46,44 +47,44 @@ export function PersonDetailsPage() {
 
       {!isLoading && !isError && data ? (
         <main>
-          <section className="mx-auto grid max-w-7xl gap-8 px-4 py-12 sm:px-6 md:grid-cols-[16rem_1fr] md:py-16">
-            <div className="w-44 md:w-full">
-              <div className="aspect-[2/3] overflow-hidden rounded-[var(--radius-md)] border border-white/[0.12] bg-[var(--color-surface-elevated)] shadow-[var(--shadow-poster)]">
-                {data.profileUrl ? (
-                  <img src={data.profileUrl} alt={data.name} className="h-full w-full object-cover" />
-                ) : (
-                  <div className="grid h-full place-items-center text-sm text-[var(--color-text-secondary)]">Sin foto</div>
-                )}
+          <section className="mx-auto max-w-7xl px-4 py-12 sm:px-6 md:py-16">
+            <BackButton fallbackHref="/people/search" className="mb-7" />
+            <div className="grid gap-8 md:grid-cols-[16rem_1fr]">
+              <div className="w-44 md:w-full">
+                <div className="aspect-[2/3] overflow-hidden rounded-[var(--radius-md)] border border-white/[0.12] bg-[var(--color-surface-elevated)] shadow-[var(--shadow-poster)]">
+                  {data.profileUrl ? (
+                    <img src={data.profileUrl} alt={data.name} className="h-full w-full object-cover" />
+                  ) : (
+                    <div className="grid h-full place-items-center text-sm text-[var(--color-text-secondary)]">Sin foto</div>
+                  )}
+                </div>
               </div>
-            </div>
 
-            <div className="min-w-0 self-end">
-              <p className="kicker">{data.knownForDepartment || 'Persona'}</p>
-              <h1 className="text-resilient mt-3 text-4xl font-semibold leading-tight sm:text-6xl">{data.name}</h1>
-              <p className="text-resilient mt-3 text-sm text-[var(--color-text-secondary)]">
-                {[formatDate(data.birthday), data.placeOfBirth].filter(Boolean).join(' / ')}
-              </p>
-              {data.biography ? (
-                <p className="mt-6 max-w-3xl text-base leading-7 text-[var(--color-text-secondary)]">{data.biography}</p>
-              ) : (
-                <p className="mt-6 max-w-3xl text-base leading-7 text-[var(--color-text-secondary)]">
-                  Todavia no hay biografia disponible.
+              <div className="min-w-0 self-end">
+                <p className="kicker">{data.knownForDepartment || 'Persona'}</p>
+                <h1 className="text-resilient mt-3 text-4xl font-semibold leading-tight sm:text-6xl">{data.name}</h1>
+                <p className="text-resilient mt-3 text-sm text-[var(--color-text-secondary)]">
+                  {[formatDate(data.birthday), data.placeOfBirth].filter(Boolean).join(' / ')}
                 </p>
-              )}
-              <div className="mt-6 flex flex-wrap gap-3">
-                <Link to="/people/search" className="secondary-action">
-                  Volver a personas
-                </Link>
-                {safeExternalUrl(data.homepage) ? (
-                  <a href={safeExternalUrl(data.homepage) ?? undefined} target="_blank" rel="noreferrer" className="secondary-action">
-                    Sitio oficial
-                  </a>
-                ) : null}
-                {data.imdbId ? (
-                  <a href={`https://www.imdb.com/name/${data.imdbId}/`} target="_blank" rel="noreferrer" className="secondary-action">
-                    IMDb
-                  </a>
-                ) : null}
+                {data.biography ? (
+                  <p className="mt-6 max-w-3xl text-base leading-7 text-[var(--color-text-secondary)]">{data.biography}</p>
+                ) : (
+                  <p className="mt-6 max-w-3xl text-base leading-7 text-[var(--color-text-secondary)]">
+                    Todavia no hay biografia disponible.
+                  </p>
+                )}
+                <div className="mt-6 flex flex-wrap gap-3">
+                  {safeExternalUrl(data.homepage) ? (
+                    <a href={safeExternalUrl(data.homepage) ?? undefined} target="_blank" rel="noreferrer" className="secondary-action">
+                      Sitio oficial
+                    </a>
+                  ) : null}
+                  {data.imdbId ? (
+                    <a href={`https://www.imdb.com/name/${data.imdbId}/`} target="_blank" rel="noreferrer" className="secondary-action">
+                      IMDb
+                    </a>
+                  ) : null}
+                </div>
               </div>
             </div>
           </section>

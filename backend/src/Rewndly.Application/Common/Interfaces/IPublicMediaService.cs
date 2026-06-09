@@ -21,9 +21,12 @@ public interface IPublicMediaService
     Task<PagedResponse<MediaSummaryResponse>> DiscoverMoviesAsync(
         int? genreId,
         int? year,
+        int? yearFrom,
+        int? yearTo,
         int? watchProviderId,
         string? sortBy,
         decimal? minVoteAverage,
+        int? runtimeMax,
         int page,
         CancellationToken cancellationToken);
 
@@ -44,6 +47,8 @@ public interface IPublicMediaService
     Task<PagedResponse<MediaSummaryResponse>> DiscoverSeriesAsync(
         int? genreId,
         int? year,
+        int? yearFrom,
+        int? yearTo,
         int? watchProviderId,
         string? sortBy,
         decimal? minVoteAverage,

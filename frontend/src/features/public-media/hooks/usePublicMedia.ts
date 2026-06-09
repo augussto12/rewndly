@@ -2,11 +2,13 @@ import { useInfiniteQuery, useQuery } from '@tanstack/react-query'
 import {
   discoverMovies,
   discoverSeries,
+  getExternalRatingsBatch,
   getAiringTodaySeries,
   getCollectionDetails,
   getCompanyDetails,
   getMovieGenres,
   getMovieDetails,
+  getMovieRanking,
   getMovieWatchProviders,
   getNowPlayingMovies,
   getTrendingMovies,
@@ -21,6 +23,7 @@ import {
   getPublicHome,
   getSeriesDetails,
   getSeriesGenres,
+  getSeriesRanking,
   getSeriesWatchProviders,
   getSeasonDetails,
   getTopRatedMovies,
@@ -34,15 +37,31 @@ import {
   searchSeries,
 } from '../services/publicMediaApi'
 import type { DiscoverFilters } from '../types/publicMedia.types'
+import type { MediaKind } from '../../user-content/types/userContent.types'
 
 export type MovieBrowseCategory = 'popular' | 'trending' | 'now-playing' | 'upcoming' | 'top-rated'
 export type SeriesBrowseCategory = 'popular' | 'trending' | 'airing-today' | 'on-the-air' | 'top-rated'
+export type ExternalRankingKey = 'imdb' | 'critics'
 export type PeopleBrowseCategory = 'popular' | 'trending'
 
 export function usePublicHome() {
   return useQuery({
     queryKey: ['public-home'],
     queryFn: getPublicHome,
+  })
+}
+
+export function useExternalRatingsBatch(
+  items: Array<{ mediaType: MediaKind; tmdbId: number }>,
+  enabled = true,
+) {
+  const limitedItems = items.slice(0, 12)
+
+  return useQuery({
+    queryKey: ['external-ratings-batch', limitedItems.map((item) => `${item.mediaType}-${item.tmdbId}`).join('|')],
+    queryFn: () => getExternalRatingsBatch(limitedItems),
+    enabled: enabled && limitedItems.length > 0,
+    staleTime: 60 * 60 * 1000,
   })
 }
 
@@ -54,21 +73,22 @@ export function useMovieSearch(query: string) {
   })
 }
 
-export function useMovieBrowse(category: MovieBrowseCategory) {
+export function useMovieBrowse(category: MovieBrowseCategory, enabled = true) {
   return useInfiniteQuery({
     queryKey: ['movies-browse', category],
     queryFn: ({ pageParam }) => getMovieBrowsePage(category, pageParam),
     initialPageParam: 1,
+    enabled,
     getNextPageParam: (lastPage) => (lastPage.hasMore ? lastPage.page + 1 : undefined),
   })
 }
 
-export function useMovieSearchPages(query: string) {
+export function useMovieSearchPages(query: string, enabled = true) {
   return useInfiniteQuery({
     queryKey: ['movies-search-pages', query],
     queryFn: ({ pageParam }) => searchMovies(query, pageParam),
     initialPageParam: 1,
-    enabled: query.trim().length >= 2,
+    enabled: enabled && query.trim().length >= 2,
     getNextPageParam: (lastPage) => (lastPage.hasMore ? lastPage.page + 1 : undefined),
   })
 }
@@ -81,21 +101,44 @@ export function useSeriesSearch(query: string) {
   })
 }
 
-export function useSeriesBrowse(category: SeriesBrowseCategory) {
+export function useSeriesBrowse(category: SeriesBrowseCategory, enabled = true) {
   return useInfiniteQuery({
     queryKey: ['series-browse', category],
     queryFn: ({ pageParam }) => getSeriesBrowsePage(category, pageParam),
     initialPageParam: 1,
+    enabled,
     getNextPageParam: (lastPage) => (lastPage.hasMore ? lastPage.page + 1 : undefined),
   })
 }
 
-export function useSeriesSearchPages(query: string) {
+export function useSeriesSearchPages(query: string, enabled = true) {
   return useInfiniteQuery({
     queryKey: ['series-search-pages', query],
     queryFn: ({ pageParam }) => searchSeries(query, pageParam),
     initialPageParam: 1,
-    enabled: query.trim().length >= 2,
+    enabled: enabled && query.trim().length >= 2,
+    getNextPageParam: (lastPage) => (lastPage.hasMore ? lastPage.page + 1 : undefined),
+  })
+}
+
+export function useMovieRanking(rankingKey: ExternalRankingKey, enabled = true) {
+  return useInfiniteQuery({
+    queryKey: ['movies-ranking', rankingKey],
+    queryFn: ({ pageParam }) => getMovieRanking(rankingKey, pageParam),
+    initialPageParam: 1,
+    enabled,
+    staleTime: 60 * 60 * 1000,
+    getNextPageParam: (lastPage) => (lastPage.hasMore ? lastPage.page + 1 : undefined),
+  })
+}
+
+export function useSeriesRanking(rankingKey: ExternalRankingKey, enabled = true) {
+  return useInfiniteQuery({
+    queryKey: ['series-ranking', rankingKey],
+    queryFn: ({ pageParam }) => getSeriesRanking(rankingKey, pageParam),
+    initialPageParam: 1,
+    enabled,
+    staleTime: 60 * 60 * 1000,
     getNextPageParam: (lastPage) => (lastPage.hasMore ? lastPage.page + 1 : undefined),
   })
 }
@@ -170,7 +213,7 @@ export function useDiscoverMedia(filters: DiscoverFilters) {
   })
 }
 
-export function useDiscoverMediaPages(filters: DiscoverFilters) {
+export function useDiscoverMediaPages(filters: DiscoverFilters, enabled = true) {
   return useInfiniteQuery({
     queryKey: ['discover-media-pages', filters],
     queryFn: ({ pageParam }) => {
@@ -178,6 +221,7 @@ export function useDiscoverMediaPages(filters: DiscoverFilters) {
       return mediaType === 'Movie' ? discoverMovies(request, pageParam) : discoverSeries(request, pageParam)
     },
     initialPageParam: 1,
+    enabled,
     getNextPageParam: (lastPage) => (lastPage.hasMore ? lastPage.page + 1 : undefined),
   })
 }

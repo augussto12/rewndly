@@ -7,7 +7,7 @@ import { MediaDetailsMetadata } from '../components/media/MediaDetailsMetadata/M
 import { MediaEntityLinks } from '../components/media/MediaEntityLinks/MediaEntityLinks'
 import { SeriesSeasonsSection } from '../components/media/SeriesSeasonsSection/SeriesSeasonsSection'
 import { useSeriesDetails } from '../features/public-media/hooks/usePublicMedia'
-import { MediaActionsPanel } from '../features/user-content/components/MediaActionsPanel'
+import { MediaActionsPanel, MediaQuickActions } from '../features/user-content/components/MediaActionsPanel'
 import { PublicLayout } from '../layouts/PublicLayout'
 
 export function SeriesDetailsPage() {
@@ -37,6 +37,8 @@ export function SeriesDetailsPage() {
             posterUrl={data.posterUrl}
             backdropUrl={data.backdropUrl}
             voteAverage={data.voteAverage}
+            externalRatings={data.externalRatings}
+            releaseYear={toYear(data.firstAirDate)}
             genres={data.genres}
             meta={[
               data.firstAirDate?.slice(0, 4) ?? '',
@@ -45,29 +47,37 @@ export function SeriesDetailsPage() {
               data.status ?? '',
             ]}
             backHref="/series/search"
-            backLabel="Volver a series"
+            actionSlot={<MediaQuickActions mediaType="Series" tmdbId={data.tmdbId} title={data.name} />}
           />
-          <MediaActionsPanel mediaType="Series" tmdbId={data.tmdbId} title={data.name} />
-          <MediaEntityLinks companies={data.productionCompanies} networks={data.networks} />
-          <SeriesSeasonsSection seriesTmdbId={data.tmdbId} seasons={data.seasons} />
-          <MediaDetailsExtras
-            cast={data.cast}
-            videos={data.videos}
-            watchProviders={data.watchProviders}
-            recommendations={data.recommendations}
-            similar={data.similar}
-          />
-          <MediaDetailsMetadata
-            images={data.images}
-            keywords={data.keywords}
-            reviews={data.tmdbReviews}
-            externalLinks={data.externalLinks}
-            alternativeTitles={data.alternativeTitles}
-            translations={data.translations}
-            contentRatings={data.contentRatings}
-          />
+          <div className="detail-content-flow">
+            <MediaEntityLinks companies={data.productionCompanies} networks={data.networks} />
+            <SeriesSeasonsSection seriesTmdbId={data.tmdbId} seasons={data.seasons} />
+            <MediaDetailsExtras
+              mediaTitle={data.name}
+              cast={data.cast}
+              videos={data.videos}
+              watchProviders={data.watchProviders}
+              recommendations={data.recommendations}
+              similar={data.similar}
+            />
+            <MediaDetailsMetadata
+              images={data.images}
+              keywords={data.keywords}
+              reviews={data.tmdbReviews}
+              externalLinks={data.externalLinks}
+              alternativeTitles={data.alternativeTitles}
+              translations={data.translations}
+              contentRatings={data.contentRatings}
+            />
+            <MediaActionsPanel mediaType="Series" tmdbId={data.tmdbId} title={data.name} />
+          </div>
         </main>
       ) : null}
     </PublicLayout>
   )
+}
+
+function toYear(value: string | null) {
+  const year = Number(value?.slice(0, 4))
+  return Number.isFinite(year) ? year : null
 }

@@ -18,7 +18,7 @@ public sealed class UserMediaItem : Entity, IAuditableEntity
 
     public bool IsFavorite { get; set; }
 
-    public int? Rating { get; set; }
+    public decimal? Rating { get; set; }
 
     public DateTimeOffset? WatchedAt { get; set; }
 

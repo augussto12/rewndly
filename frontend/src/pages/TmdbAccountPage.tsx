@@ -1,9 +1,9 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
 import { EmptyState } from '../components/feedback/EmptyState/EmptyState'
 import { ErrorState } from '../components/feedback/ErrorState/ErrorState'
 import { LoadingSkeleton } from '../components/feedback/LoadingSkeleton/LoadingSkeleton'
 import { MediaGrid } from '../components/media/MediaGrid/MediaGrid'
+import { BackButton } from '../components/navigation/BackButton'
 import {
   useConnectTmdbAccount,
   useDisconnectTmdbAccount,
@@ -136,9 +136,7 @@ export function TmdbAccountPage() {
           </section>
         )}
 
-        <Link to="/me" className="secondary-action w-fit">
-          Volver a mi cuenta
-        </Link>
+        <BackButton fallbackHref="/me" className="w-fit" />
       </main>
     </PublicLayout>
   )

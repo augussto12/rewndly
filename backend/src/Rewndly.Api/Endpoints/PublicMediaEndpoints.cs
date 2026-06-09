@@ -1,4 +1,6 @@
 using Rewndly.Application.Common.Interfaces;
+using Rewndly.Application.Modules.Public;
+using Rewndly.Domain.Media;
 using Rewndly.Infrastructure.ExternalServices.Tmdb;
 
 namespace Rewndly.Api.Endpoints;
@@ -43,12 +45,27 @@ public static class PublicMediaEndpoints
             .WithTags("Movies")
             .AllowAnonymous();
 
+        app.MapGet("/api/movies/rankings/{rankingKey}", GetMovieRankingAsync)
+            .WithTags("Movies")
+            .RequireRateLimiting("external-ratings")
+            .AllowAnonymous();
+
         app.MapGet("/api/movies/discover", DiscoverMoviesAsync)
             .WithTags("Movies")
             .AllowAnonymous();
 
         app.MapGet("/api/movies/{tmdbId:int}", GetMovieDetailsAsync)
             .WithTags("Movies")
+            .AllowAnonymous();
+
+        app.MapGet("/api/media/{mediaType}/{tmdbId:int}/ratings", GetExternalRatingsAsync)
+            .WithTags("Media")
+            .RequireRateLimiting("external-ratings")
+            .AllowAnonymous();
+
+        app.MapPost("/api/media/ratings/batch", GetExternalRatingsBatchAsync)
+            .WithTags("Media")
+            .RequireRateLimiting("external-ratings")
             .AllowAnonymous();
 
         app.MapGet("/api/series/search", SearchSeriesAsync)
@@ -65,6 +82,11 @@ public static class PublicMediaEndpoints
 
         app.MapGet("/api/series/top-rated", GetTopRatedSeriesAsync)
             .WithTags("Series")
+            .AllowAnonymous();
+
+        app.MapGet("/api/series/rankings/{rankingKey}", GetSeriesRankingAsync)
+            .WithTags("Series")
+            .RequireRateLimiting("external-ratings")
             .AllowAnonymous();
 
         app.MapGet("/api/series/airing-today", GetAiringTodaySeriesAsync)
@@ -222,14 +244,17 @@ public static class PublicMediaEndpoints
     private static async Task<IResult> DiscoverMoviesAsync(
         int? genreId,
         int? year,
+        int? yearFrom,
+        int? yearTo,
         int? watchProviderId,
         string? sortBy,
         decimal? minVoteAverage,
+        int? runtimeMax,
         int page,
         IPublicMediaService mediaService,
         CancellationToken cancellationToken)
     {
-        return await ExecuteTmdbAsync(() => mediaService.DiscoverMoviesAsync(genreId, year, watchProviderId, sortBy, minVoteAverage, NormalizePage(page), cancellationToken));
+        return await ExecuteTmdbAsync(() => mediaService.DiscoverMoviesAsync(genreId, year, yearFrom, yearTo, watchProviderId, sortBy, minVoteAverage, runtimeMax, NormalizePage(page), cancellationToken));
     }
 
     private static async Task<IResult> GetMovieDetailsAsync(
@@ -242,6 +267,94 @@ public static class PublicMediaEndpoints
             var movie = await mediaService.GetMovieDetailsAsync(tmdbId, cancellationToken);
             return movie is null ? Results.NotFound() : Results.Ok(movie);
         });
+    }
+
+    private static async Task<IResult> GetExternalRatingsAsync(
+        string mediaType,
+        int tmdbId,
+        IExternalMediaRatingsService ratingsService,
+        CancellationToken cancellationToken)
+    {
+        if (tmdbId <= 0 || !TryParseMediaType(mediaType, out var parsedMediaType))
+        {
+            return Results.BadRequest(new { message = "Media type must be movie or series." });
+        }
+
+        var ratings = await ratingsService.GetRatingsAsync(parsedMediaType, tmdbId, cancellationToken);
+        return Results.Ok(ratings);
+    }
+
+    private static async Task<IResult> GetExternalRatingsBatchAsync(
+        ExternalRatingsBatchRequest request,
+        IExternalMediaRatingsService ratingsService,
+        CancellationToken cancellationToken)
+    {
+        const int maxItems = 12;
+        var uniqueItems = request.Items
+            .Where(item => item.TmdbId > 0 && TryParseMediaType(item.MediaType, out _))
+            .GroupBy(item => $"{item.MediaType.Trim().ToLowerInvariant()}:{item.TmdbId}")
+            .Select(group => group.First())
+            .Take(maxItems)
+            .ToList();
+
+        if (uniqueItems.Count == 0)
+        {
+            return Results.Ok(Array.Empty<ExternalRatingsBatchItemResponse>());
+        }
+
+        var response = new List<ExternalRatingsBatchItemResponse>(uniqueItems.Count);
+        foreach (var item in uniqueItems)
+        {
+            TryParseMediaType(item.MediaType, out var parsedMediaType);
+            var ratings = await ratingsService.GetRatingsAsync(parsedMediaType, item.TmdbId, cancellationToken);
+            response.Add(new ExternalRatingsBatchItemResponse(
+                parsedMediaType.ToString(),
+                item.TmdbId,
+                ratings.Ratings,
+                ratings.CachedAt));
+        }
+
+        return Results.Ok(response);
+    }
+
+    private static async Task<IResult> GetMovieRankingAsync(
+        string rankingKey,
+        int page,
+        int pageSize,
+        IExternalMediaRankingService rankingService,
+        CancellationToken cancellationToken)
+    {
+        if (!IsSupportedRanking(rankingKey))
+        {
+            return Results.BadRequest(new { message = "Ranking must be imdb or critics." });
+        }
+
+        return Results.Ok(await rankingService.GetRankingAsync(
+            MediaType.Movie,
+            rankingKey,
+            NormalizePage(page),
+            NormalizePageSize(pageSize),
+            cancellationToken));
+    }
+
+    private static async Task<IResult> GetSeriesRankingAsync(
+        string rankingKey,
+        int page,
+        int pageSize,
+        IExternalMediaRankingService rankingService,
+        CancellationToken cancellationToken)
+    {
+        if (!IsSupportedRanking(rankingKey))
+        {
+            return Results.BadRequest(new { message = "Ranking must be imdb or critics." });
+        }
+
+        return Results.Ok(await rankingService.GetRankingAsync(
+            MediaType.Series,
+            rankingKey,
+            NormalizePage(page),
+            NormalizePageSize(pageSize),
+            cancellationToken));
     }
 
     private static async Task<IResult> SearchSeriesAsync(
@@ -286,6 +399,8 @@ public static class PublicMediaEndpoints
     private static async Task<IResult> DiscoverSeriesAsync(
         int? genreId,
         int? year,
+        int? yearFrom,
+        int? yearTo,
         int? watchProviderId,
         string? sortBy,
         decimal? minVoteAverage,
@@ -293,7 +408,7 @@ public static class PublicMediaEndpoints
         IPublicMediaService mediaService,
         CancellationToken cancellationToken)
     {
-        return await ExecuteTmdbAsync(() => mediaService.DiscoverSeriesAsync(genreId, year, watchProviderId, sortBy, minVoteAverage, NormalizePage(page), cancellationToken));
+        return await ExecuteTmdbAsync(() => mediaService.DiscoverSeriesAsync(genreId, year, yearFrom, yearTo, watchProviderId, sortBy, minVoteAverage, NormalizePage(page), cancellationToken));
     }
 
     private static async Task<IResult> GetSeriesDetailsAsync(
@@ -489,5 +604,31 @@ public static class PublicMediaEndpoints
     private static int NormalizePage(int page)
     {
         return page <= 0 ? 1 : Math.Min(page, 500);
+    }
+
+    private static int NormalizePageSize(int pageSize)
+    {
+        return pageSize <= 0 ? 24 : Math.Clamp(pageSize, 1, 48);
+    }
+
+    private static bool IsSupportedRanking(string rankingKey)
+    {
+        return string.Equals(rankingKey, "imdb", StringComparison.OrdinalIgnoreCase) ||
+            string.Equals(rankingKey, "critics", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static bool TryParseMediaType(string mediaType, out MediaType parsedMediaType)
+    {
+        parsedMediaType = mediaType.Equals("movie", StringComparison.OrdinalIgnoreCase) ||
+            mediaType.Equals("movies", StringComparison.OrdinalIgnoreCase) ||
+            mediaType.Equals("Movie", StringComparison.Ordinal)
+                ? MediaType.Movie
+                : MediaType.Series;
+
+        return mediaType.Equals("movie", StringComparison.OrdinalIgnoreCase) ||
+            mediaType.Equals("movies", StringComparison.OrdinalIgnoreCase) ||
+            mediaType.Equals("series", StringComparison.OrdinalIgnoreCase) ||
+            mediaType.Equals("show", StringComparison.OrdinalIgnoreCase) ||
+            mediaType.Equals("shows", StringComparison.OrdinalIgnoreCase);
     }
 }

@@ -255,7 +255,7 @@ public static class TmdbAccountEndpoints
             foreach (var item in remote.RatedMovies.Concat(remote.RatedSeries))
             {
                 var state = await tmdb.GetMediaAccountStateAsync(item.MediaType, item.TmdbId, session.SessionId, cancellationToken);
-                int? rating = state.Rating.HasValue ? Math.Clamp((int)Math.Round(state.Rating.Value), 1, 10) : null;
+                decimal? rating = state.Rating.HasValue ? Math.Clamp(state.Rating.Value, 1m, 10m) : null;
                 var result = await UpsertLibraryItemAsync(dbContext, mediaService, currentUser.UserId.Value, item, isFavorite: null, status: WatchStatus.Watched, rating, cancellationToken);
                 imported += result.Imported;
                 updated += result.Updated;
@@ -424,7 +424,7 @@ public static class TmdbAccountEndpoints
         MediaSummaryResponse summary,
         bool? isFavorite,
         WatchStatus? status,
-        int? rating,
+        decimal? rating,
         CancellationToken cancellationToken)
     {
         var mediaRef = await EnsureLocalMediaAsync(dbContext, mediaService, summary, cancellationToken);

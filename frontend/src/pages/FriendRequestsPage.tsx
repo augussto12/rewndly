@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { EmptyState } from '../components/feedback/EmptyState/EmptyState'
 import { ErrorState } from '../components/feedback/ErrorState/ErrorState'
 import { LoadingSkeleton } from '../components/feedback/LoadingSkeleton/LoadingSkeleton'
+import { toast } from '../components/feedback/Toast/toastStore'
 import { FriendRequestCard } from '../features/social/components/FriendRequestCard'
 import { useAcceptFriendRequest, useFriendRequests, useRejectFriendRequest, useSendFriendRequest } from '../features/social/hooks/useSocial'
 import { PublicLayout } from '../layouts/PublicLayout'
@@ -17,6 +18,7 @@ export function FriendRequestsPage() {
 
   async function submit() {
     if (!username.trim()) {
+      toast.error('Falta el username', 'Escribi el usuario al que queres enviarle solicitud.')
       return
     }
 

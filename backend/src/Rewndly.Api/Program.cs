@@ -5,7 +5,9 @@ using Rewndly.Api.Services;
 using Rewndly.Application;
 using Rewndly.Application.Common.Interfaces;
 using Rewndly.Infrastructure;
+using Rewndly.Infrastructure.ExternalServices.MdbList;
 using Microsoft.AspNetCore.HttpOverrides;
+using Microsoft.Extensions.Options;
 using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -34,6 +36,15 @@ builder.Services.AddRewndlyHealthChecks(builder.Configuration);
 
 var app = builder.Build();
 
+var mdbListOptions = app.Services.GetRequiredService<IOptions<MdbListOptions>>().Value;
+if (!mdbListOptions.Enabled &&
+    builder.Configuration.GetValue("MdbList:Enabled", true) &&
+    string.IsNullOrWhiteSpace(builder.Configuration["MDBLIST_API_KEY"]) &&
+    string.IsNullOrWhiteSpace(builder.Configuration["MdbList:ApiKey"]))
+{
+    app.Logger.LogWarning("MDBList ratings enrichment is enabled in configuration but no API key was provided. Set MDBLIST_API_KEY to enable it.");
+}
+
 var forwardedHeadersOptions = new ForwardedHeadersOptions
 {
     ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
@@ -59,6 +70,7 @@ app.UseAuthorization();
 
 app.MapHealthChecks("/health");
 app.MapAuthEndpoints();
+app.MapMobileAuthEndpoints();
 app.MapPublicMediaEndpoints();
 app.MapUserContentEndpoints();
 app.MapTmdbAccountEndpoints();

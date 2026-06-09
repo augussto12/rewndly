@@ -65,6 +65,7 @@ export type UserListItem = UserListItemRequest & {
   id: string
   title: string
   posterUrl: string | null
+  rating: number | null
   createdAt: string
 }
 

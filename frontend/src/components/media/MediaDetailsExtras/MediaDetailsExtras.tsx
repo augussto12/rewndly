@@ -8,6 +8,7 @@ import type {
 } from '../../../features/public-media/types/publicMedia.types'
 
 type MediaDetailsExtrasProps = {
+  mediaTitle: string
   cast: MediaPerson[]
   videos: MediaVideo[]
   watchProviders: WatchProvider[]
@@ -16,6 +17,7 @@ type MediaDetailsExtrasProps = {
 }
 
 export function MediaDetailsExtras({
+  mediaTitle,
   cast,
   videos,
   watchProviders,
@@ -64,20 +66,7 @@ export function MediaDetailsExtras({
                   <h2 className="text-sm font-semibold text-white">{group.type}</h2>
                   <div className="mt-3 flex flex-wrap gap-3">
                     {group.items.map((provider) => (
-                      <div
-                        key={`${provider.type}-${provider.providerId}`}
-                        className="flex min-h-12 items-center gap-3 rounded-[var(--radius-sm)] border border-white/10 bg-white/[0.045] px-3 py-2"
-                      >
-                        {provider.logoUrl ? (
-                          <img
-                            src={provider.logoUrl}
-                            alt=""
-                            className="h-8 w-8 rounded-[var(--radius-sm)] object-cover"
-                            loading="lazy"
-                          />
-                        ) : null}
-                        <span className="text-sm font-medium">{provider.name}</span>
-                      </div>
+                      <ProviderChip key={`${provider.type}-${provider.providerId}`} provider={provider} mediaTitle={mediaTitle} />
                     ))}
                   </div>
                 </div>
@@ -125,6 +114,30 @@ export function MediaDetailsExtras({
   )
 }
 
+function ProviderChip({ provider, mediaTitle }: { provider: WatchProvider; mediaTitle: string }) {
+  const href = getProviderSearchUrl(provider.name, mediaTitle)
+  const className =
+    'flex min-h-12 items-center gap-3 rounded-[var(--radius-sm)] border border-white/10 bg-white/[0.045] px-3 py-2 transition hover:border-violet-200/30 hover:bg-white/[0.075]'
+  const content = (
+    <>
+      {provider.logoUrl ? (
+        <img src={provider.logoUrl} alt="" className="h-8 w-8 rounded-[var(--radius-sm)] object-cover" loading="lazy" />
+      ) : null}
+      <span className="text-sm font-medium">{provider.name}</span>
+    </>
+  )
+
+  if (!href) {
+    return <div className={className}>{content}</div>
+  }
+
+  return (
+    <a href={href} target="_blank" rel="noreferrer" className={className} aria-label={`Buscar ${mediaTitle} en ${provider.name}`}>
+      {content}
+    </a>
+  )
+}
+
 function RelatedSection({ title, items }: { title: string; items: MediaSummary[] }) {
   if (items.length === 0) {
     return null
@@ -152,4 +165,62 @@ function groupProviders(providers: WatchProvider[]) {
       items: providers.filter((provider) => provider.type === type),
     }))
     .filter((group) => group.items.length > 0)
+}
+
+function getProviderSearchUrl(providerName: string, mediaTitle: string) {
+  const normalizedProvider = normalizeProviderName(providerName)
+  const query = encodeURIComponent(mediaTitle)
+
+  if (normalizedProvider.includes('netflix')) {
+    return `https://www.netflix.com/search?q=${query}`
+  }
+
+  if (normalizedProvider.includes('prime') || normalizedProvider.includes('amazon')) {
+    return `https://www.primevideo.com/search/ref=atv_nb_sr?phrase=${query}`
+  }
+
+  if (normalizedProvider.includes('disney') || normalizedProvider.includes('star plus') || normalizedProvider.includes('star+')) {
+    return `https://www.disneyplus.com/search?q=${query}`
+  }
+
+  if (normalizedProvider.includes('max') || normalizedProvider.includes('hbo')) {
+    return `https://www.max.com/search?q=${query}`
+  }
+
+  if (normalizedProvider.includes('apple')) {
+    return `https://tv.apple.com/search?term=${query}`
+  }
+
+  if (normalizedProvider.includes('paramount')) {
+    return `https://www.paramountplus.com/search/?query=${query}`
+  }
+
+  if (normalizedProvider.includes('youtube')) {
+    return `https://www.youtube.com/results?search_query=${query}`
+  }
+
+  if (normalizedProvider.includes('google play')) {
+    return `https://play.google.com/store/search?q=${query}&c=movies`
+  }
+
+  if (normalizedProvider.includes('rakuten')) {
+    return `https://rakuten.tv/search?q=${query}`
+  }
+
+  if (normalizedProvider.includes('mubi')) {
+    return `https://mubi.com/search/films?query=${query}`
+  }
+
+  if (normalizedProvider.includes('crunchyroll')) {
+    return `https://www.crunchyroll.com/search?q=${query}`
+  }
+
+  return null
+}
+
+function normalizeProviderName(value: string) {
+  return value
+    .normalize('NFD')
+    .replace(/\p{Diacritic}/gu, '')
+    .toLowerCase()
 }

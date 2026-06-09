@@ -4,10 +4,12 @@ import type {
   CompanyDetails,
   DiscoverFilters,
   EpisodeDetails,
+  ExternalRatingsBatchItem,
   Genre,
   KeywordDetails,
   MediaSummary,
   MediaReview,
+  MediaRankingResponse,
   MovieDetails,
   NetworkDetails,
   PagedResponse,
@@ -47,12 +49,23 @@ export function getTopRatedMovies(page = 1) {
   return httpClient<PagedResponse<MediaSummary>>(`/api/movies/top-rated?page=${page}`)
 }
 
+export function getMovieRanking(rankingKey: string, page = 1, pageSize = 24) {
+  return httpClient<MediaRankingResponse>(`/api/movies/rankings/${encodeURIComponent(rankingKey)}?page=${page}&pageSize=${pageSize}`)
+}
+
 export function discoverMovies(filters: Omit<DiscoverFilters, 'mediaType'>, page = 1) {
   return httpClient<PagedResponse<MediaSummary>>(`/api/movies/discover?${toSearchParams({ ...filters, page })}`)
 }
 
 export function getMovieDetails(tmdbId: number) {
   return httpClient<MovieDetails>(`/api/movies/${tmdbId}`)
+}
+
+export function getExternalRatingsBatch(items: Array<{ mediaType: 'Movie' | 'Series'; tmdbId: number }>) {
+  return httpClient<ExternalRatingsBatchItem[]>('/api/media/ratings/batch', {
+    method: 'POST',
+    body: JSON.stringify({ items }),
+  })
 }
 
 export function searchSeries(query: string, page = 1) {
@@ -69,6 +82,10 @@ export function getPopularSeries(page = 1) {
 
 export function getTopRatedSeries(page = 1) {
   return httpClient<PagedResponse<MediaSummary>>(`/api/series/top-rated?page=${page}`)
+}
+
+export function getSeriesRanking(rankingKey: string, page = 1, pageSize = 24) {
+  return httpClient<MediaRankingResponse>(`/api/series/rankings/${encodeURIComponent(rankingKey)}?page=${page}&pageSize=${pageSize}`)
 }
 
 export function getAiringTodaySeries(page = 1) {

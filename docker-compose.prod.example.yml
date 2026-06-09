@@ -28,6 +28,12 @@ services:
       Tmdb__PosterSize: ${Tmdb__PosterSize:-w500}
       Tmdb__BackdropSize: ${Tmdb__BackdropSize:-w1280}
       Tmdb__TimeoutSeconds: ${Tmdb__TimeoutSeconds:-10}
+      MDBLIST_API_KEY: ${MDBLIST_API_KEY:-}
+      MDBLIST_BASE_URL: ${MDBLIST_BASE_URL:-https://api.mdblist.com}
+      MdbList__Enabled: ${MdbList__Enabled:-true}
+      MdbList__CacheHours: ${MdbList__CacheHours:-24}
+      MdbList__RankingCacheHours: ${MdbList__RankingCacheHours:-24}
+      MdbList__TimeoutSeconds: ${MdbList__TimeoutSeconds:-15}
       Mail__Provider: ${Mail__Provider:-}
       Mail__ApiKey: ${Mail__ApiKey:-}
     depends_on:

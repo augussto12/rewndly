@@ -106,7 +106,7 @@ function getFieldLabel(field: string): string {
     Rating: 'Rating',
     RatingSnapshot: 'Rating',
     Title: 'Titulo',
-    Body: 'Resena',
+    Body: 'Reseña',
     Visibility: 'Privacidad',
     Description: 'Descripcion',
     Position: 'Posicion',
@@ -157,7 +157,7 @@ function translateMessage(message: string): string {
     'The ConfirmNewPassword field is required.': 'Confirma el password nuevo.',
     'The Identifier field is required.': 'Completa el email o usuario.',
     'The Title field is required.': 'Completa el titulo.',
-    'The Body field is required.': 'Completa la resena.',
+    'The Body field is required.': 'Completa la reseña.',
   }
 
   if (translations[normalized]) {

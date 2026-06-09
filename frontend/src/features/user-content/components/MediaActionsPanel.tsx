@@ -1,5 +1,6 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { toast } from '../../../components/feedback/Toast/toastStore'
 import { getErrorMessage } from '../../../services/apiError'
 import { useAuth } from '../../auth/useAuth'
 import {
@@ -21,12 +22,15 @@ import {
   useUpdateLibraryItem,
 } from '../hooks/useUserContent'
 import type { LibraryItemRequest, MediaKind, ReviewRequest, Visibility, WatchStatus } from '../types/userContent.types'
+import { formatLibraryRating, libraryRatingOptions, parseLibraryRating } from '../utils/ratingOptions'
 
 type MediaActionsPanelProps = {
   mediaType: MediaKind
   tmdbId: number
   title: string
 }
+
+type ExistingLibraryItem = { id: string; status: WatchStatus; rating: number | null; isFavorite: boolean } | undefined
 
 const statusOptions: Array<{ value: WatchStatus; label: string }> = [
   { value: 'WantToWatch', label: 'Quiero ver' },
@@ -41,16 +45,13 @@ const visibilityOptions: Array<{ value: Visibility; label: string }> = [
   { value: 'Private', label: 'Privada' },
 ]
 
-export function MediaActionsPanel({ mediaType, tmdbId, title }: MediaActionsPanelProps) {
+export function MediaQuickActions({ mediaType, tmdbId, title }: MediaActionsPanelProps) {
+  const rootRef = useRef<HTMLDivElement>(null)
   const { isAuthenticated } = useAuth()
   const { data: library } = useMyLibrary(isAuthenticated)
   const { data: lists } = useMyLists(isAuthenticated)
-  const { data: tmdbConnection } = useTmdbConnectionStatus(isAuthenticated)
-  const { data: tmdbState } = useTmdbMediaState(mediaType, tmdbId, isAuthenticated && Boolean(tmdbConnection?.isConnected))
-  const { data: reviews, isLoading: reviewsLoading, isError: reviewsError } = useMediaReviews(mediaType, tmdbId)
   const createLibraryItem = useCreateLibraryItem()
   const updateLibraryItem = useUpdateLibraryItem()
-  const createReview = useCreateReview()
   const addListItem = useAddListItem()
   const createList = useCreateList()
 
@@ -59,43 +60,41 @@ export function MediaActionsPanel({ mediaType, tmdbId, title }: MediaActionsPane
     [library, mediaType, tmdbId],
   )
 
-  const [reviewTitle, setReviewTitle] = useState('')
-  const [reviewBody, setReviewBody] = useState('')
-  const [reviewVisibility, setReviewVisibility] = useState<Visibility>('Public')
-  const [containsSpoilers, setContainsSpoilers] = useState(false)
+  const [isOpen, setIsOpen] = useState(false)
+  const [destination, setDestination] = useState<'library' | 'list'>('library')
   const [selectedListId, setSelectedListId] = useState('')
   const [newListTitle, setNewListTitle] = useState('')
-  const [newListVisibility, setNewListVisibility] = useState<Visibility>('Public')
-  const [reviewError, setReviewError] = useState<string | null>(null)
+  const [newListVisibility, setNewListVisibility] = useState<Visibility>('Private')
   const [listError, setListError] = useState<string | null>(null)
 
-  const canSubmitReview = reviewTitle.trim().length > 0 && reviewBody.trim().length > 0
-
-  async function submitReview() {
-    const request: ReviewRequest = {
-      mediaType,
-      tmdbId,
-      ratingSnapshot: existingItem?.rating ?? null,
-      title: reviewTitle.trim(),
-      body: reviewBody.trim(),
-      containsSpoilers,
-      visibility: reviewVisibility,
+  useEffect(() => {
+    if (!isOpen) {
+      return
     }
 
-    setReviewError(null)
-
-    try {
-      await createReview.mutateAsync(request)
-      setReviewTitle('')
-      setReviewBody('')
-      setContainsSpoilers(false)
-    } catch (error) {
-      setReviewError(getErrorMessage(error, 'No se pudo publicar la resena. Revisa los datos e intenta de nuevo.'))
+    function closeOnEscape(event: KeyboardEvent) {
+      if (event.key === 'Escape') {
+        setIsOpen(false)
+      }
     }
-  }
+
+    function closeOnOutsideClick(event: MouseEvent) {
+      if (!rootRef.current?.contains(event.target as Node)) {
+        setIsOpen(false)
+      }
+    }
+
+    document.addEventListener('keydown', closeOnEscape)
+    document.addEventListener('mousedown', closeOnOutsideClick)
+    return () => {
+      document.removeEventListener('keydown', closeOnEscape)
+      document.removeEventListener('mousedown', closeOnOutsideClick)
+    }
+  }, [isOpen])
 
   async function submitListItem() {
     if (!selectedListId) {
+      toast.error('Elegi una lista', 'Selecciona una lista antes de agregar el contenido.')
       return
     }
 
@@ -111,6 +110,7 @@ export function MediaActionsPanel({ mediaType, tmdbId, title }: MediaActionsPane
           note: null,
         },
       })
+      setIsOpen(false)
     } catch (error) {
       setListError(getErrorMessage(error, 'No se pudo agregar a la lista. Revisa la lista seleccionada e intenta de nuevo.'))
     }
@@ -118,6 +118,7 @@ export function MediaActionsPanel({ mediaType, tmdbId, title }: MediaActionsPane
 
   async function submitQuickList() {
     if (!newListTitle.trim()) {
+      toast.error('Falta el titulo', 'Escribi un nombre para crear la lista.')
       return
     }
 
@@ -136,14 +137,134 @@ export function MediaActionsPanel({ mediaType, tmdbId, title }: MediaActionsPane
     }
   }
 
+  return (
+    <div ref={rootRef} className="relative">
+      <button
+        type="button"
+        onClick={() => setIsOpen((value) => !value)}
+        aria-expanded={isOpen}
+        aria-label={`Agregar ${title}`}
+        title={`Agregar ${title}`}
+        className="grid h-12 w-12 place-items-center rounded-full border border-violet-100/45 bg-white/12 text-3xl font-semibold leading-none text-white shadow-[0_18px_44px_rgba(124,58,237,0.34)] backdrop-blur transition hover:-translate-y-0.5 hover:border-violet-100/70 hover:bg-white/18"
+      >
+        +
+      </button>
+
+      {isOpen ? (
+        <>
+          <button
+            type="button"
+            aria-label="Cerrar agregar"
+            className="fixed inset-0 z-40 cursor-default bg-black/38 backdrop-blur-[1px] md:hidden"
+            onClick={() => setIsOpen(false)}
+          />
+          <div className="quick-actions-menu">
+          {!isAuthenticated ? (
+            <div>
+              <p className="kicker">Tu espacio</p>
+              <h2 className="mt-2 text-base font-semibold">Guardalo cuando quieras</h2>
+              <p className="mt-2 text-sm leading-6 text-[var(--color-text-secondary)]">
+                La biblioteca guarda tu estado y rating. Las listas son colecciones privadas o publicas.
+              </p>
+              <div className="mt-4 grid gap-2 sm:grid-cols-2">
+                <Link to="/login" className="primary-action min-h-10">
+                  Iniciar sesion
+                </Link>
+                <Link to="/register" className="secondary-action min-h-10">
+                  Crear cuenta
+                </Link>
+              </div>
+            </div>
+          ) : (
+            <div className="grid gap-4">
+              <label className="text-sm text-[var(--color-text-secondary)]">
+                Destino
+                <select value={destination} onChange={(event) => setDestination(event.target.value as 'library' | 'list')} className="field mt-2">
+                  <option value="library">Biblioteca: estado, favorita y rating</option>
+                  <option value="list">Lista: coleccion personalizada</option>
+                </select>
+              </label>
+
+              {destination === 'library' ? (
+                <QuickLibraryForm
+                  key={existingItem?.id ?? `new-${mediaType}-${tmdbId}`}
+                  mediaType={mediaType}
+                  tmdbId={tmdbId}
+                  existingItem={existingItem}
+                  createPending={createLibraryItem.isPending}
+                  updatePending={updateLibraryItem.isPending}
+                  onCreate={(request) => createLibraryItem.mutateAsync(request)}
+                  onUpdate={(id, request) => updateLibraryItem.mutateAsync({ id, request })}
+                  onSaved={() => setIsOpen(false)}
+                />
+              ) : (
+                <div>
+                  {lists && lists.length > 0 ? (
+                    <div className="grid gap-3">
+                      <select value={selectedListId} onChange={(event) => setSelectedListId(event.target.value)} className="field">
+                        <option value="">Elegir lista</option>
+                        {lists.map((list) => (
+                          <option key={list.id} value={list.id}>
+                            {list.title} ({visibilityLabel(list.visibility)})
+                          </option>
+                        ))}
+                      </select>
+                      <button onClick={() => void submitListItem()} disabled={!selectedListId || addListItem.isPending} className="primary-action">
+                        Agregar a lista
+                      </button>
+                    </div>
+                  ) : (
+                    <p className="text-sm leading-6 text-[var(--color-text-secondary)]">Todavia no tenes listas. Crea una aca mismo.</p>
+                  )}
+
+                  <div className="mt-4 grid gap-3 border-t border-white/10 pt-4">
+                    <input value={newListTitle} onChange={(event) => setNewListTitle(event.target.value)} placeholder="Nueva lista" className="field" />
+                    <div className="grid gap-3 sm:grid-cols-[1fr_auto]">
+                      <select value={newListVisibility} onChange={(event) => setNewListVisibility(event.target.value as Visibility)} className="field">
+                        {visibilityOptions.map((option) => (
+                          <option key={option.value} value={option.value}>
+                            {option.label}
+                          </option>
+                        ))}
+                      </select>
+                      <button onClick={() => void submitQuickList()} disabled={!newListTitle.trim() || createList.isPending} className="secondary-action">
+                        Crear
+                      </button>
+                    </div>
+                  </div>
+                  {listError ? <ActionError message={listError} /> : null}
+                </div>
+              )}
+            </div>
+          )}
+          </div>
+        </>
+      ) : null}
+    </div>
+  )
+}
+
+export function MediaActionsPanel({ mediaType, tmdbId, title }: MediaActionsPanelProps) {
+  const { isAuthenticated } = useAuth()
+  const { data: library } = useMyLibrary(isAuthenticated)
+  const { data: tmdbConnection } = useTmdbConnectionStatus(isAuthenticated)
+  const { data: tmdbState } = useTmdbMediaState(mediaType, tmdbId, isAuthenticated && Boolean(tmdbConnection?.isConnected))
+  const { data: reviews, isLoading: reviewsLoading, isError: reviewsError } = useMediaReviews(mediaType, tmdbId)
+  const createReview = useCreateReview()
+
+  const existingItem = useMemo(
+    () => library?.find((item) => item.mediaType === mediaType && item.tmdbId === tmdbId),
+    [library, mediaType, tmdbId],
+  )
+
   if (!isAuthenticated) {
     return (
-      <section className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
-        <div className="surface-panel p-6">
-          <p className="kicker">Tu espacio</p>
-          <h2 className="mt-3 text-2xl font-semibold">Guarda, puntua y resena {title}</h2>
+      <section className="mx-auto max-w-7xl px-4 pb-16 sm:px-6">
+        <div className="surface-panel p-5">
+          <p className="kicker">Cuenta</p>
+          <h2 className="mt-2 text-xl font-semibold">Guarda y reseña {title}</h2>
           <p className="mt-3 max-w-2xl text-sm leading-6 text-[var(--color-text-secondary)]">
-            Inicia sesion para sumar este contenido a tu biblioteca, crear listas y dejar una resena independiente.
+            Inicia sesion para sumar este contenido a tu biblioteca, crear listas y dejar una reseña independiente.
           </p>
           <div className="mt-5 flex flex-wrap gap-3">
             <Link to="/login" className="primary-action">
@@ -160,112 +281,29 @@ export function MediaActionsPanel({ mediaType, tmdbId, title }: MediaActionsPane
   }
 
   return (
-    <section className="mx-auto max-w-7xl space-y-6 px-4 py-8 sm:px-6">
-      <div className="grid gap-4 lg:grid-cols-[1fr_1fr]">
-        <TmdbMediaControls
-          key={`${tmdbConnection?.isConnected ? 'connected' : 'disconnected'}-${tmdbState?.rating ?? 'none'}`}
-          mediaType={mediaType}
-          tmdbId={tmdbId}
-          isConnected={Boolean(tmdbConnection?.isConnected)}
-          state={tmdbState}
-        />
+    <section className="mx-auto max-w-7xl space-y-6 px-4 pb-16 sm:px-6">
+      <TmdbMediaControls
+        key={`${tmdbConnection?.isConnected ? 'connected' : 'disconnected'}-${tmdbState?.rating ?? 'none'}`}
+        mediaType={mediaType}
+        tmdbId={tmdbId}
+        isConnected={Boolean(tmdbConnection?.isConnected)}
+        state={tmdbState}
+      />
 
-        <LibraryControls
-          key={existingItem?.id ?? `new-${mediaType}-${tmdbId}`}
-          mediaType={mediaType}
-          tmdbId={tmdbId}
-          existingItem={existingItem}
-          createPending={createLibraryItem.isPending}
-          updatePending={updateLibraryItem.isPending}
-          onCreate={(request) => createLibraryItem.mutateAsync(request)}
-          onUpdate={(id, request) => updateLibraryItem.mutateAsync({ id, request })}
-        />
-
-        <div className="surface-panel p-5">
-          <h2 className="text-xl font-semibold">Agregar a lista</h2>
-          <p className="mt-2 text-sm leading-6 text-[var(--color-text-secondary)]">
-            Crea una lista aca mismo o elegi una existente para sumar este contenido.
-          </p>
-          {lists && lists.length > 0 ? (
-            <div className="mt-4 flex flex-col gap-3 sm:flex-row">
-              <select value={selectedListId} onChange={(event) => setSelectedListId(event.target.value)} className="field min-w-0 flex-1">
-                <option value="">Seleccionar lista</option>
-                {lists.map((list) => (
-                  <option key={list.id} value={list.id}>
-                    {list.title}
-                  </option>
-                ))}
-              </select>
-              <button onClick={() => void submitListItem()} disabled={!selectedListId || addListItem.isPending} className="secondary-action">
-                Agregar
-              </button>
-            </div>
-          ) : (
-            <p className="mt-3 text-sm text-[var(--color-text-secondary)]">
-              Todavia no tenes listas. Crea una abajo o administra todas desde{' '}
-              <Link to="/me/lists" className="text-[var(--color-accent-light)]">
-                Mis listas
-              </Link>.
-            </p>
-          )}
-          <div className="mt-5 grid gap-3 border-t border-white/10 pt-5 sm:grid-cols-[minmax(0,1fr)_10rem_auto]">
-            <input
-              value={newListTitle}
-              onChange={(event) => setNewListTitle(event.target.value)}
-              placeholder="Nueva lista"
-              className="field"
-            />
-            <select value={newListVisibility} onChange={(event) => setNewListVisibility(event.target.value as Visibility)} className="field">
-              {visibilityOptions.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-            <button onClick={() => void submitQuickList()} disabled={!newListTitle.trim() || createList.isPending} className="secondary-action">
-              Crear lista
-            </button>
-          </div>
-          {listError ? <ActionError message={listError} /> : null}
-        </div>
-      </div>
-
-      <div className="surface-panel p-5">
-        <h2 className="text-xl font-semibold">Crear resena</h2>
-        <div className="mt-4 grid gap-3">
-          <input value={reviewTitle} onChange={(event) => setReviewTitle(event.target.value)} placeholder="Titulo" className="field" />
-          <textarea value={reviewBody} onChange={(event) => setReviewBody(event.target.value)} placeholder="Tu resena" rows={5} className="field" />
-          <div className="flex flex-wrap items-center gap-4">
-            <select value={reviewVisibility} onChange={(event) => setReviewVisibility(event.target.value as Visibility)} className="field w-auto">
-              {visibilityOptions.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-            <label className="flex items-center gap-2 text-sm text-[var(--color-text-secondary)]">
-              <input
-                checked={containsSpoilers}
-                onChange={(event) => setContainsSpoilers(event.target.checked)}
-                type="checkbox"
-                className="h-4 w-4 accent-[var(--color-accent)]"
-              />
-              Contiene spoilers
-            </label>
-            <button onClick={() => void submitReview()} disabled={!canSubmitReview || createReview.isPending} className="primary-action">
-              Publicar
-            </button>
-          </div>
-        </div>
-        {reviewError ? <ActionError message={reviewError} /> : null}
-      </div>
+      <ReviewComposer
+        mediaType={mediaType}
+        tmdbId={tmdbId}
+        existingRating={existingItem?.rating ?? null}
+        createPending={createReview.isPending}
+        onCreate={(request) => createReview.mutateAsync(request)}
+      />
 
       <ReviewsBlock reviews={reviews ?? []} isLoading={reviewsLoading} isError={reviewsError} />
     </section>
   )
 }
 
-function LibraryControls({
+function QuickLibraryForm({
   mediaType,
   tmdbId,
   existingItem,
@@ -273,27 +311,39 @@ function LibraryControls({
   updatePending,
   onCreate,
   onUpdate,
+  onSaved,
 }: {
   mediaType: MediaKind
   tmdbId: number
-  existingItem: { id: string; status: WatchStatus; rating: number | null; isFavorite: boolean } | undefined
+  existingItem: ExistingLibraryItem
   createPending: boolean
   updatePending: boolean
   onCreate: (request: LibraryItemRequest) => Promise<unknown>
   onUpdate: (id: string, request: LibraryItemRequest) => Promise<unknown>
+  onSaved: () => void
 }) {
   const [status, setStatus] = useState<WatchStatus>(existingItem?.status ?? 'WantToWatch')
-  const [rating, setRating] = useState(existingItem?.rating?.toString() ?? '')
+  const [rating, setRating] = useState(formatLibraryRating(existingItem?.rating ?? null))
   const [isFavorite, setIsFavorite] = useState(existingItem?.isFavorite ?? false)
   const [error, setError] = useState<string | null>(null)
 
+  const parsedRating = status === 'Watched' ? parseLibraryRating(rating) : null
+  const ratingIsValid = status !== 'Watched' || (parsedRating !== null && Number.isFinite(parsedRating) && parsedRating >= 1 && parsedRating <= 10)
+
   async function saveLibraryItem() {
+    if (!ratingIsValid) {
+      const message = 'Selecciona un rating para marcarla como vista.'
+      setError(message)
+      toast.error('Rating invalido', message)
+      return
+    }
+
     const request: LibraryItemRequest = {
       mediaType,
       tmdbId,
       status,
       isFavorite,
-      rating: rating ? Number(rating) : null,
+      rating: parsedRating,
       watchedAt: status === 'Watched' ? new Date().toISOString() : null,
       startedAt: status === 'Watching' ? new Date().toISOString() : null,
     }
@@ -306,47 +356,128 @@ function LibraryControls({
       } else {
         await onCreate(request)
       }
+      onSaved()
     } catch (actionError) {
       setError(getErrorMessage(actionError, 'No se pudo guardar en tu biblioteca. Revisa los datos e intenta de nuevo.'))
     }
   }
 
   return (
+    <div className="grid gap-3">
+      <select value={status} onChange={(event) => setStatus(event.target.value as WatchStatus)} className="field">
+        {statusOptions.map((option) => (
+          <option key={option.value} value={option.value}>
+            {option.label}
+          </option>
+        ))}
+      </select>
+      {status === 'Watched' ? (
+        <select value={rating} onChange={(event) => setRating(event.target.value)} className="field">
+          <option value="">Elegir rating</option>
+          {libraryRatingOptions.map((option) => (
+            <option key={option} value={option}>
+              {option}
+            </option>
+          ))}
+        </select>
+      ) : null}
+      <label className="flex items-center gap-2 text-sm text-[var(--color-text-secondary)]">
+        <input
+          checked={isFavorite}
+          onChange={(event) => setIsFavorite(event.target.checked)}
+          type="checkbox"
+          className="h-4 w-4 accent-[var(--color-accent)]"
+        />
+        Marcar como favorita
+      </label>
+      <button onClick={() => void saveLibraryItem()} disabled={createPending || updatePending} className="primary-action">
+        {existingItem ? 'Actualizar biblioteca' : 'Guardar en biblioteca'}
+      </button>
+      {error ? <ActionError message={error} /> : null}
+    </div>
+  )
+}
+
+function ReviewComposer({
+  mediaType,
+  tmdbId,
+  existingRating,
+  createPending,
+  onCreate,
+}: {
+  mediaType: MediaKind
+  tmdbId: number
+  existingRating: number | null
+  createPending: boolean
+  onCreate: (request: ReviewRequest) => Promise<unknown>
+}) {
+  const [reviewTitle, setReviewTitle] = useState('')
+  const [reviewBody, setReviewBody] = useState('')
+  const [reviewVisibility, setReviewVisibility] = useState<Visibility>('Public')
+  const [containsSpoilers, setContainsSpoilers] = useState(false)
+  const [reviewError, setReviewError] = useState<string | null>(null)
+
+  const canSubmitReview = reviewTitle.trim().length > 0 && reviewBody.trim().length > 0
+
+  async function submitReview() {
+    if (!canSubmitReview) {
+      const message = 'Completa titulo y reseña antes de publicar.'
+      setReviewError(message)
+      toast.error('Reseña incompleta', message)
+      return
+    }
+
+    const request: ReviewRequest = {
+      mediaType,
+      tmdbId,
+      ratingSnapshot: existingRating,
+      title: reviewTitle.trim(),
+      body: reviewBody.trim(),
+      containsSpoilers,
+      visibility: reviewVisibility,
+    }
+
+    setReviewError(null)
+
+    try {
+      await onCreate(request)
+      setReviewTitle('')
+      setReviewBody('')
+      setContainsSpoilers(false)
+    } catch (error) {
+      setReviewError(getErrorMessage(error, 'No se pudo publicar la reseña. Revisa los datos e intenta de nuevo.'))
+    }
+  }
+
+  return (
     <div className="surface-panel p-5">
-      <h2 className="text-xl font-semibold">Mi biblioteca</h2>
-      <div className="mt-4 grid gap-3 sm:grid-cols-3">
-        <label className="text-sm text-[var(--color-text-secondary)]">
-          Estado
-          <select value={status} onChange={(event) => setStatus(event.target.value as WatchStatus)} className="field mt-2">
-            {statusOptions.map((option) => (
+      <h2 className="text-xl font-semibold">Crear reseña</h2>
+      <div className="mt-4 grid gap-3">
+        <input value={reviewTitle} onChange={(event) => setReviewTitle(event.target.value)} placeholder="Titulo" className="field" />
+        <textarea value={reviewBody} onChange={(event) => setReviewBody(event.target.value)} placeholder="Tu reseña" rows={5} className="field" />
+        <div className="flex flex-wrap items-center gap-4">
+          <select value={reviewVisibility} onChange={(event) => setReviewVisibility(event.target.value as Visibility)} className="field w-auto">
+            {visibilityOptions.map((option) => (
               <option key={option.value} value={option.value}>
                 {option.label}
               </option>
             ))}
           </select>
-        </label>
-        <label className="text-sm text-[var(--color-text-secondary)]">
-          Rating
-          <input value={rating} onChange={(event) => setRating(event.target.value)} type="number" min="1" max="10" className="field mt-2" />
-        </label>
-        <label className="flex items-end gap-3 text-sm text-[var(--color-text-secondary)]">
-          <input
-            checked={isFavorite}
-            onChange={(event) => setIsFavorite(event.target.checked)}
-            type="checkbox"
-            className="mb-2 h-4 w-4 accent-[var(--color-accent)]"
-          />
-          Favorita
-        </label>
+          <label className="flex items-center gap-2 text-sm text-[var(--color-text-secondary)]">
+            <input
+              checked={containsSpoilers}
+              onChange={(event) => setContainsSpoilers(event.target.checked)}
+              type="checkbox"
+              className="h-4 w-4 accent-[var(--color-accent)]"
+            />
+            Contiene spoilers
+          </label>
+          <button onClick={() => void submitReview()} disabled={!canSubmitReview || createPending} className="primary-action">
+            Publicar
+          </button>
+        </div>
       </div>
-      <button
-        onClick={() => void saveLibraryItem()}
-        disabled={createPending || updatePending}
-        className="primary-action mt-5"
-      >
-        {existingItem ? 'Actualizar' : 'Guardar'}
-      </button>
-      {error ? <ActionError message={error} /> : null}
+      {reviewError ? <ActionError message={reviewError} /> : null}
     </div>
   )
 }
@@ -366,8 +497,10 @@ function TmdbMediaControls({
   const watchlist = useSetTmdbWatchlist()
   const rate = useSetTmdbRating()
   const deleteRating = useDeleteTmdbRating()
-  const [rating, setRating] = useState(state?.rating?.toString() ?? '')
+  const [rating, setRating] = useState(formatRatingValue(state?.rating ?? null))
   const [error, setError] = useState<string | null>(null)
+  const parsedRating = parseRatingInput(rating)
+  const ratingIsValid = parsedRating !== null && Number.isFinite(parsedRating) && parsedRating >= 0.5 && parsedRating <= 10
 
   async function runTmdbAction(action: () => Promise<unknown>) {
     setError(null)
@@ -418,16 +551,13 @@ function TmdbMediaControls({
         <input
           value={rating}
           onChange={(event) => setRating(event.target.value)}
-          type="number"
-          min="0.5"
-          max="10"
-          step="0.5"
+          inputMode="decimal"
           placeholder="Rating TMDB"
           className="field min-w-0 flex-1"
         />
         <button
-          onClick={() => void runTmdbAction(() => rate.mutateAsync({ mediaType, tmdbId, value: Number(rating) }))}
-          disabled={!rating || rate.isPending}
+          onClick={() => void runTmdbAction(() => rate.mutateAsync({ mediaType, tmdbId, value: parsedRating ?? 0 }))}
+          disabled={!ratingIsValid || rate.isPending}
           className="secondary-action"
         >
           Puntuar
@@ -462,11 +592,11 @@ function ReviewsBlock({
 }) {
   return (
     <div className="surface-panel mt-6 p-5">
-      <h2 className="text-xl font-semibold">Resenas publicas</h2>
-      {isLoading ? <p className="mt-3 text-sm text-[var(--color-text-secondary)]">Cargando resenas...</p> : null}
-      {isError ? <p className="mt-3 text-sm text-red-200">No pudimos cargar resenas.</p> : null}
+      <h2 className="text-xl font-semibold">Reseñas publicas</h2>
+      {isLoading ? <p className="mt-3 text-sm text-[var(--color-text-secondary)]">Cargando reseñas...</p> : null}
+      {isError ? <p className="mt-3 text-sm text-red-200">No pudimos cargar reseñas.</p> : null}
       {!isLoading && !isError && reviews.length === 0 ? (
-        <p className="mt-3 text-sm text-[var(--color-text-secondary)]">Todavia no hay resenas publicas.</p>
+        <p className="mt-3 text-sm text-[var(--color-text-secondary)]">Todavia no hay reseñas publicas.</p>
       ) : null}
       <div className="mt-4 grid gap-3">
         {reviews.map((review) => (
@@ -483,4 +613,23 @@ function ReviewsBlock({
       </div>
     </div>
   )
+}
+
+function parseRatingInput(value: string) {
+  const normalized = value.trim().replace(',', '.')
+
+  if (!normalized) {
+    return null
+  }
+
+  const parsed = Number(normalized)
+  return Number.isFinite(parsed) ? Math.round(parsed * 10) / 10 : Number.NaN
+}
+
+function formatRatingValue(value: number | null) {
+  return value === null ? '' : String(value)
+}
+
+function visibilityLabel(value: Visibility) {
+  return visibilityOptions.find((option) => option.value === value)?.label ?? value
 }

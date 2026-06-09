@@ -5,7 +5,7 @@ public sealed record LibraryItemRequest(
     int TmdbId,
     string Status,
     bool IsFavorite,
-    int? Rating,
+    decimal? Rating,
     DateTimeOffset? WatchedAt,
     DateTimeOffset? StartedAt);
 
@@ -17,7 +17,7 @@ public sealed record LibraryItemResponse(
     string? PosterUrl,
     string Status,
     bool IsFavorite,
-    int? Rating,
+    decimal? Rating,
     DateTimeOffset? WatchedAt,
     DateTimeOffset? StartedAt,
     DateTimeOffset CreatedAt,
@@ -26,7 +26,7 @@ public sealed record LibraryItemResponse(
 public sealed record ReviewRequest(
     string MediaType,
     int TmdbId,
-    int? RatingSnapshot,
+    decimal? RatingSnapshot,
     string Title,
     string Body,
     bool ContainsSpoilers,
@@ -39,7 +39,7 @@ public sealed record ReviewResponse(
     string MediaType,
     int TmdbId,
     string MediaTitle,
-    int? RatingSnapshot,
+    decimal? RatingSnapshot,
     string Title,
     string Body,
     bool ContainsSpoilers,
@@ -82,6 +82,7 @@ public sealed record UserListItemResponse(
     int TmdbId,
     string Title,
     string? PosterUrl,
+    decimal? Rating,
     int Position,
     string? Note,
     DateTimeOffset CreatedAt);

@@ -6,9 +6,10 @@ type MediaCarouselProps = {
   title: string
   items: MediaSummary[]
   viewAllHref?: string
+  rankLabels?: Map<string, string>
 }
 
-export function MediaCarousel({ title, items, viewAllHref }: MediaCarouselProps) {
+export function MediaCarousel({ title, items, viewAllHref, rankLabels }: MediaCarouselProps) {
   if (items.length === 0) {
     return null
   }
@@ -28,9 +29,13 @@ export function MediaCarousel({ title, items, viewAllHref }: MediaCarouselProps)
       </div>
       <div className="scrollbar-cinema flex gap-4 overflow-x-auto px-4 pb-4 sm:px-6">
         {items.map((item) => (
-          <PosterCard key={`${item.mediaType}-${item.tmdbId}`} item={item} layout="carousel" />
+          <PosterCard key={`${item.mediaType}-${item.tmdbId}`} item={item} layout="carousel" rankLabel={rankLabels?.get(getMediaKey(item))} />
         ))}
       </div>
     </section>
   )
+}
+
+function getMediaKey(item: MediaSummary) {
+  return `${item.mediaType}-${item.tmdbId}`
 }

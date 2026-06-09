@@ -148,6 +148,39 @@ public sealed class CriticalFlowsIntegrationTests : IClassFixture<WebApplication
         Assert.Equal(HttpStatusCode.Unauthorized, reuse.StatusCode);
     }
 
+    [Fact]
+    public async Task Mobile_auth_uses_json_refresh_tokens_and_rejects_reuse()
+    {
+        var stamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+        using var client = _factory.CreateClient(new WebApplicationFactoryClientOptions { HandleCookies = false });
+
+        var register = await client.PostAsJsonAsync("/api/mobile/auth/register", new
+        {
+            username = $"itmobile{stamp}",
+            email = $"itmobile{stamp}@rewndly.local",
+            password = "User123!",
+            displayName = "IT Mobile"
+        });
+
+        Assert.Equal(HttpStatusCode.OK, register.StatusCode);
+        Assert.False(register.Headers.TryGetValues("Set-Cookie", out _));
+        var auth = await ReadJsonAsync<MobileAuthResponse>(register);
+        Assert.False(string.IsNullOrWhiteSpace(auth.RefreshToken));
+
+        SetBearer(client, auth.AccessToken);
+        var me = await client.GetAsync("/api/auth/me");
+        Assert.Equal(HttpStatusCode.OK, me.StatusCode);
+
+        var refresh = await client.PostAsJsonAsync("/api/mobile/auth/refresh", new { auth.RefreshToken });
+        Assert.Equal(HttpStatusCode.OK, refresh.StatusCode);
+        var rotated = await ReadJsonAsync<MobileAuthResponse>(refresh);
+        Assert.False(string.IsNullOrWhiteSpace(rotated.RefreshToken));
+        Assert.NotEqual(auth.RefreshToken, rotated.RefreshToken);
+
+        var reuse = await client.PostAsJsonAsync("/api/mobile/auth/refresh", new { auth.RefreshToken });
+        Assert.Equal(HttpStatusCode.Unauthorized, reuse.StatusCode);
+    }
+
     private static async Task<AuthResponse> RegisterAsync(HttpClient client, string username)
     {
         var response = await client.PostAsJsonAsync("/api/auth/register", new
@@ -219,6 +252,8 @@ public sealed class CriticalFlowsIntegrationTests : IClassFixture<WebApplication
     }
 
     private sealed record AuthResponse(string AccessToken, AuthUserResponse User);
+
+    private sealed record MobileAuthResponse(string AccessToken, string RefreshToken, AuthUserResponse User);
 
     private sealed record AuthUserResponse(Guid Id, string Username, string Role, bool MustChangePassword);
 }

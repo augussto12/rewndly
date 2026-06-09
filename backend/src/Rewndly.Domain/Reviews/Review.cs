@@ -14,7 +14,7 @@ public sealed class Review : Entity, IAuditableEntity, ISoftDeletableEntity
 
     public Guid? SeriesId { get; set; }
 
-    public int? RatingSnapshot { get; set; }
+    public decimal? RatingSnapshot { get; set; }
 
     public string Title { get; set; } = string.Empty;
 

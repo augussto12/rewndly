@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { Link } from 'react-router-dom'
+import { toast } from '../components/feedback/Toast/toastStore'
 import { useAuth } from '../features/auth/useAuth'
 import { PublicLayout } from '../layouts/PublicLayout'
 import { getErrorMessage } from '../services/apiError'
@@ -29,22 +30,30 @@ export function MePage() {
     setSuccess(null)
 
     if (!currentPassword) {
-      setError('Completa el password actual.')
+      const message = 'Completa el password actual.'
+      setError(message)
+      toast.error('Falta un dato', message)
       return
     }
 
     if (passwordIssues.length > 0) {
-      setError(passwordIssues.join(' '))
+      const message = passwordIssues.join(' ')
+      setError(message)
+      toast.error('Password invalido', message)
       return
     }
 
     if (newPassword !== confirmNewPassword) {
-      setError('La confirmacion no coincide con el password nuevo.')
+      const message = 'La confirmacion no coincide con el password nuevo.'
+      setError(message)
+      toast.error('Confirmacion incorrecta', message)
       return
     }
 
     if (newPassword === currentPassword) {
-      setError('El password nuevo debe ser distinto al actual.')
+      const message = 'El password nuevo debe ser distinto al actual.'
+      setError(message)
+      toast.error('Password repetido', message)
       return
     }
 
@@ -104,7 +113,7 @@ export function MePage() {
                 Biblioteca
               </Link>
               <Link to="/me/reviews" className="secondary-action justify-start">
-                Resenas
+                Reseñas
               </Link>
               <Link to="/me/lists" className="secondary-action justify-start">
                 Listas

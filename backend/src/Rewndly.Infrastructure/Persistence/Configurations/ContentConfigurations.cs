@@ -27,6 +27,7 @@ public sealed class UserMediaItemConfiguration : IEntityTypeConfiguration<UserMe
 
         builder.Property(item => item.MediaType).HasConversion<string>().HasMaxLength(20).IsRequired();
         builder.Property(item => item.Status).HasConversion<string>().HasMaxLength(30).IsRequired();
+        builder.Property(item => item.Rating).HasPrecision(3, 1);
         builder.Property(item => item.WatchedAt).HasPrecision(3);
         builder.Property(item => item.StartedAt).HasPrecision(3);
 
@@ -79,6 +80,7 @@ public sealed class ReviewConfiguration : IEntityTypeConfiguration<Review>
         builder.HasQueryFilter(review => !review.IsDeleted);
 
         builder.Property(review => review.MediaType).HasConversion<string>().HasMaxLength(20).IsRequired();
+        builder.Property(review => review.RatingSnapshot).HasPrecision(3, 1);
         builder.Property(review => review.Title).HasMaxLength(180).IsRequired();
         builder.Property(review => review.Body).HasMaxLength(8000).IsRequired();
         builder.Property(review => review.Visibility).HasConversion<string>().HasMaxLength(20).IsRequired();

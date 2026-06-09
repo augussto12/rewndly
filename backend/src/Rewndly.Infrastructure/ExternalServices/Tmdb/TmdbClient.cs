@@ -147,15 +147,18 @@ public sealed class TmdbClient(
     public Task<PagedResponse<MediaSummaryResponse>> DiscoverMoviesAsync(
         int? genreId,
         int? year,
+        int? yearFrom,
+        int? yearTo,
         int? watchProviderId,
         string? sortBy,
         decimal? minVoteAverage,
+        int? runtimeMax,
         int page,
         CancellationToken cancellationToken)
     {
         var normalizedSort = NormalizeSort(sortBy, MovieSortOptions, "popularity.desc");
         var normalizedPage = NormalizePage(page);
-        var cacheKey = $"tmdb:movies:discover:{genreId}:{year}:{watchProviderId}:{normalizedSort}:{minVoteAverage}:{normalizedPage}";
+        var cacheKey = $"tmdb:movies:discover:{genreId}:{year}:{yearFrom}:{yearTo}:{watchProviderId}:{normalizedSort}:{minVoteAverage}:{runtimeMax}:{normalizedPage}";
 
         return GetCachedAsync<PagedResponse<MediaSummaryResponse>>(
             cacheKey,
@@ -163,7 +166,7 @@ public sealed class TmdbClient(
             async () =>
             {
                 var genres = await GetMovieGenreMapAsync(cancellationToken);
-                var query = BuildDiscoverQuery(normalizedSort, genreId, year, watchProviderId, minVoteAverage, normalizedPage, isMovie: true);
+                var query = BuildDiscoverQuery(normalizedSort, genreId, year, yearFrom, yearTo, watchProviderId, minVoteAverage, runtimeMax, normalizedPage, isMovie: true);
                 var response = await GetAsync<TmdbSearchResponseDto<TmdbMovieDto>>($"discover/movie?{query}", cancellationToken);
                 return ToPagedResponse(response, response.Results.Select(movie => MapMovieSummary(movie, genres)).ToList());
             });
@@ -205,6 +208,7 @@ public sealed class TmdbClient(
                     MapCollectionSummary(movie.BelongsToCollection),
                     MapCompanySummaries(movie.ProductionCompanies),
                     MapCast(movie.Credits),
+                    MapCrew(movie.Credits),
                     MapVideos(movie.Videos),
                     MapWatchProviders(movie.WatchProviders),
                     MapMovieList(movie.Recommendations?.Results, genres).Take(RelatedLimit).ToList(),
@@ -216,7 +220,37 @@ public sealed class TmdbClient(
                     MapAlternativeTitles(movie.AlternativeTitles),
                     MapTranslations(movie.Translations),
                     MapMovieReleaseInfo(movie.ReleaseDates),
+                    [],
+                    null,
                     "Movie");
+            });
+    }
+
+    public Task<MediaSummaryResponse?> GetMovieSummaryByIdAsync(int tmdbId, CancellationToken cancellationToken)
+    {
+        return GetCachedAsync<MediaSummaryResponse?>(
+            $"tmdb:movies:summary:{tmdbId}",
+            DetailsTtl,
+            async () =>
+            {
+                try
+                {
+                    var movie = await GetAsync<TmdbMovieDto>($"movie/{tmdbId}?language={Language}", cancellationToken);
+                    return new MediaSummaryResponse(
+                        movie.Id,
+                        movie.Title ?? "Sin titulo",
+                        movie.Overview,
+                        BuildImageUrl(movie.PosterPath, _options.PosterSize),
+                        BuildImageUrl(movie.BackdropPath, _options.BackdropSize),
+                        ParseDate(movie.ReleaseDate),
+                        movie.VoteAverage,
+                        movie.Genres?.Select(genre => genre.Name).ToList() ?? [],
+                        "Movie");
+                }
+                catch (TmdbNotFoundException)
+                {
+                    return null;
+                }
             });
     }
 
@@ -270,6 +304,8 @@ public sealed class TmdbClient(
     public Task<PagedResponse<MediaSummaryResponse>> DiscoverSeriesAsync(
         int? genreId,
         int? year,
+        int? yearFrom,
+        int? yearTo,
         int? watchProviderId,
         string? sortBy,
         decimal? minVoteAverage,
@@ -278,7 +314,7 @@ public sealed class TmdbClient(
     {
         var normalizedSort = NormalizeSort(sortBy, SeriesSortOptions, "popularity.desc");
         var normalizedPage = NormalizePage(page);
-        var cacheKey = $"tmdb:series:discover:{genreId}:{year}:{watchProviderId}:{normalizedSort}:{minVoteAverage}:{normalizedPage}";
+        var cacheKey = $"tmdb:series:discover:{genreId}:{year}:{yearFrom}:{yearTo}:{watchProviderId}:{normalizedSort}:{minVoteAverage}:{normalizedPage}";
 
         return GetCachedAsync<PagedResponse<MediaSummaryResponse>>(
             cacheKey,
@@ -286,7 +322,7 @@ public sealed class TmdbClient(
             async () =>
             {
                 var genres = await GetSeriesGenreMapAsync(cancellationToken);
-                var query = BuildDiscoverQuery(normalizedSort, genreId, year, watchProviderId, minVoteAverage, normalizedPage, isMovie: false);
+                var query = BuildDiscoverQuery(normalizedSort, genreId, year, yearFrom, yearTo, watchProviderId, minVoteAverage, null, normalizedPage, isMovie: false);
                 var response = await GetAsync<TmdbSearchResponseDto<TmdbSeriesDto>>($"discover/tv?{query}", cancellationToken);
                 return ToPagedResponse(response, response.Results.Select(series => MapSeriesSummary(series, genres)).ToList());
             });
@@ -330,6 +366,7 @@ public sealed class TmdbClient(
                     MapCompanySummaries(series.ProductionCompanies),
                     MapNetworkSummaries(series.Networks),
                     MapCast(series.Credits),
+                    MapCrew(series.Credits),
                     MapVideos(series.Videos),
                     MapWatchProviders(series.WatchProviders),
                     MapSeriesList(series.Recommendations?.Results, genres).Take(RelatedLimit).ToList(),
@@ -342,7 +379,37 @@ public sealed class TmdbClient(
                     MapTranslations(series.Translations),
                     MapSeriesContentRatings(series.ContentRatings),
                     MapSeasonSummaries(series.Seasons),
+                    [],
+                    null,
                     "Series");
+            });
+    }
+
+    public Task<MediaSummaryResponse?> GetSeriesSummaryByIdAsync(int tmdbId, CancellationToken cancellationToken)
+    {
+        return GetCachedAsync<MediaSummaryResponse?>(
+            $"tmdb:series:summary:{tmdbId}",
+            DetailsTtl,
+            async () =>
+            {
+                try
+                {
+                    var series = await GetAsync<TmdbSeriesDto>($"tv/{tmdbId}?language={Language}", cancellationToken);
+                    return new MediaSummaryResponse(
+                        series.Id,
+                        series.Name ?? "Sin titulo",
+                        series.Overview,
+                        BuildImageUrl(series.PosterPath, _options.PosterSize),
+                        BuildImageUrl(series.BackdropPath, _options.BackdropSize),
+                        ParseDate(series.FirstAirDate),
+                        series.VoteAverage,
+                        series.Genres?.Select(genre => genre.Name).ToList() ?? [],
+                        "Series");
+                }
+                catch (TmdbNotFoundException)
+                {
+                    return null;
+                }
             });
     }
 
@@ -1663,8 +1730,11 @@ public sealed class TmdbClient(
         string sortBy,
         int? genreId,
         int? year,
+        int? yearFrom,
+        int? yearTo,
         int? watchProviderId,
         decimal? minVoteAverage,
+        int? runtimeMax,
         int page,
         bool isMovie)
     {
@@ -1686,6 +1756,18 @@ public sealed class TmdbClient(
         {
             query.Add(new(isMovie ? "primary_release_year" : "first_air_date_year", year.Value.ToString()));
         }
+        else
+        {
+            if (yearFrom is >= 1900 and <= 2100)
+            {
+                query.Add(new(isMovie ? "primary_release_date.gte" : "first_air_date.gte", $"{yearFrom.Value:0000}-01-01"));
+            }
+
+            if (yearTo is >= 1900 and <= 2100)
+            {
+                query.Add(new(isMovie ? "primary_release_date.lte" : "first_air_date.lte", $"{yearTo.Value:0000}-12-31"));
+            }
+        }
 
         if (watchProviderId is > 0)
         {
@@ -1696,6 +1778,11 @@ public sealed class TmdbClient(
         if (minVoteAverage is >= 0 and <= 10)
         {
             query.Add(new("vote_average.gte", minVoteAverage.Value.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture)));
+        }
+
+        if (isMovie && runtimeMax is >= 45 and <= 240)
+        {
+            query.Add(new("with_runtime.lte", runtimeMax.Value.ToString()));
         }
 
         if (sortBy.Equals("vote_average.desc", StringComparison.OrdinalIgnoreCase))

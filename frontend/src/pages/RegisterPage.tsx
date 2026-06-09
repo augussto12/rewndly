@@ -33,7 +33,7 @@ export function RegisterPage() {
         <p className="kicker mt-8">Cuenta</p>
         <h1 className="mt-3 text-3xl font-semibold">Crear cuenta</h1>
         <p className="mt-3 text-sm leading-6 text-[var(--color-text-secondary)]">
-          Empeza con una biblioteca propia, resenas independientes y listas visibles segun tu privacidad.
+          Empeza con una biblioteca propia, reseñas independientes y listas visibles segun tu privacidad.
         </p>
         <label className="mt-6 block text-sm text-[var(--color-text-secondary)]">
           Usuario

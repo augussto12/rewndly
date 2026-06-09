@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { EmptyState } from '../components/feedback/EmptyState/EmptyState'
 import { ErrorState } from '../components/feedback/ErrorState/ErrorState'
 import { LoadingSkeleton } from '../components/feedback/LoadingSkeleton/LoadingSkeleton'
@@ -16,8 +17,9 @@ const categories: Array<{ value: PeopleBrowseCategory; label: string }> = [
 ]
 
 export function PeopleSearchPage() {
-  const [query, setQuery] = useState('')
+  const [searchParams, setSearchParams] = useSearchParams()
   const [category, setCategory] = useState<PeopleBrowseCategory>('popular')
+  const query = searchParams.get('q') ?? ''
   const normalizedQuery = useMemo(() => query.trim(), [query])
   const canSearch = normalizedQuery.length >= 2
   const browse = usePeopleBrowse(category)
@@ -25,6 +27,20 @@ export function PeopleSearchPage() {
   const activeQuery = canSearch ? search : browse
   const items = flattenUniquePages<PersonSummary>(activeQuery.data, (person) => String(person.tmdbId))
   const title = canSearch ? `Resultados para "${normalizedQuery}"` : categories.find((item) => item.value === category)?.label ?? 'Personas'
+
+  function changeQuery(value: string) {
+    setSearchParams((current) => {
+      const next = new URLSearchParams(current)
+
+      if (value.trim()) {
+        next.set('q', value)
+      } else {
+        next.delete('q')
+      }
+
+      return next
+    })
+  }
 
   return (
     <PublicLayout>
@@ -39,7 +55,7 @@ export function PeopleSearchPage() {
 
         <div className="mt-8 grid gap-4 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end">
           <div className="max-w-2xl">
-            <SearchInput value={query} placeholder="Buscar por nombre" onChange={setQuery} />
+            <SearchInput value={query} placeholder="Buscar por nombre" onChange={changeQuery} />
           </div>
           {!canSearch ? (
             <div className="flex flex-wrap gap-2">

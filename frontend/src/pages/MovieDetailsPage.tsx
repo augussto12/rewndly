@@ -6,7 +6,7 @@ import { MediaDetailsHeader } from '../components/media/MediaDetailsHeader/Media
 import { MediaDetailsMetadata } from '../components/media/MediaDetailsMetadata/MediaDetailsMetadata'
 import { MediaEntityLinks } from '../components/media/MediaEntityLinks/MediaEntityLinks'
 import { useMovieDetails } from '../features/public-media/hooks/usePublicMedia'
-import { MediaActionsPanel } from '../features/user-content/components/MediaActionsPanel'
+import { MediaActionsPanel, MediaQuickActions } from '../features/user-content/components/MediaActionsPanel'
 import { PublicLayout } from '../layouts/PublicLayout'
 
 export function MovieDetailsPage() {
@@ -36,31 +36,41 @@ export function MovieDetailsPage() {
             posterUrl={data.posterUrl}
             backdropUrl={data.backdropUrl}
             voteAverage={data.voteAverage}
+            externalRatings={data.externalRatings}
+            releaseYear={toYear(data.releaseDate)}
             genres={data.genres}
             meta={[data.releaseDate?.slice(0, 4) ?? '', data.runtimeMinutes ? `${data.runtimeMinutes} min` : '']}
             backHref="/movies/search"
-            backLabel="Volver a peliculas"
+            actionSlot={<MediaQuickActions mediaType="Movie" tmdbId={data.tmdbId} title={data.title} />}
           />
-          <MediaActionsPanel mediaType="Movie" tmdbId={data.tmdbId} title={data.title} />
-          <MediaEntityLinks collection={data.collection} companies={data.productionCompanies} />
-          <MediaDetailsExtras
-            cast={data.cast}
-            videos={data.videos}
-            watchProviders={data.watchProviders}
-            recommendations={data.recommendations}
-            similar={data.similar}
-          />
-          <MediaDetailsMetadata
-            images={data.images}
-            keywords={data.keywords}
-            reviews={data.tmdbReviews}
-            externalLinks={data.externalLinks}
-            alternativeTitles={data.alternativeTitles}
-            translations={data.translations}
-            releaseInfo={data.releaseInfo}
-          />
+          <div className="detail-content-flow">
+            <MediaEntityLinks collection={data.collection} companies={data.productionCompanies} />
+            <MediaDetailsExtras
+              mediaTitle={data.title}
+              cast={data.cast}
+              videos={data.videos}
+              watchProviders={data.watchProviders}
+              recommendations={data.recommendations}
+              similar={data.similar}
+            />
+            <MediaDetailsMetadata
+              images={data.images}
+              keywords={data.keywords}
+              reviews={data.tmdbReviews}
+              externalLinks={data.externalLinks}
+              alternativeTitles={data.alternativeTitles}
+              translations={data.translations}
+              releaseInfo={data.releaseInfo}
+            />
+            <MediaActionsPanel mediaType="Movie" tmdbId={data.tmdbId} title={data.title} />
+          </div>
         </main>
       ) : null}
     </PublicLayout>
   )
+}
+
+function toYear(value: string | null) {
+  const year = Number(value?.slice(0, 4))
+  return Number.isFinite(year) ? year : null
 }

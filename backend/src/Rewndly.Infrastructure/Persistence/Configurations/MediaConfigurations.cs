@@ -69,6 +69,51 @@ public sealed class GenreConfiguration : IEntityTypeConfiguration<Genre>
     }
 }
 
+public sealed class ExternalMediaRatingConfiguration : IEntityTypeConfiguration<ExternalMediaRating>
+{
+    public void Configure(EntityTypeBuilder<ExternalMediaRating> builder)
+    {
+        builder.ToTable("external_media_ratings");
+
+        builder.ConfigureUuidPrimaryKey();
+
+        builder.Property(rating => rating.MediaType).HasConversion<string>().HasMaxLength(20).IsRequired();
+        builder.Property(rating => rating.Source).HasMaxLength(40).IsRequired();
+        builder.Property(rating => rating.Value).HasPrecision(6, 2);
+        builder.Property(rating => rating.Scale).HasPrecision(6, 2);
+        builder.Property(rating => rating.FetchedAt).HasPrecision(3).IsRequired();
+        builder.Property(rating => rating.ExpiresAt).HasPrecision(3).IsRequired();
+
+        builder.HasIndex(rating => new { rating.MediaType, rating.TmdbId, rating.Source }).IsUnique();
+        builder.HasIndex(rating => new { rating.MediaType, rating.TmdbId, rating.ExpiresAt });
+    }
+}
+
+public sealed class ExternalMediaRankingItemConfiguration : IEntityTypeConfiguration<ExternalMediaRankingItem>
+{
+    public void Configure(EntityTypeBuilder<ExternalMediaRankingItem> builder)
+    {
+        builder.ToTable("external_media_ranking_items");
+
+        builder.ConfigureUuidPrimaryKey();
+
+        builder.Property(item => item.MediaType).HasConversion<string>().HasMaxLength(20).IsRequired();
+        builder.Property(item => item.RankingKey).HasMaxLength(40).IsRequired();
+        builder.Property(item => item.Title).HasMaxLength(300).IsRequired();
+        builder.Property(item => item.Overview).HasMaxLength(4000);
+        builder.Property(item => item.PosterUrl).HasMaxLength(500);
+        builder.Property(item => item.BackdropUrl).HasMaxLength(500);
+        builder.Property(item => item.VoteAverage).HasPrecision(4, 2);
+        builder.Property(item => item.RankingScore).HasPrecision(8, 2);
+        builder.Property(item => item.FetchedAt).HasPrecision(3).IsRequired();
+        builder.Property(item => item.ExpiresAt).HasPrecision(3).IsRequired();
+
+        builder.HasIndex(item => new { item.MediaType, item.RankingKey, item.Rank }).IsUnique();
+        builder.HasIndex(item => new { item.MediaType, item.RankingKey, item.TmdbId }).IsUnique();
+        builder.HasIndex(item => new { item.MediaType, item.RankingKey, item.ExpiresAt });
+    }
+}
+
 public sealed class MovieGenreConfiguration : IEntityTypeConfiguration<MovieGenre>
 {
     public void Configure(EntityTypeBuilder<MovieGenre> builder)

@@ -4,6 +4,7 @@ import { LoadingSkeleton } from '../components/feedback/LoadingSkeleton/LoadingS
 import { MediaDetailsExtras } from '../components/media/MediaDetailsExtras/MediaDetailsExtras'
 import { MediaDetailsMetadata } from '../components/media/MediaDetailsMetadata/MediaDetailsMetadata'
 import { RatingBadge } from '../components/media/RatingBadge/RatingBadge'
+import { BackButton } from '../components/navigation/BackButton'
 import { useSeasonDetails } from '../features/public-media/hooks/usePublicMedia'
 import { PublicLayout } from '../layouts/PublicLayout'
 
@@ -51,9 +52,7 @@ export function SeasonDetailsPage() {
                 {data.overview || 'Todavia no hay sinopsis disponible para esta temporada.'}
               </p>
               <div className="mt-6 flex flex-wrap gap-3">
-                <Link to={`/series/${data.seriesTmdbId}`} className="secondary-action">
-                  Volver a la serie
-                </Link>
+                <BackButton fallbackHref={`/series/${data.seriesTmdbId}`} />
               </div>
             </div>
           </section>
@@ -94,6 +93,7 @@ export function SeasonDetailsPage() {
           </section>
 
           <MediaDetailsExtras
+            mediaTitle={data.name}
             cast={data.cast}
             videos={data.videos}
             watchProviders={data.watchProviders}

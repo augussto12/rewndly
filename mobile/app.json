@@ -1,0 +1,38 @@
+{
+  "expo": {
+    "name": "Rewndly",
+    "slug": "rewndly",
+    "scheme": "rewndly",
+    "version": "0.1.0",
+    "platforms": [
+      "ios",
+      "android"
+    ],
+    "orientation": "portrait",
+    "userInterfaceStyle": "dark",
+    "jsEngine": "jsc",
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.rewndly.app"
+    },
+    "android": {
+      "package": "com.rewndly.app",
+      "adaptiveIcon": {
+        "backgroundColor": "#111827"
+      }
+    },
+    "extra": {
+      "apiBaseUrl": "https://rewndly.com",
+      "eas": {
+        "projectId": "00000000-0000-0000-0000-000000000000"
+      }
+    },
+    "plugins": [
+      "expo-router",
+      "expo-secure-store"
+    ]
+  }
+}

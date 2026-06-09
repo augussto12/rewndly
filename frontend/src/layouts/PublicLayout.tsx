@@ -1,14 +1,15 @@
 import { useState, type PropsWithChildren } from 'react'
 import { Link, NavLink } from 'react-router-dom'
+import { GlobalSearch } from '../components/search/GlobalSearch/GlobalSearch'
 import { useAuth } from '../features/auth/useAuth'
 
 const publicLinks = [
   { href: '/movies/search', label: 'Peliculas' },
   { href: '/series/search', label: 'Series' },
   { href: '/discover', label: 'Explorar' },
-  { href: '/people/search', label: 'Personas' },
+  { href: '/compare', label: 'Comparar' },
+  { href: '/games/poster', label: 'Juego' },
   { href: '/lists/public', label: 'Listas' },
-  { href: '/reviews/public', label: 'Resenas' },
 ]
 
 export function PublicLayout({ children }: PropsWithChildren) {
@@ -25,12 +26,13 @@ export function PublicLayout({ children }: PropsWithChildren) {
             </span>
             <span className="truncate">Rewndly</span>
           </Link>
-          <nav className="hidden items-center gap-2 text-sm text-[var(--color-text-secondary)] md:flex md:justify-end">
+          <nav className="hidden items-center gap-2 text-sm text-[var(--color-text-secondary)] lg:flex lg:justify-end">
             {publicLinks.map((link) => (
               <NavLink key={link.href} to={link.href} className={({ isActive }) => navClass(isActive)}>
                 {link.label}
               </NavLink>
             ))}
+            <GlobalSearch />
             {isAuthenticated ? (
               <>
                 <NavLink to="/feed" className={({ isActive }) => navClass(isActive)}>
@@ -46,26 +48,29 @@ export function PublicLayout({ children }: PropsWithChildren) {
               </Link>
             )}
           </nav>
-          <button
-            type="button"
-            className="inline-grid h-10 w-10 shrink-0 place-items-center rounded-[var(--radius-sm)] border border-white/10 bg-white/[0.06] text-white transition hover:bg-white/[0.1] md:hidden"
-            aria-label={isMenuOpen ? 'Cerrar menu' : 'Abrir menu'}
-            aria-expanded={isMenuOpen}
-            aria-controls="mobile-nav"
-            onClick={() => setIsMenuOpen((value) => !value)}
-          >
-            <span className="sr-only">{isMenuOpen ? 'Cerrar menu' : 'Abrir menu'}</span>
-            <span className="grid gap-1.5" aria-hidden="true">
-              <span className={`block h-0.5 w-5 rounded-full bg-current transition ${isMenuOpen ? 'translate-y-2 rotate-45' : ''}`} />
-              <span className={`block h-0.5 w-5 rounded-full bg-current transition ${isMenuOpen ? 'opacity-0' : ''}`} />
-              <span className={`block h-0.5 w-5 rounded-full bg-current transition ${isMenuOpen ? '-translate-y-2 -rotate-45' : ''}`} />
-            </span>
-          </button>
+          <div className="flex shrink-0 items-center gap-2 lg:hidden">
+            <GlobalSearch onNavigate={() => setIsMenuOpen(false)} />
+            <button
+              type="button"
+              className="inline-grid h-10 w-10 shrink-0 place-items-center rounded-[var(--radius-sm)] border border-white/10 bg-white/[0.06] text-white transition hover:bg-white/[0.1]"
+              aria-label={isMenuOpen ? 'Cerrar menu' : 'Abrir menu'}
+              aria-expanded={isMenuOpen}
+              aria-controls="mobile-nav"
+              onClick={() => setIsMenuOpen((value) => !value)}
+            >
+              <span className="sr-only">{isMenuOpen ? 'Cerrar menu' : 'Abrir menu'}</span>
+              <span className="grid gap-1.5" aria-hidden="true">
+                <span className={`block h-0.5 w-5 rounded-full bg-current transition ${isMenuOpen ? 'translate-y-2 rotate-45' : ''}`} />
+                <span className={`block h-0.5 w-5 rounded-full bg-current transition ${isMenuOpen ? 'opacity-0' : ''}`} />
+                <span className={`block h-0.5 w-5 rounded-full bg-current transition ${isMenuOpen ? '-translate-y-2 -rotate-45' : ''}`} />
+              </span>
+            </button>
+          </div>
         </div>
         {isMenuOpen ? (
           <nav
             id="mobile-nav"
-            className="absolute right-4 top-[calc(100%+0.5rem)] z-30 max-h-[calc(100svh-5rem)] w-[calc(100vw-2rem)] max-w-none overflow-y-auto rounded-[var(--radius-md)] border border-white/10 bg-[rgba(10,11,20,0.96)] p-3 text-sm text-[var(--color-text-secondary)] shadow-[0_24px_70px_rgba(0,0,0,0.5)] backdrop-blur-xl sm:right-6 sm:w-80 sm:max-w-80 md:hidden"
+            className="absolute right-4 top-[calc(100%+0.5rem)] z-30 max-h-[calc(100svh-5rem)] w-[calc(100vw-2rem)] max-w-none overflow-y-auto rounded-[var(--radius-md)] border border-white/10 bg-[rgba(10,11,20,0.96)] p-3 text-sm text-[var(--color-text-secondary)] shadow-[0_24px_70px_rgba(0,0,0,0.5)] backdrop-blur-xl sm:right-6 sm:w-80 sm:max-w-80 lg:hidden"
           >
             <div className="grid gap-2">
               {publicLinks.map((link) => (

@@ -26,6 +26,14 @@ public static class RateLimitExtensions
                 limiterOptions.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
             });
 
+            options.AddFixedWindowLimiter("external-ratings", limiterOptions =>
+            {
+                limiterOptions.PermitLimit = 90;
+                limiterOptions.Window = TimeSpan.FromMinutes(1);
+                limiterOptions.QueueLimit = 0;
+                limiterOptions.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
+            });
+
             options.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(context =>
                 RateLimitPartition.GetFixedWindowLimiter(
                     context.Connection.RemoteIpAddress?.ToString() ?? "anonymous",

@@ -1,4 +1,6 @@
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { toast } from '../../../components/feedback/Toast/toastStore'
+import { getErrorMessage } from '../../../services/apiError'
 import {
   acceptFriendRequest,
   deleteFriendship,
@@ -31,7 +33,11 @@ export function useSendFriendRequest() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: sendFriendRequest,
-    onSuccess: () => void queryClient.invalidateQueries({ queryKey: ['friend-requests'] }),
+    onSuccess: () => {
+      toast.success('Solicitud enviada', 'La invitacion quedo pendiente.')
+      void queryClient.invalidateQueries({ queryKey: ['friend-requests'] })
+    },
+    onError: (error) => notifySocialError(error, 'No se pudo enviar la solicitud.'),
   })
 }
 
@@ -40,9 +46,11 @@ export function useAcceptFriendRequest() {
   return useMutation({
     mutationFn: acceptFriendRequest,
     onSuccess: () => {
+      toast.success('Solicitud aceptada', 'La persona ya aparece en tus amigos.')
       void queryClient.invalidateQueries({ queryKey: ['friends'] })
       void queryClient.invalidateQueries({ queryKey: ['friend-requests'] })
     },
+    onError: (error) => notifySocialError(error, 'No se pudo aceptar la solicitud.'),
   })
 }
 
@@ -50,7 +58,11 @@ export function useRejectFriendRequest() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: rejectFriendRequest,
-    onSuccess: () => void queryClient.invalidateQueries({ queryKey: ['friend-requests'] }),
+    onSuccess: () => {
+      toast.success('Solicitud rechazada', 'La solicitud fue archivada.')
+      void queryClient.invalidateQueries({ queryKey: ['friend-requests'] })
+    },
+    onError: (error) => notifySocialError(error, 'No se pudo rechazar la solicitud.'),
   })
 }
 
@@ -58,7 +70,11 @@ export function useDeleteFriendship() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: deleteFriendship,
-    onSuccess: () => void queryClient.invalidateQueries({ queryKey: ['friends'] }),
+    onSuccess: () => {
+      toast.success('Amigo eliminado', 'La conexion fue quitada de tu cuenta.')
+      void queryClient.invalidateQueries({ queryKey: ['friends'] })
+    },
+    onError: (error) => notifySocialError(error, 'No se pudo eliminar la amistad.'),
   })
 }
 
@@ -159,4 +175,8 @@ export function useFeedPages() {
     initialPageParam: 1,
     getNextPageParam: (lastPage) => (lastPage.hasMore ? lastPage.page + 1 : undefined),
   })
+}
+
+function notifySocialError(error: unknown, fallback: string) {
+  toast.error('No se pudo completar la accion social', getErrorMessage(error, fallback))
 }

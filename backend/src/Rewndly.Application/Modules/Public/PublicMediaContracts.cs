@@ -43,6 +43,7 @@ public sealed record MovieDetailsResponse(
     CollectionSummaryResponse? Collection,
     IReadOnlyList<CompanySummaryResponse> ProductionCompanies,
     IReadOnlyList<MediaPersonResponse> Cast,
+    IReadOnlyList<MediaCrewResponse> Crew,
     IReadOnlyList<MediaVideoResponse> Videos,
     IReadOnlyList<WatchProviderResponse> WatchProviders,
     IReadOnlyList<MediaSummaryResponse> Recommendations,
@@ -54,6 +55,8 @@ public sealed record MovieDetailsResponse(
     IReadOnlyList<MediaAlternativeTitleResponse> AlternativeTitles,
     IReadOnlyList<MediaTranslationResponse> Translations,
     IReadOnlyList<MovieReleaseInfoResponse> ReleaseInfo,
+    IReadOnlyList<ExternalRatingResponse> ExternalRatings,
+    DateTimeOffset? RatingsCachedAt,
     string MediaType);
 
 public sealed record SeriesDetailsResponse(
@@ -74,6 +77,7 @@ public sealed record SeriesDetailsResponse(
     IReadOnlyList<CompanySummaryResponse> ProductionCompanies,
     IReadOnlyList<NetworkSummaryResponse> Networks,
     IReadOnlyList<MediaPersonResponse> Cast,
+    IReadOnlyList<MediaCrewResponse> Crew,
     IReadOnlyList<MediaVideoResponse> Videos,
     IReadOnlyList<WatchProviderResponse> WatchProviders,
     IReadOnlyList<MediaSummaryResponse> Recommendations,
@@ -86,7 +90,51 @@ public sealed record SeriesDetailsResponse(
     IReadOnlyList<MediaTranslationResponse> Translations,
     IReadOnlyList<SeriesContentRatingResponse> ContentRatings,
     IReadOnlyList<SeasonSummaryResponse> Seasons,
+    IReadOnlyList<ExternalRatingResponse> ExternalRatings,
+    DateTimeOffset? RatingsCachedAt,
     string MediaType);
+
+public sealed record ExternalRatingsResponse(
+    IReadOnlyList<ExternalRatingResponse> Ratings,
+    DateTimeOffset? CachedAt);
+
+public sealed record ExternalRatingsBatchRequest(
+    IReadOnlyList<ExternalRatingsBatchItemRequest> Items);
+
+public sealed record ExternalRatingsBatchItemRequest(
+    string MediaType,
+    int TmdbId);
+
+public sealed record ExternalRatingsBatchItemResponse(
+    string MediaType,
+    int TmdbId,
+    IReadOnlyList<ExternalRatingResponse> Ratings,
+    DateTimeOffset? CachedAt);
+
+public sealed record ExternalRatingResponse(
+    string Source,
+    string Label,
+    decimal Value,
+    decimal Scale,
+    int? Votes);
+
+public sealed record RankedMediaSummaryResponse(
+    MediaSummaryResponse Media,
+    int Rank,
+    string Source,
+    decimal? Score,
+    decimal? ScoreScale);
+
+public sealed record MediaRankingResponse(
+    IReadOnlyList<RankedMediaSummaryResponse> Items,
+    int Page,
+    int TotalPages,
+    int TotalResults,
+    bool HasMore,
+    string RankingKey,
+    string Source,
+    DateTimeOffset? CachedAt,
+    bool IsStale);
 
 public sealed record GenreResponse(
     int TmdbId,

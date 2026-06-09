@@ -51,10 +51,10 @@ export function UserProfilePage() {
               />
             </section>
             <section>
-              <h2 className="mb-4 text-2xl font-semibold">Resenas visibles</h2>
+              <h2 className="mb-4 text-2xl font-semibold">Reseñas visibles</h2>
               {reviews.isLoading ? <LoadingSkeleton /> : null}
               {!reviews.isLoading && visibleReviews.length === 0 ? (
-                <EmptyState title="Sin resenas visibles" message="No hay resenas para mostrar." />
+                <EmptyState title="Sin reseñas visibles" message="No hay reseñas para mostrar." />
               ) : null}
               <div className="grid gap-4">
                 {visibleReviews.map((review) => <ReviewCard key={review.id} review={review} />)}

@@ -33,6 +33,10 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
 
     public DbSet<Genre> Genres => Set<Genre>();
 
+    public DbSet<ExternalMediaRating> ExternalMediaRatings => Set<ExternalMediaRating>();
+
+    public DbSet<ExternalMediaRankingItem> ExternalMediaRankingItems => Set<ExternalMediaRankingItem>();
+
     public DbSet<MovieGenre> MovieGenres => Set<MovieGenre>();
 
     public DbSet<SeriesGenre> SeriesGenres => Set<SeriesGenre>();

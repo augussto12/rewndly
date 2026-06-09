@@ -2,6 +2,7 @@ import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../features/auth/useAuth'
+import { APP_VERSION } from '../lib/appVersion'
 import { ApiError, getErrorMessage } from '../services/apiError'
 
 export function LoginPage() {
@@ -57,6 +58,7 @@ export function LoginPage() {
         <Link to="/register" className="mt-4 block text-center text-sm text-[var(--color-text-secondary)] hover:text-white">
           Crear cuenta
         </Link>
+        <p className="mt-5 text-center text-xs font-semibold text-[var(--color-text-tertiary)]">Rewndly {APP_VERSION}</p>
       </form>
     </main>
   )

@@ -25,11 +25,13 @@ TestResults/
 # Node
 node_modules/
 dist/
+dist-*/
 coverage/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
+.expo/
 
 # Logs
 logs/
@@ -37,6 +39,7 @@ logs/
 
 # Local QA artifacts
 qa-*.png
+*.tar.gz
 
 # Database
 *.bak

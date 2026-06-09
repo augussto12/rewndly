@@ -540,12 +540,14 @@ public static class UserContentEndpoints
             .ThenBy(item => item.CreatedAt)
             .ToListAsync(cancellationToken);
 
+        var ratings = await GetLibraryRatingsByMediaAsync(dbContext, currentUser.UserId.Value, items, cancellationToken);
+
         return Results.Ok(new UserListDetailsResponse(
             list.Id,
             list.Title,
             list.Description,
             list.Visibility.ToString(),
-            items.Select(ToListItemResponse).ToList(),
+            items.Select(item => ToListItemResponse(item, ratings.GetValueOrDefault(MediaKey.From(item)))).ToList(),
             list.CreatedAt,
             list.UpdatedAt));
     }
@@ -704,7 +706,9 @@ public static class UserContentEndpoints
         await dbContext.Entry(listItem).Reference(entity => entity.Movie).LoadAsync(cancellationToken);
         await dbContext.Entry(listItem).Reference(entity => entity.Series).LoadAsync(cancellationToken);
 
-        return Results.Created($"/api/me/lists/{list.Id}/items/{listItem.Id}", ToListItemResponse(listItem));
+        var rating = await GetLibraryRatingAsync(dbContext, currentUser.UserId.Value, listItem, cancellationToken);
+
+        return Results.Created($"/api/me/lists/{list.Id}/items/{listItem.Id}", ToListItemResponse(listItem, rating));
     }
 
     private static async Task<IResult> DeleteListItemAsync(
@@ -857,7 +861,7 @@ public static class UserContentEndpoints
         bool isNew,
         WatchStatus? previousStatus = null,
         bool wasFavorite = false,
-        int? previousRating = null)
+        decimal? previousRating = null)
     {
         var mediaRef = MediaRef.FromItem(item);
 
@@ -963,7 +967,46 @@ public static class UserContentEndpoints
             review.UpdatedAt);
     }
 
-    private static UserListItemResponse ToListItemResponse(ListItemEntity item)
+    private static async Task<Dictionary<MediaKey, decimal?>> GetLibraryRatingsByMediaAsync(
+        AppDbContext dbContext,
+        Guid userId,
+        IReadOnlyCollection<ListItemEntity> items,
+        CancellationToken cancellationToken)
+    {
+        var movieIds = items.Where(item => item.MovieId.HasValue).Select(item => item.MovieId!.Value).ToHashSet();
+        var seriesIds = items.Where(item => item.SeriesId.HasValue).Select(item => item.SeriesId!.Value).ToHashSet();
+
+        return await dbContext.UserMediaItems
+            .AsNoTracking()
+            .Where(item =>
+                item.UserId == userId &&
+                ((item.MovieId.HasValue && movieIds.Contains(item.MovieId.Value)) ||
+                 (item.SeriesId.HasValue && seriesIds.Contains(item.SeriesId.Value))))
+            .Select(item => new { item.MediaType, item.MovieId, item.SeriesId, item.Rating })
+            .ToDictionaryAsync(
+                item => new MediaKey(item.MediaType, item.MovieId, item.SeriesId),
+                item => item.Rating,
+                cancellationToken);
+    }
+
+    private static async Task<decimal?> GetLibraryRatingAsync(
+        AppDbContext dbContext,
+        Guid userId,
+        ListItemEntity item,
+        CancellationToken cancellationToken)
+    {
+        return await dbContext.UserMediaItems
+            .AsNoTracking()
+            .Where(candidate =>
+                candidate.UserId == userId &&
+                (item.MediaType == MediaType.Movie
+                    ? candidate.MovieId == item.MovieId
+                    : candidate.SeriesId == item.SeriesId))
+            .Select(candidate => candidate.Rating)
+            .FirstOrDefaultAsync(cancellationToken);
+    }
+
+    private static UserListItemResponse ToListItemResponse(ListItemEntity item, decimal? rating)
     {
         var media = MediaView.From(item.MediaType, item.Movie, item.Series);
         return new UserListItemResponse(
@@ -972,6 +1015,7 @@ public static class UserContentEndpoints
             media.TmdbId,
             media.Title,
             media.PosterUrl,
+            rating,
             item.Position,
             item.Note,
             item.CreatedAt);
@@ -1004,6 +1048,14 @@ public static class UserContentEndpoints
         public static MediaRef FromItem(UserMediaItem item)
         {
             return new MediaRef(item.MediaType, item.MovieId, item.SeriesId);
+        }
+    }
+
+    private sealed record MediaKey(MediaType MediaType, Guid? MovieId, Guid? SeriesId)
+    {
+        public static MediaKey From(ListItemEntity item)
+        {
+            return new MediaKey(item.MediaType, item.MovieId, item.SeriesId);
         }
     }
 

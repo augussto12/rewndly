@@ -4,6 +4,7 @@ import { LoadingSkeleton } from '../components/feedback/LoadingSkeleton/LoadingS
 import { MediaDetailsExtras } from '../components/media/MediaDetailsExtras/MediaDetailsExtras'
 import { MediaDetailsMetadata } from '../components/media/MediaDetailsMetadata/MediaDetailsMetadata'
 import { RatingBadge } from '../components/media/RatingBadge/RatingBadge'
+import { BackButton } from '../components/navigation/BackButton'
 import { useEpisodeDetails } from '../features/public-media/hooks/usePublicMedia'
 import { PublicLayout } from '../layouts/PublicLayout'
 
@@ -52,9 +53,7 @@ export function EpisodeDetailsPage() {
                   {data.overview || 'Todavia no hay sinopsis disponible para este episodio.'}
                 </p>
                 <div className="mt-6 flex flex-wrap gap-3">
-                  <Link to={`/series/${data.seriesTmdbId}/seasons/${data.seasonNumber}`} className="secondary-action">
-                    Volver a temporada
-                  </Link>
+                  <BackButton fallbackHref={`/series/${data.seriesTmdbId}/seasons/${data.seasonNumber}`} />
                   <Link to={`/series/${data.seriesTmdbId}`} className="secondary-action">
                     Ver serie
                   </Link>
@@ -82,7 +81,7 @@ export function EpisodeDetailsPage() {
             </section>
           ) : null}
 
-          <MediaDetailsExtras cast={data.cast} videos={data.videos} watchProviders={[]} recommendations={[]} similar={[]} />
+          <MediaDetailsExtras mediaTitle={data.name} cast={data.cast} videos={data.videos} watchProviders={[]} recommendations={[]} similar={[]} />
           <MediaDetailsMetadata
             images={data.images}
             keywords={[]}

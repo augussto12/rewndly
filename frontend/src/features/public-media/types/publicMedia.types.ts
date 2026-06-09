@@ -44,6 +44,7 @@ export type MovieDetails = {
   collection: CollectionSummary | null
   productionCompanies: CompanySummary[]
   cast: MediaPerson[]
+  crew: MediaCrew[]
   videos: MediaVideo[]
   watchProviders: WatchProvider[]
   recommendations: MediaSummary[]
@@ -55,6 +56,8 @@ export type MovieDetails = {
   alternativeTitles: MediaAlternativeTitle[]
   translations: MediaTranslation[]
   releaseInfo: MovieReleaseInfo[]
+  externalRatings: ExternalRating[]
+  ratingsCachedAt: string | null
   mediaType: 'Movie'
 }
 
@@ -76,6 +79,7 @@ export type SeriesDetails = {
   productionCompanies: CompanySummary[]
   networks: NetworkSummary[]
   cast: MediaPerson[]
+  crew: MediaCrew[]
   videos: MediaVideo[]
   watchProviders: WatchProvider[]
   recommendations: MediaSummary[]
@@ -88,7 +92,44 @@ export type SeriesDetails = {
   translations: MediaTranslation[]
   contentRatings: SeriesContentRating[]
   seasons: SeasonSummary[]
+  externalRatings: ExternalRating[]
+  ratingsCachedAt: string | null
   mediaType: 'Series'
+}
+
+export type ExternalRating = {
+  source: string
+  label: string
+  value: number
+  scale: number
+  votes: number | null
+}
+
+export type ExternalRatingsBatchItem = {
+  mediaType: 'Movie' | 'Series'
+  tmdbId: number
+  ratings: ExternalRating[]
+  cachedAt: string | null
+}
+
+export type RankedMediaSummary = {
+  media: MediaSummary
+  rank: number
+  source: string
+  score: number | null
+  scoreScale: number | null
+}
+
+export type MediaRankingResponse = {
+  items: RankedMediaSummary[]
+  page: number
+  totalPages: number
+  totalResults: number
+  hasMore: boolean
+  rankingKey: string
+  source: string
+  cachedAt: string | null
+  isStale: boolean
 }
 
 export type MediaPerson = {
@@ -322,9 +363,12 @@ export type DiscoverFilters = {
   mediaType: 'Movie' | 'Series'
   genreId?: number
   year?: number
+  yearFrom?: number
+  yearTo?: number
   watchProviderId?: number
   sortBy?: string
   minVoteAverage?: number
+  runtimeMax?: number
 }
 
 export type PersonSummary = {
