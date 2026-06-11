@@ -117,6 +117,14 @@ public sealed class EnrichedPublicMediaService(
         };
     }
 
+    public async Task<IReadOnlyList<WatchProviderResponse>> GetWatchProvidersAsync(
+        MediaType mediaType,
+        int tmdbId,
+        CancellationToken cancellationToken)
+    {
+        return await tmdbClient.GetWatchProvidersAsync(mediaType, tmdbId, cancellationToken);
+    }
+
     public Task<SeasonDetailsResponse?> GetSeasonDetailsAsync(int seriesTmdbId, int seasonNumber, CancellationToken cancellationToken) =>
         tmdbClient.GetSeasonDetailsAsync(seriesTmdbId, seasonNumber, cancellationToken);
 

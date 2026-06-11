@@ -111,6 +111,18 @@ public sealed record ExternalRatingsBatchItemResponse(
     IReadOnlyList<ExternalRatingResponse> Ratings,
     DateTimeOffset? CachedAt);
 
+public sealed record WatchProvidersBatchRequest(
+    IReadOnlyList<WatchProvidersBatchItemRequest> Items);
+
+public sealed record WatchProvidersBatchItemRequest(
+    string MediaType,
+    int TmdbId);
+
+public sealed record WatchProvidersBatchItemResponse(
+    string MediaType,
+    int TmdbId,
+    IReadOnlyList<WatchProviderResponse> Providers);
+
 public sealed record ExternalRatingResponse(
     string Source,
     string Label,

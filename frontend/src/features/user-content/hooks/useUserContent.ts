@@ -21,6 +21,10 @@ import {
 } from '../services/userContentApi'
 import type { LibraryItemRequest, ReviewRequest, UserListItemRequest, UserListRequest } from '../types/userContent.types'
 
+type ToastMutationContext = {
+  toastId: string
+}
+
 export function useMyLibrary(enabled = true) {
   return useQuery({
     queryKey: ['my-library'],
@@ -64,11 +68,12 @@ export function useCreateLibraryItem() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: (request: LibraryItemRequest) => createLibraryItem(request),
-    onSuccess: () => {
-      toast.success('Guardado en biblioteca', 'El contenido ya está en tu biblioteca.')
+    onMutate: () => showLoadingToast('Guardando en biblioteca', 'Estamos actualizando tu biblioteca.'),
+    onSuccess: (_item, _request, context) => {
+      notifyActionSuccess(context, 'Guardado en biblioteca', 'El contenido ya está en tu biblioteca.')
       void queryClient.invalidateQueries({ queryKey: ['my-library'] })
     },
-    onError: (error) => notifyActionError(error, 'No se pudo guardar en biblioteca.'),
+    onError: (error, _request, context) => notifyActionError(error, 'No se pudo guardar en biblioteca.', context),
   })
 }
 
@@ -76,11 +81,12 @@ export function useUpdateLibraryItem() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: ({ id, request }: { id: string; request: LibraryItemRequest }) => updateLibraryItem(id, request),
-    onSuccess: () => {
-      toast.success('Biblioteca actualizada', 'Tus cambios quedaron guardados.')
+    onMutate: () => showLoadingToast('Guardando cambios', 'Estamos actualizando tu biblioteca.'),
+    onSuccess: (_item, _request, context) => {
+      notifyActionSuccess(context, 'Biblioteca actualizada', 'Tus cambios quedaron guardados.')
       void queryClient.invalidateQueries({ queryKey: ['my-library'] })
     },
-    onError: (error) => notifyActionError(error, 'No se pudo actualizar tu biblioteca.'),
+    onError: (error, _request, context) => notifyActionError(error, 'No se pudo actualizar tu biblioteca.', context),
   })
 }
 
@@ -88,11 +94,12 @@ export function useDeleteLibraryItem() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: deleteLibraryItem,
-    onSuccess: () => {
-      toast.success('Quitado de biblioteca', 'El contenido salio de tu biblioteca.')
+    onMutate: () => showLoadingToast('Quitando de biblioteca', 'Estamos guardando el cambio.'),
+    onSuccess: (_value, _id, context) => {
+      notifyActionSuccess(context, 'Quitado de biblioteca', 'El contenido salió de tu biblioteca.')
       void queryClient.invalidateQueries({ queryKey: ['my-library'] })
     },
-    onError: (error) => notifyActionError(error, 'No se pudo quitar de biblioteca.'),
+    onError: (error, _id, context) => notifyActionError(error, 'No se pudo quitar de biblioteca.', context),
   })
 }
 
@@ -101,7 +108,7 @@ export function useCreateReview() {
   return useMutation({
     mutationFn: (request: ReviewRequest) => createReview(request),
     onSuccess: (_review, request) => {
-      toast.success('Reseña publicada', 'Tu opinion ya aparece en el detalle.')
+      toast.success('Reseña publicada', 'Tu opinión ya aparece en el detalle.')
       void queryClient.invalidateQueries({ queryKey: ['my-reviews'] })
       void queryClient.invalidateQueries({ queryKey: ['media-reviews', request.mediaType, request.tmdbId] })
     },
@@ -178,12 +185,13 @@ export function useAddListItem() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: ({ id, request }: { id: string; request: UserListItemRequest }) => addListItem(id, request),
-    onSuccess: (_item, args) => {
-      toast.success('Agregado a la lista', 'El contenido ya está en la lista seleccionada.')
+    onMutate: () => showLoadingToast('Agregando a la lista', 'Estamos guardando el contenido.'),
+    onSuccess: (_item, args, context) => {
+      notifyActionSuccess(context, 'Agregado a la lista', 'El contenido ya está en la lista seleccionada.')
       void queryClient.invalidateQueries({ queryKey: ['my-lists'] })
       void queryClient.invalidateQueries({ queryKey: ['my-list', args.id] })
     },
-    onError: (error) => notifyActionError(error, 'No se pudo agregar a la lista.'),
+    onError: (error, _args, context) => notifyActionError(error, 'No se pudo agregar a la lista.', context),
   })
 }
 
@@ -191,15 +199,35 @@ export function useDeleteListItem() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: ({ listId, itemId }: { listId: string; itemId: string }) => deleteListItem(listId, itemId),
-    onSuccess: (_value, args) => {
-      toast.success('Quitado de la lista', 'El contenido ya no está en esa lista.')
+    onMutate: () => showLoadingToast('Quitando de la lista', 'Estamos guardando el cambio.'),
+    onSuccess: (_value, args, context) => {
+      notifyActionSuccess(context, 'Quitado de la lista', 'El contenido ya no está en esa lista.')
       void queryClient.invalidateQueries({ queryKey: ['my-lists'] })
       void queryClient.invalidateQueries({ queryKey: ['my-list', args.listId] })
     },
-    onError: (error) => notifyActionError(error, 'No se pudo quitar de la lista.'),
+    onError: (error, _args, context) => notifyActionError(error, 'No se pudo quitar de la lista.', context),
   })
 }
 
-function notifyActionError(error: unknown, fallback: string) {
-  toast.error('No se pudo completar la acción', getErrorMessage(error, fallback))
+function showLoadingToast(title: string, description: string): ToastMutationContext {
+  return { toastId: toast.loading(title, description) }
+}
+
+function notifyActionSuccess(context: ToastMutationContext | undefined, title: string, description: string) {
+  if (context?.toastId) {
+    toast.update(context.toastId, { title, description, tone: 'success' })
+    return
+  }
+
+  toast.success(title, description)
+}
+
+function notifyActionError(error: unknown, fallback: string, context?: ToastMutationContext) {
+  const description = getErrorMessage(error, fallback)
+  if (context?.toastId) {
+    toast.update(context.toastId, { title: 'No se pudo completar la acción', description, tone: 'error' })
+    return
+  }
+
+  toast.error('No se pudo completar la acción', description)
 }

@@ -18,6 +18,7 @@ import type {
   PublicHomeResponse,
   SeasonDetails,
   SeriesDetails,
+  WatchProvidersBatchItem,
   WatchProviderOption,
 } from '../types/publicMedia.types'
 
@@ -63,6 +64,13 @@ export function getMovieDetails(tmdbId: number) {
 
 export function getExternalRatingsBatch(items: Array<{ mediaType: 'Movie' | 'Series'; tmdbId: number }>) {
   return httpClient<ExternalRatingsBatchItem[]>('/api/media/ratings/batch', {
+    method: 'POST',
+    body: JSON.stringify({ items }),
+  })
+}
+
+export function getWatchProvidersBatch(items: Array<{ mediaType: 'Movie' | 'Series'; tmdbId: number }>) {
+  return httpClient<WatchProvidersBatchItem[]>('/api/media/watch-providers/batch', {
     method: 'POST',
     body: JSON.stringify({ items }),
   })

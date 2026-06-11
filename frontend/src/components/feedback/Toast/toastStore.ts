@@ -1,4 +1,4 @@
-export type ToastTone = 'success' | 'error' | 'info'
+export type ToastTone = 'success' | 'error' | 'info' | 'loading'
 
 export type ToastMessage = {
   id: string
@@ -30,6 +30,12 @@ export const toast = {
   info(title: string, description?: string) {
     return showToast({ title, description, tone: 'info' })
   },
+  loading(title: string, description?: string) {
+    return showToast({ title, description, tone: 'loading', durationMs: 0 })
+  },
+  update(id: string, input: ToastInput) {
+    updateToast(id, input)
+  },
 }
 
 export function showToast(input: ToastInput) {
@@ -44,10 +50,36 @@ export function showToast(input: ToastInput) {
   messages = [message, ...messages].slice(0, 4)
   emit()
 
-  const timer = window.setTimeout(() => dismissToast(id), input.durationMs ?? 4800)
-  timers.set(id, timer)
+  scheduleDismiss(id, input.durationMs ?? 4800)
 
   return id
+}
+
+export function updateToast(id: string, input: ToastInput) {
+  const existing = messages.some((message) => message.id === id)
+  if (!existing) {
+    showToast(input)
+    return
+  }
+
+  const timer = timers.get(id)
+  if (timer) {
+    window.clearTimeout(timer)
+    timers.delete(id)
+  }
+
+  messages = messages.map((message) =>
+    message.id === id
+      ? {
+          ...message,
+          title: input.title,
+          description: input.description,
+          tone: input.tone ?? message.tone,
+        }
+      : message,
+  )
+  emit()
+  scheduleDismiss(id, input.durationMs ?? (input.tone === 'error' ? 7000 : 4200))
 }
 
 export function dismissToast(id: string) {
@@ -76,4 +108,13 @@ export function getToastsSnapshot() {
 
 function emit() {
   listeners.forEach((listener) => listener(messages))
+}
+
+function scheduleDismiss(id: string, durationMs: number) {
+  if (durationMs <= 0) {
+    return
+  }
+
+  const timer = window.setTimeout(() => dismissToast(id), durationMs)
+  timers.set(id, timer)
 }

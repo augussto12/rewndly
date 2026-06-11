@@ -1,10 +1,10 @@
 import { useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { EmptyState } from '../components/feedback/EmptyState/EmptyState'
 import { ErrorState } from '../components/feedback/ErrorState/ErrorState'
 import { LoadingSkeleton } from '../components/feedback/LoadingSkeleton/LoadingSkeleton'
 import { FilterChip } from '../components/filters/FilterChip'
-import { useExternalRatingsBatch } from '../features/public-media/hooks/usePublicMedia'
+import { useExternalRatingsBatch, useWatchProvidersBatch } from '../features/public-media/hooks/usePublicMedia'
 import {
   getRatingsKey,
   ratingValueForSort,
@@ -14,6 +14,7 @@ import {
 import { useDeleteLibraryItem, useMyLibrary, useUpdateLibraryItem } from '../features/user-content/hooks/useUserContent'
 import { PublicLayout } from '../layouts/PublicLayout'
 import type { LibraryItem, WatchStatus } from '../features/user-content/types/userContent.types'
+import type { WatchProvider } from '../features/public-media/types/publicMedia.types'
 
 type LibrarySort = 'updated' | 'rating-desc' | 'rating-asc' | 'title' | `external-${ExternalRatingSource}`
 type StatusFilter = 'all' | 'WantToWatch' | 'Watching' | 'Watched'
@@ -106,6 +107,14 @@ export function MyLibraryPage() {
       return Date.parse(b.updatedAt) - Date.parse(a.updatedAt)
     })
   }, [filteredItems, ratingsMap, sort, externalSortSource])
+
+  const watchProviderItems = useMemo(() => sortedItems.slice(0, 12), [sortedItems])
+  const watchProviderKeys = useMemo(
+    () => new Set(watchProviderItems.map((item) => mediaProviderKey(item.mediaType, item.tmdbId))),
+    [watchProviderItems],
+  )
+  const watchProviders = useWatchProvidersBatch(watchProviderItems)
+  const watchProvidersMap = useMemo(() => toWatchProvidersMap(watchProviders.data), [watchProviders.data])
 
   async function handleStatusChange(item: LibraryItem, newStatus: WatchStatus) {
     setOpenMenuId(null)
@@ -272,6 +281,8 @@ export function MyLibraryPage() {
                     onStatusChange={handleStatusChange}
                     onEditRating={handleEditRating}
                     onRemove={handleRemove}
+                    providers={watchProvidersMap.get(mediaProviderKey(item.mediaType, item.tmdbId))}
+                    providersLoading={watchProviders.isLoading && watchProviderKeys.has(mediaProviderKey(item.mediaType, item.tmdbId))}
                   />
                 ))}
               </div>
@@ -313,6 +324,8 @@ function LibraryCard({
   onStatusChange,
   onEditRating,
   onRemove,
+  providers,
+  providersLoading,
 }: {
   item: LibraryItem
   viewMode: 'grid' | 'list'
@@ -321,20 +334,34 @@ function LibraryCard({
   onStatusChange: (item: LibraryItem, status: WatchStatus) => void
   onEditRating: (item: LibraryItem) => void
   onRemove: (id: string) => void
+  providers: WatchProvider[] | undefined
+  providersLoading: boolean
 }) {
+  const navigate = useNavigate()
   const mediaHref = item.mediaType === 'Movie' ? `/movies/${item.tmdbId}` : `/series/${item.tmdbId}`
   const vs = visibleStatus(item.status)
   const isActive = (s: WatchStatus) => item.status === s || (s === 'WantToWatch' && item.status === 'Dropped')
+  const openMedia = () => navigate(mediaHref)
 
   return (
-    <article className={`surface-panel relative flex gap-3 p-3 ${viewMode === 'list' ? 'sm:min-h-28' : ''}`}>
+    <article
+      role="link"
+      tabIndex={0}
+      onClick={openMedia}
+      onKeyDown={(event) => {
+        if (event.target !== event.currentTarget) return
+        if (event.key === 'Enter') {
+          openMedia()
+        }
+      }}
+      className={`surface-panel group relative flex cursor-pointer gap-3 p-3 hover:border-violet-200/28 ${viewMode === 'list' ? 'sm:min-h-28' : ''}`}
+    >
       {/* Poster */}
-      <Link
-        to={mediaHref}
+      <div
         className={`${viewMode === 'list' ? 'h-[6.25rem] w-[4.15rem]' : 'h-[7.5rem] w-[5rem]'} shrink-0 overflow-hidden rounded-[var(--radius-sm)] border border-white/10 bg-white/5`}
       >
         {item.posterUrl ? (
-          <img src={item.posterUrl} alt={item.title} className="h-full w-full object-cover" loading="lazy" />
+          <img src={item.posterUrl} alt="" className="h-full w-full object-cover transition duration-200 group-hover:scale-[1.025]" loading="lazy" />
         ) : (
           <div className="flex h-full w-full items-center justify-center text-white/20">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
@@ -343,7 +370,7 @@ function LibraryCard({
             </svg>
           </div>
         )}
-      </Link>
+      </div>
 
       {/* Content */}
       <div className="flex min-w-0 flex-1 flex-col gap-1.5">
@@ -415,9 +442,7 @@ function LibraryCard({
         </div>
 
         {/* Title */}
-        <Link to={mediaHref} className="pr-8">
-          <h2 className="line-clamp-2 text-sm font-semibold leading-snug">{item.title}</h2>
-        </Link>
+        <h2 className="line-clamp-2 pr-8 text-sm font-semibold leading-snug transition group-hover:text-white">{item.title}</h2>
 
         {/* Badges */}
         <div className="flex flex-wrap items-center gap-1.5">
@@ -444,7 +469,7 @@ function LibraryCard({
               <svg className="text-amber-400" width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01z" />
               </svg>
-              <span className="text-sm font-semibold text-amber-300">{item.rating}</span>
+              <span className="text-sm font-semibold text-amber-300">{formatRatingValue(item.rating)}</span>
               <span className="text-xs text-white/35">/10</span>
             </>
           ) : (
@@ -456,8 +481,44 @@ function LibraryCard({
             </>
           )}
         </button>
+
+        <ProviderPreview providers={providers} isLoading={providersLoading} />
       </div>
     </article>
+  )
+}
+
+function ProviderPreview({ providers, isLoading }: { providers: WatchProvider[] | undefined; isLoading: boolean }) {
+  if (isLoading && providers === undefined) {
+    return <span className="mt-1 h-6 w-32 animate-pulse rounded-[var(--radius-sm)] bg-white/[0.055]" />
+  }
+
+  if (!providers || providers.length === 0) {
+    return null
+  }
+
+  const visibleProviders = compactProviders(providers)
+  const hiddenCount = Math.max(0, providers.length - visibleProviders.length)
+
+  return (
+    <div className="mt-1 flex min-w-0 flex-wrap items-center gap-1.5">
+      <span className="text-[0.65rem] font-semibold uppercase tracking-[0.11em] text-white/35">Ver en</span>
+      {visibleProviders.map((provider) => (
+        <span
+          key={`${provider.type}-${provider.providerId}`}
+          className="inline-flex max-w-full items-center gap-1.5 rounded-[var(--radius-sm)] border border-white/10 bg-black/20 px-1.5 py-1 text-[0.68rem] font-medium text-white/72"
+          title={`${provider.name} (${provider.type})`}
+        >
+          {provider.logoUrl ? <img src={provider.logoUrl} alt="" className="h-4 w-4 rounded object-cover" loading="lazy" /> : null}
+          <span className="max-w-[6rem] truncate">{provider.name}</span>
+        </span>
+      ))}
+      {hiddenCount > 0 ? (
+        <span className="rounded-[var(--radius-sm)] border border-white/10 bg-white/[0.04] px-1.5 py-1 text-[0.68rem] font-medium text-white/42">
+          +{hiddenCount}
+        </span>
+      ) : null}
+    </div>
   )
 }
 
@@ -472,7 +533,10 @@ function RatingModal({
   onConfirm: (rating: number | null) => void
   onCancel: () => void
 }) {
-  const [selected, setSelected] = useState<number | null>(markWatched ? null : item.rating)
+  const initialRating = splitRating(markWatched ? null : item.rating)
+  const [whole, setWhole] = useState<number | null>(initialRating.whole)
+  const [decimal, setDecimal] = useState(initialRating.decimal)
+  const selected = whole === null ? null : whole === 10 ? 10 : Number((whole + decimal / 10).toFixed(1))
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/65 p-4 backdrop-blur-sm">
@@ -493,10 +557,13 @@ function RatingModal({
             <button
               key={n}
               type="button"
-              onClick={() => setSelected((prev) => (prev === n ? null : n))}
+              onClick={() => {
+                setWhole((prev) => (prev === n ? null : n))
+                if (n === 10) setDecimal(0)
+              }}
               className={[
                 'rounded-[var(--radius-sm)] border py-2 text-sm font-semibold transition',
-                selected === n
+                whole === n
                   ? 'border-amber-400/50 bg-amber-400/15 text-amber-300'
                   : 'border-white/10 bg-white/[0.04] text-[var(--color-text-secondary)] hover:border-white/25 hover:text-white',
               ].join(' ')}
@@ -505,6 +572,39 @@ function RatingModal({
             </button>
           ))}
         </div>
+
+        {whole !== null ? (
+          <div className="mt-4">
+            <div className="mb-2 flex items-center justify-between gap-3">
+              <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[var(--color-text-secondary)]">Decimal</p>
+              <p className="rounded-[var(--radius-sm)] bg-amber-400/10 px-2 py-1 text-xs font-semibold text-amber-200">
+                {formatRatingValue(selected)}
+              </p>
+            </div>
+            <div className="grid grid-cols-5 gap-1.5">
+              {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9].map((n) => {
+                const disabled = whole === 10 && n > 0
+                return (
+                  <button
+                    key={n}
+                    type="button"
+                    onClick={() => setDecimal(n)}
+                    disabled={disabled}
+                    className={[
+                      'rounded-[var(--radius-sm)] border py-2 text-sm font-semibold transition',
+                      decimal === n
+                        ? 'border-violet-300/50 bg-violet-400/15 text-violet-100'
+                        : 'border-white/10 bg-white/[0.04] text-[var(--color-text-secondary)] hover:border-white/25 hover:text-white',
+                      disabled ? 'opacity-35' : '',
+                    ].join(' ')}
+                  >
+                    {n}
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+        ) : null}
 
         <div className="mt-5 flex gap-2">
           <button onClick={onCancel} className="secondary-action flex-1 py-2 text-sm">
@@ -517,4 +617,55 @@ function RatingModal({
       </div>
     </div>
   )
+}
+
+function mediaProviderKey(mediaType: string, tmdbId: number) {
+  return `${mediaType}:${tmdbId}`
+}
+
+function toWatchProvidersMap(items: Array<{ mediaType: string; tmdbId: number; providers: WatchProvider[] }> | undefined) {
+  const map = new Map<string, WatchProvider[]>()
+  for (const item of items ?? []) {
+    map.set(mediaProviderKey(item.mediaType, item.tmdbId), item.providers)
+  }
+  return map
+}
+
+function compactProviders(providers: WatchProvider[]) {
+  const order: Record<string, number> = {
+    Streaming: 0,
+    Alquiler: 1,
+    Compra: 2,
+  }
+
+  return [...providers]
+    .sort((a, b) => (order[a.type] ?? 9) - (order[b.type] ?? 9) || a.name.localeCompare(b.name))
+    .slice(0, 3)
+}
+
+function splitRating(value: number | null) {
+  if (value === null) {
+    return { whole: null, decimal: 0 }
+  }
+
+  const clamped = Math.min(10, Math.max(1, value))
+  const whole = Math.trunc(clamped)
+  const decimal = Math.round((clamped - whole) * 10)
+
+  if (whole >= 10 || decimal >= 10) {
+    return { whole: 10, decimal: 0 }
+  }
+
+  return { whole, decimal }
+}
+
+function formatRatingValue(value: number | null) {
+  if (value === null) {
+    return ''
+  }
+
+  return value.toLocaleString('es-AR', {
+    minimumFractionDigits: value % 1 === 0 ? 0 : 1,
+    maximumFractionDigits: 1,
+  })
 }

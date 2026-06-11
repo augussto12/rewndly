@@ -3,6 +3,7 @@ import {
   discoverMovies,
   discoverSeries,
   getExternalRatingsBatch,
+  getWatchProvidersBatch,
   getAiringTodaySeries,
   getCollectionDetails,
   getCompanyDetails,
@@ -62,6 +63,20 @@ export function useExternalRatingsBatch(
     queryFn: () => getExternalRatingsBatch(limitedItems),
     enabled: enabled && limitedItems.length > 0,
     staleTime: 60 * 60 * 1000,
+  })
+}
+
+export function useWatchProvidersBatch(
+  items: Array<{ mediaType: MediaKind; tmdbId: number }>,
+  enabled = true,
+) {
+  const limitedItems = items.slice(0, 12)
+
+  return useQuery({
+    queryKey: ['watch-providers-batch', limitedItems.map((item) => `${item.mediaType}-${item.tmdbId}`).join('|')],
+    queryFn: () => getWatchProvidersBatch(limitedItems),
+    enabled: enabled && limitedItems.length > 0,
+    staleTime: 6 * 60 * 60 * 1000,
   })
 }
 

@@ -1,4 +1,5 @@
 using Rewndly.Application.Modules.Public;
+using Rewndly.Domain.Media;
 
 namespace Rewndly.Application.Common.Interfaces;
 
@@ -56,6 +57,8 @@ public interface IPublicMediaService
         CancellationToken cancellationToken);
 
     Task<SeriesDetailsResponse?> GetSeriesDetailsAsync(int tmdbId, CancellationToken cancellationToken);
+
+    Task<IReadOnlyList<WatchProviderResponse>> GetWatchProvidersAsync(MediaType mediaType, int tmdbId, CancellationToken cancellationToken);
 
     Task<SeasonDetailsResponse?> GetSeasonDetailsAsync(int seriesTmdbId, int seasonNumber, CancellationToken cancellationToken);
 

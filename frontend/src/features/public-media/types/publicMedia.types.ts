@@ -112,6 +112,12 @@ export type ExternalRatingsBatchItem = {
   cachedAt: string | null
 }
 
+export type WatchProvidersBatchItem = {
+  mediaType: 'Movie' | 'Series'
+  tmdbId: number
+  providers: WatchProvider[]
+}
+
 export type RankedMediaSummary = {
   media: MediaSummary
   rank: number

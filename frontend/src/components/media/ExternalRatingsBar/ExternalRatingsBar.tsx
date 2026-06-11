@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import type { ExternalRating } from '../../../features/public-media/types/publicMedia.types'
 
 type ExternalRatingsBarProps = {
@@ -5,9 +6,11 @@ type ExternalRatingsBarProps = {
 }
 
 export function ExternalRatingsBar({ ratings }: ExternalRatingsBarProps) {
+  const [expanded, setExpanded] = useState(false)
   const visibleRatings = ratings.filter((rating) => Number.isFinite(rating.value) && Number.isFinite(rating.scale))
   const primaryRatings = visibleRatings.slice(0, 3)
   const hiddenRatings = visibleRatings.slice(3)
+  const renderedHiddenRatings = expanded ? hiddenRatings : []
 
   if (visibleRatings.length === 0) {
     return null
@@ -16,24 +19,35 @@ export function ExternalRatingsBar({ ratings }: ExternalRatingsBarProps) {
   return (
     <div className="mt-4 flex max-w-full flex-wrap gap-2" aria-label="Ratings externos">
       {primaryRatings.map((rating) => (
-        <span
-          key={rating.source}
-          className="inline-flex h-8 shrink-0 items-center gap-2 rounded-[var(--radius-sm)] border border-white/10 bg-white/[0.075] px-3 text-xs font-medium text-white shadow-[0_10px_24px_rgba(0,0,0,0.18)] backdrop-blur"
-          title={rating.votes ? `${rating.label} con ${rating.votes.toLocaleString('es-AR')} votos` : rating.label}
-        >
-          <span className="text-[var(--color-text-secondary)]">{rating.label}</span>
-          <span>{formatRating(rating)}</span>
-        </span>
+        <RatingBadge key={rating.source} rating={rating} />
+      ))}
+      {renderedHiddenRatings.map((rating) => (
+        <RatingBadge key={rating.source} rating={rating} />
       ))}
       {hiddenRatings.length > 0 ? (
-        <span
-          className="inline-flex h-8 shrink-0 items-center rounded-[var(--radius-sm)] border border-white/10 bg-white/[0.045] px-3 text-xs font-medium text-[var(--color-text-secondary)]"
-          title={hiddenRatings.map((rating) => `${rating.label}: ${formatRating(rating)}`).join(' · ')}
+        <button
+          type="button"
+          onClick={() => setExpanded((value) => !value)}
+          aria-expanded={expanded}
+          className="inline-flex h-8 shrink-0 items-center rounded-[var(--radius-sm)] border border-white/10 bg-white/[0.045] px-3 text-xs font-medium text-[var(--color-text-secondary)] transition hover:border-violet-200/28 hover:bg-white/[0.075] hover:text-white"
+          title={hiddenRatings.map((rating) => `${rating.label}: ${formatRating(rating)}`).join(' - ')}
         >
-          +{hiddenRatings.length} fuentes
-        </span>
+          {expanded ? 'Ver menos' : `+${hiddenRatings.length} más`}
+        </button>
       ) : null}
     </div>
+  )
+}
+
+function RatingBadge({ rating }: { rating: ExternalRating }) {
+  return (
+    <span
+      className="inline-flex h-8 shrink-0 items-center gap-2 rounded-[var(--radius-sm)] border border-white/10 bg-white/[0.075] px-3 text-xs font-medium text-white shadow-[0_10px_24px_rgba(0,0,0,0.18)] backdrop-blur"
+      title={rating.votes ? `${rating.label} con ${rating.votes.toLocaleString('es-AR')} votos` : rating.label}
+    >
+      <span className="text-[var(--color-text-secondary)]">{rating.label}</span>
+      <span>{formatRating(rating)}</span>
+    </span>
   )
 }
 

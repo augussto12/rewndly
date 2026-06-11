@@ -413,6 +413,29 @@ public sealed class TmdbClient(
             });
     }
 
+    public async Task<IReadOnlyList<WatchProviderResponse>> GetWatchProvidersAsync(
+        Rewndly.Domain.Media.MediaType mediaType,
+        int tmdbId,
+        CancellationToken cancellationToken)
+    {
+        var kind = mediaType == Rewndly.Domain.Media.MediaType.Movie ? "movie" : "tv";
+        return await GetCachedAsync<IReadOnlyList<WatchProviderResponse>>(
+            $"tmdb:{kind}:watch-providers:{tmdbId}",
+            ProvidersTtl,
+            async () =>
+            {
+                try
+                {
+                    var response = await GetAsync<TmdbWatchProvidersResponseDto>($"{kind}/{tmdbId}/watch/providers", cancellationToken);
+                    return MapWatchProviders(response);
+                }
+                catch (TmdbNotFoundException)
+                {
+                    return [];
+                }
+            });
+    }
+
     public Task<SeasonDetailsResponse?> GetSeasonDetailsAsync(int seriesTmdbId, int seasonNumber, CancellationToken cancellationToken)
     {
         return GetCachedAsync<SeasonDetailsResponse?>(

@@ -68,6 +68,10 @@ public static class PublicMediaEndpoints
             .RequireRateLimiting("external-ratings")
             .AllowAnonymous();
 
+        app.MapPost("/api/media/watch-providers/batch", GetWatchProvidersBatchAsync)
+            .WithTags("Media")
+            .AllowAnonymous();
+
         app.MapGet("/api/series/search", SearchSeriesAsync)
             .WithTags("Series")
             .AllowAnonymous();
@@ -315,6 +319,41 @@ public static class PublicMediaEndpoints
         }
 
         return Results.Ok(response);
+    }
+
+    private static async Task<IResult> GetWatchProvidersBatchAsync(
+        WatchProvidersBatchRequest request,
+        IPublicMediaService mediaService,
+        CancellationToken cancellationToken)
+    {
+        const int maxItems = 12;
+        var uniqueItems = request.Items
+            .Where(item => item.TmdbId > 0 && TryParseMediaType(item.MediaType, out _))
+            .GroupBy(item => $"{item.MediaType.Trim().ToLowerInvariant()}:{item.TmdbId}")
+            .Select(group => group.First())
+            .Take(maxItems)
+            .ToList();
+
+        if (uniqueItems.Count == 0)
+        {
+            return Results.Ok(Array.Empty<WatchProvidersBatchItemResponse>());
+        }
+
+        return await ExecuteTmdbAsync(async () =>
+        {
+            var response = new List<WatchProvidersBatchItemResponse>(uniqueItems.Count);
+            foreach (var item in uniqueItems)
+            {
+                TryParseMediaType(item.MediaType, out var parsedMediaType);
+                var providers = await mediaService.GetWatchProvidersAsync(parsedMediaType, item.TmdbId, cancellationToken);
+                response.Add(new WatchProvidersBatchItemResponse(
+                    parsedMediaType.ToString(),
+                    item.TmdbId,
+                    providers));
+            }
+
+            return Results.Ok(response);
+        });
     }
 
     private static async Task<IResult> GetMovieRankingAsync(
