@@ -51,7 +51,7 @@ export function MyListsPage() {
   }
 
   return (
-    <PublicLayout>
+    <PublicLayout ambient="catalog">
       <main className="page-shell">
         <header className="mb-8">
           <p className="kicker">Listas</p>

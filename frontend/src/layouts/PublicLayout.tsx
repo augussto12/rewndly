@@ -177,7 +177,13 @@ function sidebarNavClass({ isActive }: { isActive: boolean }) {
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
-export function PublicLayout({ children }: PropsWithChildren) {
+type PublicLayoutAmbient = 'default' | 'home' | 'catalog' | 'detail' | 'game' | 'error'
+
+type PublicLayoutProps = PropsWithChildren<{
+  ambient?: PublicLayoutAmbient
+}>
+
+export function PublicLayout({ children, ambient = 'default' }: PublicLayoutProps) {
   const { isAuthenticated, user, logout } = useAuth()
   const [isAvatarMenuOpen, setIsAvatarMenuOpen] = useState(false)
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
@@ -218,8 +224,10 @@ export function PublicLayout({ children }: PropsWithChildren) {
   const closeSidebar = () => setIsSidebarOpen(false)
   const closeDropdown = () => setIsAvatarMenuOpen(false)
 
+  const ambientClass = ambient === 'default' ? '' : ` cinema-page--${ambient}`
+
   return (
-    <div className="cinema-page flex min-h-svh flex-col text-[var(--color-text-primary)]">
+    <div className={`cinema-page${ambientClass} flex min-h-svh flex-col text-[var(--color-text-primary)]`}>
 
       {/* ═══════════════════ HEADER ═══════════════════ */}
       <header className="site-header sticky top-0 z-20">

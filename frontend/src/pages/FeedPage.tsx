@@ -212,7 +212,7 @@ export function FeedPage() {
   const totalEvents = query.data?.pages[0]?.total ?? allItems.length
 
   return (
-    <PublicLayout>
+    <PublicLayout ambient="catalog">
       <main className="page-shell">
 
         {/* ── Header ── */}

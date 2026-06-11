@@ -15,7 +15,7 @@ export function EpisodeDetailsPage() {
   const { data, isError, isLoading } = useEpisodeDetails(seriesTmdbId, seasonNumber, episodeNumber)
 
   return (
-    <PublicLayout>
+    <PublicLayout ambient="detail">
       {isLoading ? (
         <main className="page-shell">
           <LoadingSkeleton />

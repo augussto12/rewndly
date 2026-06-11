@@ -74,7 +74,7 @@ export function MePage() {
   }
 
   return (
-    <PublicLayout>
+    <PublicLayout ambient="catalog">
       <main className="page-shell">
         <header className="mb-8">
           <p className="kicker">Mi cuenta</p>

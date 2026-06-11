@@ -13,7 +13,7 @@ export function NetworkDetailsPage() {
   const { data, isError, isLoading } = useNetworkDetails(networkId)
 
   return (
-    <PublicLayout>
+    <PublicLayout ambient="detail">
       {isLoading ? (
         <main className="page-shell">
           <LoadingSkeleton />

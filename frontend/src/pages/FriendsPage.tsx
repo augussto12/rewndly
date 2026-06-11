@@ -23,7 +23,7 @@ export function FriendsPage() {
   }
 
   return (
-    <PublicLayout>
+    <PublicLayout ambient="catalog">
       <main className="page-shell">
         <PageHeader title="Amigos" subtitle="Personas cuyo criterio queres tener cerca." />
         {isLoading ? <LoadingSkeleton /> : null}

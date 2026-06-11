@@ -10,7 +10,7 @@ export function TmdbReviewDetailsPage() {
   const { data, isError, isLoading } = useTmdbReviewDetails(reviewId)
 
   return (
-    <PublicLayout>
+    <PublicLayout ambient="detail">
       {isLoading ? (
         <main className="page-shell">
           <LoadingSkeleton />

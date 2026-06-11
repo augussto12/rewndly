@@ -16,7 +16,7 @@ export function SeriesDetailsPage() {
   const { data, isError, isLoading } = useSeriesDetails(tmdbId)
 
   return (
-    <PublicLayout>
+    <PublicLayout ambient="detail">
       {isLoading ? (
         <main className="page-shell">
           <LoadingSkeleton />

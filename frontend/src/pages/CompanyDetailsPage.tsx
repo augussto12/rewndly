@@ -14,7 +14,7 @@ export function CompanyDetailsPage() {
   const { data, isError, isLoading } = useCompanyDetails(companyId)
 
   return (
-    <PublicLayout>
+    <PublicLayout ambient="detail">
       {isLoading ? (
         <main className="page-shell">
           <LoadingSkeleton />

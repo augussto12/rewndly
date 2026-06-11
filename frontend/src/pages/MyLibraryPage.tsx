@@ -158,7 +158,7 @@ export function MyLibraryPage() {
   const hasData = !isLoading && !isError && data && data.length > 0
 
   return (
-    <PublicLayout>
+    <PublicLayout ambient="catalog">
       {openMenuId && <div className="fixed inset-0 z-10" onClick={() => setOpenMenuId(null)} />}
 
       <main className="page-shell">

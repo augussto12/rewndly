@@ -57,7 +57,7 @@ export function TmdbAccountPage() {
   }
 
   return (
-    <PublicLayout>
+    <PublicLayout ambient="catalog">
       <main className="page-shell">
         <header>
           <p className="kicker">TMDB</p>

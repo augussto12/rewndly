@@ -37,7 +37,7 @@ export function ListDetailsPage() {
   }
 
   return (
-    <PublicLayout>
+    <PublicLayout ambient="detail">
       <main className="page-shell">
         {isLoading ? <LoadingSkeleton /> : null}
         {isError ? <ErrorState title="No pudimos cargar la lista" /> : null}

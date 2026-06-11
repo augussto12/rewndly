@@ -11,7 +11,7 @@ export function PublicListDetailsPage() {
   const { data, isError, isLoading } = usePublicListDetails(id)
 
   return (
-    <PublicLayout>
+    <PublicLayout ambient="detail">
       <main className="page-shell">
         {isLoading ? <LoadingSkeleton /> : null}
         {isError ? <ErrorState title="Lista no disponible" message="No existe o no tenés permiso para verla." /> : null}

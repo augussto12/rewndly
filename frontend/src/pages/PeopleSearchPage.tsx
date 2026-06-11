@@ -44,7 +44,7 @@ export function PeopleSearchPage() {
   }
 
   return (
-    <PublicLayout>
+    <PublicLayout ambient="catalog">
       <main className="page-shell">
         <header className="max-w-2xl">
           <p className="kicker">Personas</p>

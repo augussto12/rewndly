@@ -33,7 +33,7 @@ export function PersonDetailsPage() {
   const [activeTab, setActiveTab] = useState<PersonTab>('featured')
 
   return (
-    <PublicLayout>
+    <PublicLayout ambient="detail">
       {isLoading ? (
         <main className="page-shell">
           <LoadingSkeleton />

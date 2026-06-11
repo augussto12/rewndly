@@ -30,7 +30,7 @@ export function LoginPage() {
   }
 
   return (
-    <main className="cinema-page grid min-h-svh place-items-center px-5 py-8 text-[var(--color-text-primary)]">
+    <main className="cinema-page cinema-page--auth grid min-h-svh place-items-center px-5 py-8 text-[var(--color-text-primary)]">
       <form onSubmit={handleSubmit} className="surface-panel w-full max-w-md p-6 sm:p-7">
         <Link to="/" className="text-sm font-semibold uppercase tracking-[0.18em] text-white">
           Rewndly

@@ -15,7 +15,7 @@ export function MovieDetailsPage() {
   const { data, isError, isLoading } = useMovieDetails(tmdbId)
 
   return (
-    <PublicLayout>
+    <PublicLayout ambient="detail">
       {isLoading ? (
         <main className="page-shell">
           <LoadingSkeleton />

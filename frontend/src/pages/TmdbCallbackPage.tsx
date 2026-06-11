@@ -32,7 +32,7 @@ export function TmdbCallbackPage() {
   }, [complete, denied, requestToken])
 
   return (
-    <PublicLayout>
+    <PublicLayout ambient="catalog">
       <main className="page-shell">
         {complete.isPending || (!complete.isSuccess && !complete.isError && !denied) ? (
           <section>

@@ -21,7 +21,7 @@ export function UserProfilePage() {
   const visibleReviews = flattenUniqueArrayPages<PublicReview>(reviews.data, (review) => review.id)
 
   return (
-    <PublicLayout>
+    <PublicLayout ambient="detail">
       {profile.isLoading ? (
         <main className="mx-auto max-w-[90rem] px-4 py-8 sm:px-6">
           <LoadingSkeleton />

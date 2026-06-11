@@ -16,7 +16,7 @@ export function AppErrorPage({ mode }: AppErrorPageProps) {
     : 'La página se trabó antes de cargar bien. Podés recargarla o volver al inicio y seguir explorando.'
 
   return (
-    <PublicLayout>
+    <PublicLayout ambient="error">
       <main className="page-shell grid min-h-[calc(100svh-9rem)] place-items-center">
         <section className="relative w-full max-w-4xl overflow-hidden rounded-[var(--radius-md)] border border-violet-200/18 bg-[rgba(18,20,36,0.86)] p-6 shadow-[0_30px_90px_rgba(0,0,0,0.42)] sm:p-8 lg:p-10">
           <div className="absolute inset-x-10 top-0 h-px bg-gradient-to-r from-transparent via-violet-200/70 to-transparent" />

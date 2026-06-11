@@ -111,7 +111,7 @@ export function MoviesSearchPage() {
   }
 
   return (
-    <PublicLayout>
+    <PublicLayout ambient="catalog">
       <main className="page-shell">
         <PageHeader eyebrow="Catálogo" title="Películas" subtitle="Explorá el catálogo o buscá por título cuando ya tenés algo en mente." />
         <div className="mt-8 grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(14rem,18rem)] lg:items-end">

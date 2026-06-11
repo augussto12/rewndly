@@ -11,7 +11,7 @@ export function CollectionDetailsPage() {
   const { data, isError, isLoading } = useCollectionDetails(collectionId)
 
   return (
-    <PublicLayout>
+    <PublicLayout ambient="detail">
       {isLoading ? (
         <main className="page-shell">
           <LoadingSkeleton />

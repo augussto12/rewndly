@@ -194,7 +194,7 @@ export function PosterGamePage() {
   }
 
   return (
-    <PublicLayout>
+    <PublicLayout ambient="game">
       <main className="page-shell">
         <header className="mb-8 max-w-3xl">
           <p className="kicker">Posterle</p>

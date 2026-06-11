@@ -14,7 +14,7 @@ export function SeasonDetailsPage() {
   const { data, isError, isLoading } = useSeasonDetails(seriesTmdbId, seasonNumber)
 
   return (
-    <PublicLayout>
+    <PublicLayout ambient="detail">
       {isLoading ? (
         <main className="page-shell">
           <LoadingSkeleton />

@@ -43,7 +43,7 @@ export function HomePage() {
   const featureItems = (gemsPicks.length > 0 ? gemsPicks : data?.trendingMovies ?? []).slice(0, 5)
 
   return (
-    <PublicLayout>
+    <PublicLayout ambient="home">
       {isLoading ? (
         <HomeLoadingSkeleton />
       ) : null}

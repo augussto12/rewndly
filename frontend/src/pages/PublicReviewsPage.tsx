@@ -12,7 +12,7 @@ export function PublicReviewsPage() {
   const data = flattenUniqueArrayPages<PublicReview>(reviews.data, (review) => review.id)
 
   return (
-    <PublicLayout>
+    <PublicLayout ambient="detail">
       <main className="page-shell">
         <header className="mb-8">
           <p className="kicker">Explorar</p>

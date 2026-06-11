@@ -94,7 +94,7 @@ export function ComparePage() {
   }
 
   return (
-    <PublicLayout>
+    <PublicLayout ambient="catalog">
       <main className="page-shell">
         <header className="max-w-3xl">
           <p className="kicker">Comparador</p>

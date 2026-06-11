@@ -18,11 +18,7 @@ body {
   min-width: 320px;
   min-height: 100svh;
   margin: 0;
-  background:
-    linear-gradient(128deg, rgba(45, 212, 191, 0.3) 0%, rgba(45, 212, 191, 0.08) 30%, rgba(45, 212, 191, 0) 50%),
-    linear-gradient(235deg, rgba(251, 113, 133, 0.24) 0%, rgba(251, 113, 133, 0.06) 31%, rgba(251, 113, 133, 0) 52%),
-    linear-gradient(28deg, rgba(251, 191, 36, 0.1) 0%, rgba(251, 191, 36, 0.025) 26%, rgba(251, 191, 36, 0) 46%),
-    linear-gradient(180deg, #1c1935 0%, #111a2b 48%, #102236 100%);
+  background: #090d18;
 }
 
 button,
@@ -70,14 +66,24 @@ a {
 }
 
 .cinema-page {
+  --ambient-a: 45, 212, 191;
+  --ambient-b: 124, 58, 237;
+  --ambient-c: 251, 113, 133;
+  --ambient-a-strength: 0.105;
+  --ambient-b-strength: 0.12;
+  --ambient-c-strength: 0.082;
+  --ambient-motion-opacity: 0.74;
+  --ambient-texture-opacity: 0.54;
   position: relative;
   isolation: isolate;
+  overflow-x: clip;
   background:
-    linear-gradient(160deg, rgba(45, 212, 191, 0.2), transparent 26rem),
-    linear-gradient(24deg, rgba(251, 113, 133, 0.16), transparent 28rem),
-    linear-gradient(100deg, rgba(251, 191, 36, 0.08), transparent 32rem),
-    linear-gradient(180deg, rgba(124, 58, 237, 0.18), transparent 25rem),
+    linear-gradient(118deg, rgba(var(--ambient-a), var(--ambient-a-strength)) -8%, rgba(var(--ambient-a), 0.035) 24%, transparent 52%),
+    linear-gradient(242deg, rgba(var(--ambient-c), var(--ambient-c-strength)) -4%, rgba(var(--ambient-c), 0.028) 30%, transparent 58%),
+    linear-gradient(180deg, rgba(var(--ambient-b), var(--ambient-b-strength)) 0%, transparent 28rem),
+    linear-gradient(180deg, #11162a 0%, #0c1424 42%, #0d1928 100%),
     var(--color-background);
+  background-attachment: fixed;
 }
 
 .cinema-page::before {
@@ -86,16 +92,107 @@ a {
   inset: 0;
   z-index: -1;
   pointer-events: none;
+  opacity: var(--ambient-texture-opacity);
   background:
-    linear-gradient(90deg, rgba(255, 255, 255, 0.038) 1px, transparent 1px),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.024) 1px, transparent 1px),
-    repeating-linear-gradient(110deg, transparent 0 3.2rem, rgba(45, 212, 191, 0.055) 3.2rem 3.25rem),
-    repeating-linear-gradient(70deg, transparent 0 8rem, rgba(251, 113, 133, 0.035) 8rem 8.04rem);
+    radial-gradient(circle at 16% 24%, rgba(255, 255, 255, 0.055) 0 0.045rem, transparent 0.055rem),
+    radial-gradient(circle at 74% 62%, rgba(255, 255, 255, 0.04) 0 0.04rem, transparent 0.052rem),
+    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.016) 0 1px, transparent 1px 3px),
+    repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.012) 0 1px, transparent 1px 4px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.028) 1px, transparent 1px),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.018) 1px, transparent 1px);
   background-size:
-    4rem 4rem,
-    4rem 4rem,
-    auto;
-  mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.92), rgba(0, 0, 0, 0.2));
+    4.8rem 4.8rem,
+    7rem 7rem,
+    8rem 8rem,
+    9rem 9rem,
+    4.5rem 4.5rem,
+    4.5rem 4.5rem;
+  mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.9), rgba(0, 0, 0, 0.18));
+  mix-blend-mode: screen;
+}
+
+.cinema-page::after {
+  content: "";
+  position: fixed;
+  inset: -18vh -14vw;
+  z-index: -1;
+  pointer-events: none;
+  opacity: var(--ambient-motion-opacity);
+  background:
+    linear-gradient(106deg, transparent 0 14%, rgba(var(--ambient-a), var(--ambient-a-strength)) 26%, rgba(var(--ambient-b), var(--ambient-b-strength)) 43%, transparent 66%),
+    linear-gradient(248deg, transparent 0 18%, rgba(var(--ambient-c), var(--ambient-c-strength)) 36%, transparent 63%),
+    conic-gradient(from 214deg at 50% -12%, transparent 0deg, rgba(var(--ambient-b), var(--ambient-b-strength)) 40deg, rgba(var(--ambient-a), var(--ambient-a-strength)) 68deg, transparent 124deg);
+  filter: blur(24px);
+  transform: translate3d(0, 0, 0) scale(1.02);
+  animation: ambient-projector 36s ease-in-out infinite alternate;
+}
+
+.cinema-page--home {
+  --ambient-a-strength: 0.15;
+  --ambient-b-strength: 0.155;
+  --ambient-c-strength: 0.105;
+  --ambient-motion-opacity: 0.9;
+  --ambient-texture-opacity: 0.58;
+}
+
+.cinema-page--catalog {
+  --ambient-a: 45, 212, 191;
+  --ambient-b: 99, 102, 241;
+  --ambient-c: 167, 139, 250;
+  --ambient-a-strength: 0.074;
+  --ambient-b-strength: 0.082;
+  --ambient-c-strength: 0.052;
+  --ambient-motion-opacity: 0.56;
+  --ambient-texture-opacity: 0.5;
+}
+
+.cinema-page--detail {
+  --ambient-a: 45, 212, 191;
+  --ambient-b: 167, 139, 250;
+  --ambient-c: 251, 113, 133;
+  --ambient-a-strength: 0.12;
+  --ambient-b-strength: 0.135;
+  --ambient-c-strength: 0.09;
+  --ambient-motion-opacity: 0.8;
+}
+
+.cinema-page--game {
+  --ambient-a: 45, 212, 191;
+  --ambient-b: 124, 58, 237;
+  --ambient-c: 251, 191, 36;
+  --ambient-a-strength: 0.15;
+  --ambient-b-strength: 0.16;
+  --ambient-c-strength: 0.11;
+  --ambient-motion-opacity: 0.94;
+  --ambient-texture-opacity: 0.64;
+}
+
+.cinema-page--error,
+.cinema-page--auth {
+  --ambient-a: 45, 212, 191;
+  --ambient-b: 124, 58, 237;
+  --ambient-c: 251, 113, 133;
+  --ambient-a-strength: 0.075;
+  --ambient-b-strength: 0.145;
+  --ambient-c-strength: 0.11;
+  --ambient-motion-opacity: 0.86;
+  --ambient-texture-opacity: 0.62;
+}
+
+@keyframes ambient-projector {
+  0% {
+    transform: translate3d(-1.5vw, -0.8vh, 0) scale(1.02);
+  }
+
+  100% {
+    transform: translate3d(1.4vw, 1vh, 0) scale(1.055);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cinema-page::after {
+    animation: none;
+  }
 }
 
 .site-header {
@@ -430,9 +527,10 @@ textarea.field {
   isolation: isolate;
   margin-top: -1px;
   background:
-    linear-gradient(180deg, rgba(16, 34, 54, 0.98) 0%, rgba(17, 26, 43, 0.92) 18rem, rgba(17, 26, 43, 0) 42rem),
-    linear-gradient(128deg, rgba(45, 212, 191, 0.08), transparent 28rem),
-    linear-gradient(235deg, rgba(251, 113, 133, 0.07), transparent 30rem);
+    linear-gradient(180deg, rgba(10, 13, 25, 0.98) 0%, rgba(13, 20, 34, 0.93) 18rem, rgba(17, 26, 43, 0) 44rem),
+    linear-gradient(126deg, rgba(var(--ambient-a), 0.105), transparent 30rem),
+    linear-gradient(238deg, rgba(var(--ambient-c), 0.085), transparent 32rem),
+    linear-gradient(180deg, rgba(var(--ambient-b), 0.09), transparent 22rem);
 }
 
 .detail-content-flow::before {
@@ -444,7 +542,7 @@ textarea.field {
   height: 14rem;
   pointer-events: none;
   background:
-    linear-gradient(90deg, transparent, rgba(45, 212, 191, 0.16), rgba(167, 139, 250, 0.16), rgba(251, 113, 133, 0.13), transparent),
+    linear-gradient(90deg, transparent, rgba(var(--ambient-a), 0.18), rgba(var(--ambient-b), 0.17), rgba(var(--ambient-c), 0.14), transparent),
     linear-gradient(180deg, rgba(255, 255, 255, 0.035), transparent 74%);
   mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.72), transparent);
 }

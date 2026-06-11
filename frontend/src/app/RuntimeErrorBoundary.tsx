@@ -26,7 +26,7 @@ export class RuntimeErrorBoundary extends Component<RuntimeErrorBoundaryProps, R
     }
 
     return (
-      <main className="cinema-page grid min-h-svh place-items-center px-5 py-8 text-[var(--color-text-primary)]">
+      <main className="cinema-page cinema-page--error grid min-h-svh place-items-center px-5 py-8 text-[var(--color-text-primary)]">
         <section className="relative w-full max-w-4xl overflow-hidden rounded-[var(--radius-md)] border border-violet-200/18 bg-[rgba(18,20,36,0.86)] p-6 shadow-[0_30px_90px_rgba(0,0,0,0.42)] sm:p-8 lg:p-10">
           <div className="absolute inset-x-10 top-0 h-px bg-gradient-to-r from-transparent via-violet-200/70 to-transparent" />
           <div className="grid gap-8 lg:grid-cols-[15rem_minmax(0,1fr)] lg:items-center">
