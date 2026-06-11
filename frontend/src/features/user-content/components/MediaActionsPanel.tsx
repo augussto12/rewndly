@@ -23,6 +23,7 @@ import {
 } from '../hooks/useUserContent'
 import type { LibraryItemRequest, MediaKind, ReviewRequest, Visibility, WatchStatus } from '../types/userContent.types'
 import { formatLibraryRating, libraryRatingOptions, parseLibraryRating } from '../utils/ratingOptions'
+import { visibilityLabel } from '../utils/visibility'
 
 type MediaActionsPanelProps = {
   mediaType: MediaKind
@@ -40,7 +41,7 @@ const statusOptions: Array<{ value: WatchStatus; label: string }> = [
 ]
 
 const visibilityOptions: Array<{ value: Visibility; label: string }> = [
-  { value: 'Public', label: 'Publica' },
+  { value: 'Public', label: visibilityLabel('Public') },
   { value: 'FriendsOnly', label: 'Solo amigos' },
   { value: 'Private', label: 'Privada' },
 ]
@@ -59,6 +60,7 @@ export function MediaQuickActions({ mediaType, tmdbId, title }: MediaActionsPane
     () => library?.find((item) => item.mediaType === mediaType && item.tmdbId === tmdbId),
     [library, mediaType, tmdbId],
   )
+  const actionLabel = existingItem ? 'Editar' : 'Guardar'
 
   const [isOpen, setIsOpen] = useState(false)
   const [destination, setDestination] = useState<'library' | 'list'>('library')
@@ -94,7 +96,7 @@ export function MediaQuickActions({ mediaType, tmdbId, title }: MediaActionsPane
 
   async function submitListItem() {
     if (!selectedListId) {
-      toast.error('Elegi una lista', 'Selecciona una lista antes de agregar el contenido.')
+      toast.error('Elegí una lista', 'Seleccioná una lista antes de agregar el contenido.')
       return
     }
 
@@ -112,13 +114,13 @@ export function MediaQuickActions({ mediaType, tmdbId, title }: MediaActionsPane
       })
       setIsOpen(false)
     } catch (error) {
-      setListError(getErrorMessage(error, 'No se pudo agregar a la lista. Revisa la lista seleccionada e intenta de nuevo.'))
+      setListError(getErrorMessage(error, 'No se pudo agregar a la lista. Revisá la lista seleccionada e intentá de nuevo.'))
     }
   }
 
   async function submitQuickList() {
     if (!newListTitle.trim()) {
-      toast.error('Falta el titulo', 'Escribi un nombre para crear la lista.')
+      toast.error('Falta el título', 'Escribí un nombre para crear la lista.')
       return
     }
 
@@ -133,7 +135,7 @@ export function MediaQuickActions({ mediaType, tmdbId, title }: MediaActionsPane
       setNewListTitle('')
       setSelectedListId(list.id)
     } catch (error) {
-      setListError(getErrorMessage(error, 'No se pudo crear la lista. Revisa el titulo e intenta de nuevo.'))
+      setListError(getErrorMessage(error, 'No se pudo crear la lista. Revisá el título e intentá de nuevo.'))
     }
   }
 
@@ -143,11 +145,12 @@ export function MediaQuickActions({ mediaType, tmdbId, title }: MediaActionsPane
         type="button"
         onClick={() => setIsOpen((value) => !value)}
         aria-expanded={isOpen}
-        aria-label={`Agregar ${title}`}
-        title={`Agregar ${title}`}
-        className="grid h-12 w-12 place-items-center rounded-full border border-violet-100/45 bg-white/12 text-3xl font-semibold leading-none text-white shadow-[0_18px_44px_rgba(124,58,237,0.34)] backdrop-blur transition hover:-translate-y-0.5 hover:border-violet-100/70 hover:bg-white/18"
+        aria-label={`${actionLabel} ${title} en biblioteca`}
+        title={`${actionLabel} ${title} en biblioteca`}
+        className="inline-flex h-12 items-center gap-2 rounded-full border border-violet-100/45 bg-white/12 px-4 text-sm font-semibold leading-none text-white shadow-[0_18px_44px_rgba(124,58,237,0.34)] backdrop-blur transition hover:-translate-y-0.5 hover:border-violet-100/70 hover:bg-white/18"
       >
-        +
+        <span className="text-2xl leading-none">+</span>
+        <span>{actionLabel}</span>
       </button>
 
       {isOpen ? (
@@ -164,11 +167,11 @@ export function MediaQuickActions({ mediaType, tmdbId, title }: MediaActionsPane
               <p className="kicker">Tu espacio</p>
               <h2 className="mt-2 text-base font-semibold">Guardalo cuando quieras</h2>
               <p className="mt-2 text-sm leading-6 text-[var(--color-text-secondary)]">
-                La biblioteca guarda tu estado y rating. Las listas son colecciones privadas o publicas.
+                La biblioteca guarda tu estado y rating. Las listas son colecciones privadas o públicas.
               </p>
               <div className="mt-4 grid gap-2 sm:grid-cols-2">
                 <Link to="/login" className="primary-action min-h-10">
-                  Iniciar sesion
+                  Iniciar sesión
                 </Link>
                 <Link to="/register" className="secondary-action min-h-10">
                   Crear cuenta
@@ -214,7 +217,7 @@ export function MediaQuickActions({ mediaType, tmdbId, title }: MediaActionsPane
                       </button>
                     </div>
                   ) : (
-                    <p className="text-sm leading-6 text-[var(--color-text-secondary)]">Todavia no tenes listas. Crea una aca mismo.</p>
+                    <p className="text-sm leading-6 text-[var(--color-text-secondary)]">Todavía no tenés listas. Creá una acá mismo.</p>
                   )}
 
                   <div className="mt-4 grid gap-3 border-t border-white/10 pt-4">
@@ -264,11 +267,11 @@ export function MediaActionsPanel({ mediaType, tmdbId, title }: MediaActionsPane
           <p className="kicker">Cuenta</p>
           <h2 className="mt-2 text-xl font-semibold">Guarda y reseña {title}</h2>
           <p className="mt-3 max-w-2xl text-sm leading-6 text-[var(--color-text-secondary)]">
-            Inicia sesion para sumar este contenido a tu biblioteca, crear listas y dejar una reseña independiente.
+            Iniciá sesión para sumar este contenido a tu biblioteca, crear listas y dejar una reseña independiente.
           </p>
           <div className="mt-5 flex flex-wrap gap-3">
             <Link to="/login" className="primary-action">
-              Iniciar sesion
+              Iniciar sesión
             </Link>
             <Link to="/register" className="secondary-action">
               Crear cuenta
@@ -332,9 +335,9 @@ function QuickLibraryForm({
 
   async function saveLibraryItem() {
     if (!ratingIsValid) {
-      const message = 'Selecciona un rating para marcarla como vista.'
+      const message = 'Seleccioná un rating para marcarla como vista.'
       setError(message)
-      toast.error('Rating invalido', message)
+      toast.error('Rating inválido', message)
       return
     }
 
@@ -358,7 +361,7 @@ function QuickLibraryForm({
       }
       onSaved()
     } catch (actionError) {
-      setError(getErrorMessage(actionError, 'No se pudo guardar en tu biblioteca. Revisa los datos e intenta de nuevo.'))
+      setError(getErrorMessage(actionError, 'No se pudo guardar en tu biblioteca. Revisá los datos e intentá de nuevo.'))
     }
   }
 
@@ -421,7 +424,7 @@ function ReviewComposer({
 
   async function submitReview() {
     if (!canSubmitReview) {
-      const message = 'Completa titulo y reseña antes de publicar.'
+      const message = 'Completá título y reseña antes de publicar.'
       setReviewError(message)
       toast.error('Reseña incompleta', message)
       return
@@ -445,7 +448,7 @@ function ReviewComposer({
       setReviewBody('')
       setContainsSpoilers(false)
     } catch (error) {
-      setReviewError(getErrorMessage(error, 'No se pudo publicar la reseña. Revisa los datos e intenta de nuevo.'))
+      setReviewError(getErrorMessage(error, 'No se pudo publicar la reseña. Revisá los datos e intentá de nuevo.'))
     }
   }
 
@@ -508,7 +511,7 @@ function TmdbMediaControls({
     try {
       await action()
     } catch (actionError) {
-      setError(getErrorMessage(actionError, 'No se pudo sincronizar con TMDB. Proba nuevamente.'))
+      setError(getErrorMessage(actionError, 'No se pudo sincronizar con TMDB. Probá nuevamente.'))
     }
   }
 
@@ -592,11 +595,11 @@ function ReviewsBlock({
 }) {
   return (
     <div className="surface-panel mt-6 p-5">
-      <h2 className="text-xl font-semibold">Reseñas publicas</h2>
+      <h2 className="text-xl font-semibold">Reseñas públicas</h2>
       {isLoading ? <p className="mt-3 text-sm text-[var(--color-text-secondary)]">Cargando reseñas...</p> : null}
       {isError ? <p className="mt-3 text-sm text-red-200">No pudimos cargar reseñas.</p> : null}
       {!isLoading && !isError && reviews.length === 0 ? (
-        <p className="mt-3 text-sm text-[var(--color-text-secondary)]">Todavia no hay reseñas publicas.</p>
+        <p className="mt-3 text-sm text-[var(--color-text-secondary)]">Todavía no hay reseñas públicas.</p>
       ) : null}
       <div className="mt-4 grid gap-3">
         {reviews.map((review) => (
@@ -628,8 +631,4 @@ function parseRatingInput(value: string) {
 
 function formatRatingValue(value: number | null) {
   return value === null ? '' : String(value)
-}
-
-function visibilityLabel(value: Visibility) {
-  return visibilityOptions.find((option) => option.value === value)?.label ?? value
 }

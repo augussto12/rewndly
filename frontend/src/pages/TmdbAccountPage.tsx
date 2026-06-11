@@ -32,7 +32,7 @@ export function TmdbAccountPage() {
       sessionStorage.setItem(pendingTokenKey, response.requestToken)
       window.location.href = response.authorizationUrl
     } catch (error) {
-      setActionError(getErrorMessage(error, 'No se pudo iniciar la conexion con TMDB. Proba nuevamente.'))
+      setActionError(getErrorMessage(error, 'No se pudo iniciar la conexión con TMDB. Probá nuevamente.'))
     }
   }
 
@@ -42,7 +42,7 @@ export function TmdbAccountPage() {
     try {
       await sync.mutateAsync()
     } catch (error) {
-      setActionError(getErrorMessage(error, 'No se pudo sincronizar tu biblioteca TMDB. Proba nuevamente.'))
+      setActionError(getErrorMessage(error, 'No se pudo sincronizar tu biblioteca TMDB. Probá nuevamente.'))
     }
   }
 
@@ -52,7 +52,7 @@ export function TmdbAccountPage() {
     try {
       await disconnect.mutateAsync()
     } catch (error) {
-      setActionError(getErrorMessage(error, 'No se pudo desconectar TMDB. Proba nuevamente.'))
+      setActionError(getErrorMessage(error, 'No se pudo desconectar TMDB. Probá nuevamente.'))
     }
   }
 
@@ -63,12 +63,12 @@ export function TmdbAccountPage() {
           <p className="kicker">TMDB</p>
           <h1 className="mt-3 text-4xl font-semibold">Cuenta TMDB</h1>
           <p className="mt-3 max-w-3xl text-[var(--color-text-secondary)]">
-            Conecta tu cuenta de TMDB para sincronizar favoritos, watchlist y ratings. La sesion queda guardada en el backend, no en el navegador.
+            Conectá tu cuenta de TMDB para sincronizar favoritos, watchlist y ratings. La sesión queda guardada en el backend, no en el navegador.
           </p>
         </header>
 
         {status.isLoading ? <LoadingSkeleton /> : null}
-        {status.isError ? <ErrorState title="No pudimos cargar la conexion TMDB" /> : null}
+        {status.isError ? <ErrorState title="No pudimos cargar la conexión TMDB" /> : null}
 
         {!status.isLoading && !status.isError && status.data ? (
           <section className="surface-panel p-5 sm:p-6">
@@ -80,13 +80,13 @@ export function TmdbAccountPage() {
                 </h2>
                 {status.data.isConnected ? (
                   <p className="mt-2 text-sm text-[var(--color-text-secondary)]">
-                    {[status.data.displayName, status.data.lastSyncedAt ? `Ultima sync ${status.data.lastSyncedAt.slice(0, 10)}` : 'Sin sync todavia']
+                    {[status.data.displayName, status.data.lastSyncedAt ? `Última sync ${status.data.lastSyncedAt.slice(0, 10)}` : 'Sin sync todavía']
                       .filter(Boolean)
                       .join(' / ')}
                   </p>
                 ) : (
                   <p className="mt-2 text-sm text-[var(--color-text-secondary)]">
-                    Te vamos a llevar a TMDB para aprobar el acceso y despues vas a volver a Rewndly.
+                    Te vamos a llevar a TMDB para aprobar el acceso y después vas a volver a Rewndly.
                   </p>
                 )}
               </div>
@@ -132,7 +132,7 @@ export function TmdbAccountPage() {
           </section>
         ) : (
           <section className="surface-panel p-5">
-            <EmptyState title="TMDB sin conectar" message="Cuando conectes tu cuenta, aca vas a ver favoritos, watchlist y ratings remotos." />
+            <EmptyState title="TMDB sin conectar" message="Cuando conectes tu cuenta, acá vas a ver favoritos, watchlist y ratings remotos." />
           </section>
         )}
 

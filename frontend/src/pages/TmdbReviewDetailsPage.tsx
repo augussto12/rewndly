@@ -41,7 +41,7 @@ export function TmdbReviewDetailsPage() {
             <div className="text-resilient mt-7 whitespace-pre-line text-base leading-8 text-[var(--color-text-secondary)]">{data.content}</div>
             <div className="mt-7 flex flex-wrap gap-3">
               <Link to="/discover" className="secondary-action">
-                Explorar catalogo
+                Explorar catálogo
               </Link>
               {safeExternalUrl(data.url) ? (
                 <a href={safeExternalUrl(data.url) ?? undefined} target="_blank" rel="noreferrer" className="secondary-action">

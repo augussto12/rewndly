@@ -76,6 +76,12 @@ export function getAdminActivityEvents() {
   return httpClient<AdminPagedResponse<AdminActivityEvent>>(`/api/admin/activity-events?${pageQuery}`)
 }
 
+export function getAdminActivityEventsPage(page: number, pageSize: number) {
+  return httpClient<AdminPagedResponse<AdminActivityEvent>>(
+    `/api/admin/activity-events?page=${page}&pageSize=${pageSize}`,
+  )
+}
+
 export function getAdminAuditLogs() {
   return httpClient<AdminPagedResponse<AdminAuditLog>>(`/api/admin/audit-logs?${pageQuery}`)
 }

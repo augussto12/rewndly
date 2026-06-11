@@ -6,6 +6,7 @@ import { MediaDetailsHeader } from '../components/media/MediaDetailsHeader/Media
 import { MediaDetailsMetadata } from '../components/media/MediaDetailsMetadata/MediaDetailsMetadata'
 import { MediaEntityLinks } from '../components/media/MediaEntityLinks/MediaEntityLinks'
 import { useMovieDetails } from '../features/public-media/hooks/usePublicMedia'
+import { translateTmdbLabels } from '../features/public-media/utils/tmdbLabels'
 import { MediaActionsPanel, MediaQuickActions } from '../features/user-content/components/MediaActionsPanel'
 import { PublicLayout } from '../layouts/PublicLayout'
 
@@ -23,7 +24,7 @@ export function MovieDetailsPage() {
 
       {isError || !Number.isFinite(tmdbId) ? (
         <main className="mx-auto max-w-4xl px-4 py-16 sm:px-6">
-          <ErrorState title="No pudimos cargar la pelicula" />
+          <ErrorState title="No pudimos cargar la película" />
         </main>
       ) : null}
 
@@ -38,13 +39,13 @@ export function MovieDetailsPage() {
             voteAverage={data.voteAverage}
             externalRatings={data.externalRatings}
             releaseYear={toYear(data.releaseDate)}
-            genres={data.genres}
+            genres={translateTmdbLabels(data.genres)}
             meta={[data.releaseDate?.slice(0, 4) ?? '', data.runtimeMinutes ? `${data.runtimeMinutes} min` : '']}
             backHref="/movies/search"
             actionSlot={<MediaQuickActions mediaType="Movie" tmdbId={data.tmdbId} title={data.title} />}
           />
           <div className="detail-content-flow">
-            <MediaEntityLinks collection={data.collection} companies={data.productionCompanies} />
+            <MediaEntityLinks collection={data.collection} companies={data.productionCompanies} watchProviders={data.watchProviders} />
             <MediaDetailsExtras
               mediaTitle={data.title}
               cast={data.cast}

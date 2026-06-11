@@ -4,11 +4,11 @@ import { Link, NavLink } from 'react-router-dom'
 const links = [
   ['/admin', 'Dashboard'],
   ['/admin/users', 'Usuarios'],
-  ['/admin/reviews', 'Reviews'],
+  ['/admin/reviews', 'Reseñas'],
   ['/admin/lists', 'Listas'],
-  ['/admin/system-events', 'System'],
-  ['/admin/activity-events', 'Activity'],
-  ['/admin/audit-logs', 'Auditoria'],
+  ['/admin/system-events', 'Sistema'],
+  ['/admin/activity-events', 'Actividad'],
+  ['/admin/audit-logs', 'Auditoría'],
 ]
 
 export function AdminLayout({ children }: PropsWithChildren) {
@@ -20,7 +20,7 @@ export function AdminLayout({ children }: PropsWithChildren) {
           <span>Rewndly</span>
         </Link>
         <p className="mt-5 rounded-[var(--radius-md)] border border-white/10 bg-white/[0.03] p-3 text-xs leading-5 text-[var(--color-text-secondary)]">
-          Operacion interna, auditoria y moderacion basica de Rewndly.
+          Operación interna, auditoría y moderación básica de Rewndly.
         </p>
         <nav className="mt-8 grid gap-2 text-sm">
           {links.map(([href, label]) => (

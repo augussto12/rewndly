@@ -6,10 +6,11 @@ type MediaCarouselProps = {
   title: string
   items: MediaSummary[]
   viewAllHref?: string
+  kicker?: string
   rankLabels?: Map<string, string>
 }
 
-export function MediaCarousel({ title, items, viewAllHref, rankLabels }: MediaCarouselProps) {
+export function MediaCarousel({ title, items, viewAllHref, kicker = 'Selección', rankLabels }: MediaCarouselProps) {
   if (items.length === 0) {
     return null
   }
@@ -18,7 +19,7 @@ export function MediaCarousel({ title, items, viewAllHref, rankLabels }: MediaCa
     <section className="py-8">
       <div className="mb-4 flex items-end justify-between px-4 sm:px-6">
         <div>
-          <p className="kicker">Seleccion</p>
+          <p className="kicker">{kicker}</p>
           <h2 className="mt-2 text-xl font-semibold">{title}</h2>
         </div>
         {viewAllHref ? (

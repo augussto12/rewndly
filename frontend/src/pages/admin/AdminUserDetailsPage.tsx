@@ -29,10 +29,10 @@ export function AdminUserDetailsPage() {
               <AdminStatusBadge value={data.isDeleted ? 'Deleted' : 'Active'} />
             </div>
             <dl className="mt-6 grid gap-3 text-sm sm:grid-cols-2">
-              <Info label="Email" value={data.email} />
+              <Info label="Correo" value={data.email} />
               <Info label="Creado" value={new Date(data.createdAt).toLocaleString()} />
-              <Info label="Ultimo login" value={data.lastLoginAt ? new Date(data.lastLoginAt).toLocaleString() : 'Nunca'} />
-              <Info label="Email verificado" value={data.emailVerifiedAt ? new Date(data.emailVerifiedAt).toLocaleString() : 'No'} />
+              <Info label="Último login" value={data.lastLoginAt ? new Date(data.lastLoginAt).toLocaleString() : 'Nunca'} />
+              <Info label="Correo verificado" value={data.emailVerifiedAt ? new Date(data.emailVerifiedAt).toLocaleString() : 'No'} />
             </dl>
             <div className="mt-6 flex flex-wrap gap-3">
               {data.isDisabled ? (
@@ -42,7 +42,7 @@ export function AdminUserDetailsPage() {
               ) : (
                 <AdminConfirmDialog title="Deshabilitar usuario" actionLabel="Deshabilitar" onConfirm={(reason) => void disableUser.mutateAsync({ id: data.id, reason })} />
               )}
-              {!data.isDeleted ? <AdminConfirmDialog title="Soft delete usuario" actionLabel="Eliminar" onConfirm={(reason) => void deleteUser.mutateAsync({ id: data.id, reason })} /> : null}
+              {!data.isDeleted ? <AdminConfirmDialog title="Eliminar usuario" actionLabel="Eliminar" onConfirm={(reason) => void deleteUser.mutateAsync({ id: data.id, reason })} /> : null}
             </div>
           </section>
         ) : null}

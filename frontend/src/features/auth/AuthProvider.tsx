@@ -53,7 +53,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
       setUser(auth.user)
       toast.success('Sesion iniciada', `Hola, ${auth.user.displayName}.`)
     } catch (error) {
-      toast.error('No se pudo iniciar sesion', getErrorMessage(error, 'Revisa tus credenciales e intenta de nuevo.'))
+      toast.error('No se pudo iniciar sesión', getErrorMessage(error, 'Revisá tus credenciales e intentá de nuevo.'))
       throw error
     }
   }, [])
@@ -63,9 +63,9 @@ export function AuthProvider({ children }: PropsWithChildren) {
       const auth = await register(request)
       setAccessToken(auth.accessToken)
       setUser(auth.user)
-      toast.success('Cuenta creada', 'Ya podes empezar a guardar contenido.')
+      toast.success('Cuenta creada', 'Ya podés empezar a guardar contenido.')
     } catch (error) {
-      toast.error('No se pudo crear la cuenta', getErrorMessage(error, 'Revisa los datos e intenta de nuevo.'))
+      toast.error('No se pudo crear la cuenta', getErrorMessage(error, 'Revisá los datos e intentá de nuevo.'))
       throw error
     }
   }, [])
@@ -74,9 +74,9 @@ export function AuthProvider({ children }: PropsWithChildren) {
     try {
       const updatedUser = await changePassword(request)
       setUser(updatedUser)
-      toast.success('Password actualizado', 'Tu cuenta quedo con el nuevo password.')
+      toast.success('Contraseña actualizada', 'Tu cuenta quedó con la contraseña nueva.')
     } catch (error) {
-      toast.error('No se pudo cambiar el password', getErrorMessage(error, 'Revisa los datos e intenta de nuevo.'))
+      toast.error('No se pudo cambiar la contraseña', getErrorMessage(error, 'Revisá los datos e intentá de nuevo.'))
       throw error
     }
   }, [])
@@ -86,7 +86,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
       await logout()
       toast.success('Sesion cerrada', 'Volves a navegar como visitante.')
     } catch (error) {
-      toast.error('No pudimos cerrar sesion en el servidor', getErrorMessage(error, 'La sesion local se va a limpiar igual.'))
+      toast.error('No pudimos cerrar sesión en el servidor', getErrorMessage(error, 'La sesión local se va a limpiar igual.'))
     } finally {
       setAccessToken(null)
       setUser(null)

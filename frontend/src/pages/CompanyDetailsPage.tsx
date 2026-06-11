@@ -5,6 +5,7 @@ import { LoadingSkeleton } from '../components/feedback/LoadingSkeleton/LoadingS
 import { MediaGrid } from '../components/media/MediaGrid/MediaGrid'
 import { useCompanyDetails } from '../features/public-media/hooks/usePublicMedia'
 import type { CompanyDetails } from '../features/public-media/types/publicMedia.types'
+import { formatCountryName, getEntityInitials } from '../features/public-media/utils/tmdbLabels'
 import { PublicLayout } from '../layouts/PublicLayout'
 import { safeExternalUrl } from '../lib/safeExternalUrl'
 
@@ -39,15 +40,15 @@ function CompanyProfile({ data }: { data: CompanyDetails }) {
         name={data.name}
         description={data.description}
         logoUrl={data.logoUrl}
-        meta={[data.originCountry, data.headquarters].filter(Boolean).join(' / ')}
+        meta={[formatCountryName(data.originCountry), data.headquarters].filter(Boolean).join(' / ')}
         homepage={data.homepage}
       />
 
       <section className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
         <div className="surface-panel p-4 sm:p-5">
-          <p className="kicker">Catalogo</p>
-          <h2 className="mt-2 text-2xl font-semibold">Peliculas populares</h2>
-          <div className="mt-6">{data.movies.length > 0 ? <MediaGrid items={data.movies} /> : <EmptyState title="Sin peliculas" message="TMDB no devolvio peliculas para esta productora." />}</div>
+          <p className="kicker">Catálogo</p>
+          <h2 className="mt-2 text-2xl font-semibold">Películas populares</h2>
+          <div className="mt-6">{data.movies.length > 0 ? <MediaGrid items={data.movies} /> : <EmptyState title="Sin películas" message="TMDB no devolvió películas para esta productora." />}</div>
         </div>
 
         <EntityFacts
@@ -59,7 +60,7 @@ function CompanyProfile({ data }: { data: CompanyDetails }) {
       <section className="surface-panel p-4 sm:p-5">
         <p className="kicker">Series</p>
         <h2 className="mt-2 text-2xl font-semibold">Series relacionadas</h2>
-        <div className="mt-6">{data.series.length > 0 ? <MediaGrid items={data.series} /> : <EmptyState title="Sin series" message="TMDB no devolvio series para esta productora." />}</div>
+        <div className="mt-6">{data.series.length > 0 ? <MediaGrid items={data.series} /> : <EmptyState title="Sin series" message="TMDB no devolvió series para esta productora." />}</div>
       </section>
     </main>
   )
@@ -85,7 +86,7 @@ function EntityHeader({
   return (
     <section className="grid gap-6 md:grid-cols-[8rem_1fr]">
       <div className="grid h-28 w-28 place-items-center rounded-[var(--radius-md)] border border-white/10 bg-white/[0.045] p-4 md:h-32 md:w-32">
-        {logoUrl ? <img src={logoUrl} alt="" className="max-h-full max-w-full object-contain" /> : <span className="text-center text-xs text-[var(--color-text-secondary)]">Sin logo</span>}
+        {logoUrl ? <img src={logoUrl} alt="" className="max-h-full max-w-full object-contain" /> : <span className="text-center text-xl font-semibold text-violet-100/85">{getEntityInitials(name)}</span>}
       </div>
       <div className="min-w-0">
         <p className="kicker">{eyebrow}</p>

@@ -9,12 +9,30 @@ import { AdminLayout } from '../../layouts/AdminLayout'
 
 export function AdminActivityEventsPage() {
   const { data, isError, isLoading } = useAdminActivityEvents()
-  return <AdminLayout><main className="px-4 py-8 lg:px-8"><Header title="Activity events" />{isLoading ? <LoadingSkeleton /> : null}{isError ? <ErrorState /> : null}{data ? <><AdminTable<AdminActivityEvent> items={data.items} columns={[
-    { header: 'Evento', cell: (event) => <AdminEventRow title={event.eventType} meta={event.mediaTitle ?? event.mediaType ?? 'Actividad social'} /> },
-    { header: 'Usuario', cell: (event) => event.username },
-    { header: 'TMDB', cell: (event) => event.tmdbId ?? '-' },
-    { header: 'Fecha', cell: (event) => new Date(event.createdAt).toLocaleString() },
-  ]} /><AdminPagination page={data.page} pageSize={data.pageSize} total={data.total} /></> : null}</main></AdminLayout>
+
+  return (
+    <AdminLayout>
+      <main className="px-4 py-8 lg:px-8">
+        <Header title="Eventos de actividad" />
+        {isLoading ? <LoadingSkeleton /> : null}
+        {isError ? <ErrorState /> : null}
+        {data ? (
+          <>
+            <AdminTable<AdminActivityEvent>
+              items={data.items}
+              columns={[
+                { header: 'Evento', cell: (event) => <AdminEventRow title={event.eventType} meta={event.mediaTitle ?? event.mediaType ?? 'Actividad social'} /> },
+                { header: 'Usuario', cell: (event) => event.username },
+                { header: 'TMDB', cell: (event) => event.tmdbId ?? '-' },
+                { header: 'Fecha', cell: (event) => new Date(event.createdAt).toLocaleString() },
+              ]}
+            />
+            <AdminPagination page={data.page} pageSize={data.pageSize} total={data.total} />
+          </>
+        ) : null}
+      </main>
+    </AdminLayout>
+  )
 }
 
 function Header({ title }: { title: string }) {

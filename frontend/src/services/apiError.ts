@@ -27,7 +27,7 @@ export async function createApiError(response: Response): Promise<ApiError> {
   return new ApiError(message, response.status, details)
 }
 
-export function getErrorMessage(error: unknown, fallback = 'La accion no se pudo completar. Proba nuevamente.'): string {
+export function getErrorMessage(error: unknown, fallback = 'La acción no se pudo completar. Probá nuevamente.'): string {
   if (error instanceof Error && error.message.trim()) {
     return error.message
   }
@@ -93,23 +93,23 @@ function getDetailsMessage(details: ApiErrorDetails | null): string | null {
 function getFieldLabel(field: string): string {
   const labels: Record<string, string> = {
     Username: 'Usuario',
-    Email: 'Email',
-    Password: 'Password',
-    CurrentPassword: 'Password actual',
-    NewPassword: 'Password nuevo',
-    ConfirmNewPassword: 'Confirmacion',
+    Email: 'Correo',
+    Password: 'Contraseña',
+    CurrentPassword: 'Contraseña actual',
+    NewPassword: 'Contraseña nueva',
+    ConfirmNewPassword: 'Confirmación',
     DisplayName: 'Nombre visible',
-    Identifier: 'Email o usuario',
+    Identifier: 'Correo o usuario',
     MediaType: 'Tipo de contenido',
     TmdbId: 'Contenido',
     Status: 'Estado',
     Rating: 'Rating',
     RatingSnapshot: 'Rating',
-    Title: 'Titulo',
+    Title: 'Título',
     Body: 'Reseña',
     Visibility: 'Privacidad',
-    Description: 'Descripcion',
-    Position: 'Posicion',
+    Description: 'Descripción',
+    Position: 'Posición',
     Note: 'Nota',
     RequestToken: 'Token TMDB',
     Value: 'Valor',
@@ -121,43 +121,43 @@ function getFieldLabel(field: string): string {
 function translateMessage(message: string): string {
   const normalized = message.trim()
   const translations: Record<string, string> = {
-    'Email is already registered.': 'Ese email ya esta registrado. Proba iniciar sesion o usa otro email.',
-    'Username is already registered.': 'Ese usuario ya esta registrado. Elegi otro nombre de usuario.',
-    'Username or email is already registered.': 'Ese usuario o email ya esta registrado. Proba iniciar sesion o usa otros datos.',
-    'This media item already exists in your library.': 'Ese contenido ya esta en tu biblioteca.',
-    'This media item already exists in the list.': 'Ese contenido ya esta en la lista seleccionada.',
-    'Media item was not found.': 'No encontramos esa pelicula o serie en TMDB.',
-    'User was not found.': 'No encontramos un usuario con ese username.',
-    'You cannot send a friendship request to yourself.': 'No podes enviarte una solicitud a vos mismo.',
+    'Email is already registered.': 'Ese correo ya está registrado. Probá iniciar sesión o usá otro correo.',
+    'Username is already registered.': 'Ese usuario ya está registrado. Elegí otro nombre de usuario.',
+    'Username or email is already registered.': 'Ese usuario o correo ya está registrado. Probá iniciar sesión o usá otros datos.',
+    'This media item already exists in your library.': 'Ese contenido ya está en tu biblioteca.',
+    'This media item already exists in the list.': 'Ese contenido ya está en la lista seleccionada.',
+    'Media item was not found.': 'No encontramos esa película o serie en TMDB.',
+    'User was not found.': 'No encontramos un usuario con ese nombre.',
+    'You cannot send a friendship request to yourself.': 'No podés enviarte una solicitud a vos mismo.',
     'Friendship already exists.': 'Ya son amigos.',
     'Friendship request already exists.': 'Ya existe una solicitud pendiente entre esos usuarios.',
-    'TMDB account is not connected.': 'Tu cuenta de TMDB no esta conectada.',
-    'Request token is required.': 'Falta el token de autorizacion de TMDB.',
-    'TMDB request token is invalid or expired.': 'El token de TMDB es invalido o expiro. Inicia la conexion de nuevo.',
+    'TMDB account is not connected.': 'Tu cuenta de TMDB no está conectada.',
+    'Request token is required.': 'Falta el token de autorización de TMDB.',
+    'TMDB request token is invalid or expired.': 'El token de TMDB es inválido o expiró. Iniciá la conexión de nuevo.',
     'Rating must be between 0.5 and 10.': 'El rating debe estar entre 0.5 y 10.',
-    'Invalid or expired token.': 'El token es invalido o expiro.',
-    'Invalid media type or TMDB id.': 'El tipo de contenido o el id de TMDB no es valido.',
-    'One or more validation errors occurred.': 'Revisa los campos marcados.',
-    'Unexpected server error': 'El servidor tuvo un error inesperado. Proba nuevamente mas tarde.',
-    'Current password is incorrect.': 'El password actual no es correcto.',
-    'New password must be different from current password.': 'El password nuevo debe ser distinto al actual.',
-    'Password confirmation does not match.': 'La confirmacion no coincide con el password nuevo.',
-    'Password must contain an uppercase letter.': 'Debe tener al menos una mayuscula.',
-    'Password must contain a lowercase letter.': 'Debe tener al menos una minuscula.',
-    'Password must contain a number.': 'Debe tener al menos un numero.',
-    'Password must contain a symbol.': 'Debe tener al menos un simbolo.',
-    'MediaType must be Movie or Series.': 'Debe ser Movie o Series.',
+    'Invalid or expired token.': 'El token es inválido o expiró.',
+    'Invalid media type or TMDB id.': 'El tipo de contenido o el id de TMDB no es válido.',
+    'One or more validation errors occurred.': 'Revisá los campos marcados.',
+    'Unexpected server error': 'El servidor tuvo un error inesperado. Probá nuevamente más tarde.',
+    'Current password is incorrect.': 'La contraseña actual no es correcta.',
+    'New password must be different from current password.': 'La contraseña nueva debe ser distinta a la actual.',
+    'Password confirmation does not match.': 'La confirmación no coincide con la contraseña nueva.',
+    'Password must contain an uppercase letter.': 'Debe tener al menos una mayúscula.',
+    'Password must contain a lowercase letter.': 'Debe tener al menos una minúscula.',
+    'Password must contain a number.': 'Debe tener al menos un número.',
+    'Password must contain a symbol.': 'Debe tener al menos un símbolo.',
+    'MediaType must be Movie or Series.': 'Debe ser Película o Serie.',
     'Status must be WantToWatch, Watching, Watched or Dropped.': 'Debe ser Quiero ver, Viendo, Vista o Abandonada.',
-    'Visibility must be Public, FriendsOnly or Private.': 'Debe ser Publica, Solo amigos o Privada.',
-    'The Username field is required.': 'Completa el usuario.',
-    'The Email field is required.': 'Completa el email.',
-    'The Password field is required.': 'Completa el password.',
-    'The CurrentPassword field is required.': 'Completa el password actual.',
-    'The NewPassword field is required.': 'Completa el password nuevo.',
-    'The ConfirmNewPassword field is required.': 'Confirma el password nuevo.',
-    'The Identifier field is required.': 'Completa el email o usuario.',
-    'The Title field is required.': 'Completa el titulo.',
-    'The Body field is required.': 'Completa la reseña.',
+    'Visibility must be Public, FriendsOnly or Private.': 'Debe ser Pública, Solo amigos o Privada.',
+    'The Username field is required.': 'Completá el usuario.',
+    'The Email field is required.': 'Completá el correo.',
+    'The Password field is required.': 'Completá la contraseña.',
+    'The CurrentPassword field is required.': 'Completá la contraseña actual.',
+    'The NewPassword field is required.': 'Completá la contraseña nueva.',
+    'The ConfirmNewPassword field is required.': 'Confirmá la contraseña nueva.',
+    'The Identifier field is required.': 'Completá el correo o usuario.',
+    'The Title field is required.': 'Completá el título.',
+    'The Body field is required.': 'Completá la reseña.',
   }
 
   if (translations[normalized]) {
@@ -189,15 +189,15 @@ function translateMessage(message: string): string {
 
 function getStatusMessage(status: number): string {
   if (status === 400) {
-    return 'La solicitud tiene datos invalidos. Revisa los campos e intenta de nuevo.'
+    return 'La solicitud tiene datos inválidos. Revisá los campos e intentá de nuevo.'
   }
 
   if (status === 401) {
-    return 'Tu sesion expiro o las credenciales no son validas. Inicia sesion nuevamente.'
+    return 'Tu sesión expiró o las credenciales no son válidas. Iniciá sesión nuevamente.'
   }
 
   if (status === 403) {
-    return 'No tenes permiso para realizar esta accion.'
+    return 'No tenés permiso para realizar esta acción.'
   }
 
   if (status === 404) {
@@ -205,12 +205,12 @@ function getStatusMessage(status: number): string {
   }
 
   if (status === 409) {
-    return 'La accion entra en conflicto con algo que ya existe.'
+    return 'La acción entra en conflicto con algo que ya existe.'
   }
 
   if (status >= 500) {
-    return 'El servidor tuvo un problema. Proba nuevamente mas tarde.'
+    return 'El servidor tuvo un problema. Probá nuevamente más tarde.'
   }
 
-  return `La solicitud fallo con estado ${status}.`
+  return `La solicitud falló con estado ${status}.`
 }

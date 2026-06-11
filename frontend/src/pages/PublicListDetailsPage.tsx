@@ -14,7 +14,7 @@ export function PublicListDetailsPage() {
     <PublicLayout>
       <main className="page-shell">
         {isLoading ? <LoadingSkeleton /> : null}
-        {isError ? <ErrorState title="Lista no disponible" message="No existe o no tenes permiso para verla." /> : null}
+        {isError ? <ErrorState title="Lista no disponible" message="No existe o no tenés permiso para verla." /> : null}
         {data ? (
           <>
             <header className="mb-8">
@@ -25,9 +25,9 @@ export function PublicListDetailsPage() {
                 </Link>
               </div>
               <h1 className="mt-3 text-4xl font-semibold">{data.title}</h1>
-              <p className="mt-3 text-[var(--color-text-secondary)]">{data.description || 'Lista sin descripcion.'}</p>
+              <p className="mt-3 text-[var(--color-text-secondary)]">{data.description || 'Lista sin descripción.'}</p>
             </header>
-            {data.items.length === 0 ? <EmptyState title="Lista vacia" message="No hay contenido visible." /> : null}
+            {data.items.length === 0 ? <EmptyState title="Lista vacía" message="No hay contenido visible." /> : null}
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
               {data.items.map((item) => (
                 <Link key={item.id} to={item.mediaType === 'Movie' ? `/movies/${item.tmdbId}` : `/series/${item.tmdbId}`} className="block">

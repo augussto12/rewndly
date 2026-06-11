@@ -50,7 +50,7 @@ export function EpisodeDetailsPage() {
                 <p className="kicker">Episodio</p>
                 <h1 className="mt-3 text-4xl font-semibold leading-tight sm:text-6xl">{data.name}</h1>
                 <p className="mt-6 max-w-3xl text-base leading-7 text-[var(--color-text-secondary)]">
-                  {data.overview || 'Todavia no hay sinopsis disponible para este episodio.'}
+                  {data.overview || 'Todavía no hay sinopsis disponible para este episodio.'}
                 </p>
                 <div className="mt-6 flex flex-wrap gap-3">
                   <BackButton fallbackHref={`/series/${data.seriesTmdbId}/seasons/${data.seasonNumber}`} />
@@ -66,7 +66,7 @@ export function EpisodeDetailsPage() {
             <section className="mx-auto max-w-7xl px-4 pb-12 sm:px-6">
               <div className="mb-4">
                 <p className="kicker">Equipo</p>
-                <h2 className="mt-2 text-2xl font-semibold">Creditos destacados</h2>
+                <h2 className="mt-2 text-2xl font-semibold">Créditos destacados</h2>
               </div>
               <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                 {data.crew.map((member) => (

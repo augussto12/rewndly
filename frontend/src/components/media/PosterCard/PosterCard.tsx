@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import { FilterChip } from '../../filters/FilterChip'
 import { toast } from '../../feedback/Toast/toastStore'
 import { useAuth } from '../../../features/auth/useAuth'
 import { useCreateLibraryItem, useMyLibrary, useUpdateLibraryItem } from '../../../features/user-content/hooks/useUserContent'
@@ -33,7 +34,7 @@ export function PosterCard({ item, layout = 'grid', rankLabel }: PosterCardProps
             />
           ) : (
             <div className="grid h-full place-items-center px-4 text-center text-sm text-[var(--color-text-secondary)]">
-              Sin poster
+              Sin póster
             </div>
           )}
           <div className="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-black/78 to-transparent opacity-80" />
@@ -49,7 +50,7 @@ export function PosterCard({ item, layout = 'grid', rankLabel }: PosterCardProps
         <h3 className="mt-3 line-clamp-2 break-words text-sm font-semibold leading-snug text-white">{item.title}</h3>
       </Link>
       <p className="mt-1 text-xs text-[var(--color-text-secondary)]">
-        {item.releaseDate?.slice(0, 4) ?? (item.mediaType === 'Movie' ? 'Pelicula' : 'Serie')}
+        {item.releaseDate?.slice(0, 4) ?? (item.mediaType === 'Movie' ? 'Película' : 'Serie')}
       </p>
     </article>
   )
@@ -84,7 +85,7 @@ function LibraryShortcutButton({ item }: { item: MediaSummary }) {
 
   function openLibraryPanel() {
     if (!isAuthenticated) {
-      toast.info('Inicia sesion', 'Entra a tu cuenta para guardar contenido en tu biblioteca.')
+      toast.info('Iniciá sesión', 'Entrá a tu cuenta para guardar contenido en tu biblioteca.')
       navigate('/login')
       return
     }
@@ -98,7 +99,7 @@ function LibraryShortcutButton({ item }: { item: MediaSummary }) {
     const parsedRating = status === 'Watched' ? parseLibraryRating(rating) : null
 
     if (status === 'Watched' && (parsedRating === null || Number.isNaN(parsedRating))) {
-      toast.error('Elegi un rating', 'Para marcarla como vista, selecciona una valoracion.')
+      toast.error('Elegí una valoración', 'Para marcarla como vista, seleccioná una puntuación.')
       return
     }
 
@@ -128,13 +129,17 @@ function LibraryShortcutButton({ item }: { item: MediaSummary }) {
         onClick={openLibraryPanel}
         aria-label={isSaved ? `Editar ${item.title} en biblioteca` : `Agregar ${item.title} a biblioteca`}
         title={isSaved ? 'Editar biblioteca' : 'Agregar a biblioteca'}
-        className={`absolute right-2 top-2 z-10 grid h-10 w-10 place-items-center rounded-[var(--radius-sm)] border text-xl font-semibold leading-none shadow-[0_10px_24px_rgba(0,0,0,0.34)] backdrop-blur transition hover:-translate-y-0.5 ${
+        className={`absolute right-2 top-2 z-10 grid h-10 w-10 place-items-center rounded-[var(--radius-sm)] border shadow-[0_10px_24px_rgba(0,0,0,0.34)] backdrop-blur transition hover:-translate-y-0.5 ${
           isSaved
             ? 'border-emerald-200/35 bg-emerald-500/20 text-emerald-100'
             : 'border-violet-200/25 bg-black/62 text-white hover:border-violet-100/50 hover:bg-black/74'
         }`}
       >
-        +
+        {isSaved ? (
+          <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+        ) : (
+          <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+        )}
       </button>
 
       {isOpen ? (
@@ -157,18 +162,18 @@ function LibraryShortcutButton({ item }: { item: MediaSummary }) {
                 className="grid h-9 w-9 shrink-0 place-items-center rounded-[var(--radius-sm)] border border-white/10 bg-white/[0.06] text-sm font-semibold text-white/80 hover:bg-white/[0.12]"
                 aria-label="Cerrar"
               >
-                x
+                <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
               </button>
             </div>
 
             <div className="mt-5 grid gap-4">
               <div className="grid grid-cols-2 gap-2 rounded-[var(--radius-sm)] border border-white/10 bg-black/20 p-1">
-                <button type="button" onClick={() => setStatus('WantToWatch')} className={segmentClass(status === 'WantToWatch')}>
+                <FilterChip active={status === 'WantToWatch'} onClick={() => setStatus('WantToWatch')} size="lg" className="w-full">
                   Quiero ver
-                </button>
-                <button type="button" onClick={() => setStatus('Watched')} className={segmentClass(status === 'Watched')}>
+                </FilterChip>
+                <FilterChip active={status === 'Watched'} onClick={() => setStatus('Watched')} size="lg" className="w-full">
                   Vista
-                </button>
+                </FilterChip>
               </div>
 
               {status === 'Watched' ? (
@@ -199,10 +204,4 @@ function LibraryShortcutButton({ item }: { item: MediaSummary }) {
       ) : null}
     </>
   )
-}
-
-function segmentClass(isActive: boolean) {
-  return `min-h-11 rounded-[var(--radius-sm)] px-3 text-sm font-semibold transition ${
-    isActive ? 'bg-[var(--color-accent)] text-white' : 'text-[var(--color-text-secondary)] hover:bg-white/[0.06] hover:text-white'
-  }`
 }

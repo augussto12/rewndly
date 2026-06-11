@@ -37,6 +37,7 @@ export type Review = ReviewRequest & {
   userId: string
   username: string
   mediaTitle: string
+  posterUrl: string | null
   createdAt: string
   updatedAt: string
 }

@@ -34,7 +34,7 @@ export function useDisableAdminUser() {
   return useMutation({
     mutationFn: ({ id, reason }: { id: string; reason: string | null }) => disableAdminUser(id, reason),
     onSuccess: (_user, args) => {
-      toast.success('Usuario deshabilitado', 'El cambio quedo registrado en auditoria.')
+      toast.success('Usuario deshabilitado', 'El cambio quedó registrado en auditoría.')
       void queryClient.invalidateQueries({ queryKey: ['admin-users'] })
       void queryClient.invalidateQueries({ queryKey: ['admin-user', args.id] })
     },
@@ -60,7 +60,7 @@ export function useDeleteAdminUser() {
   return useMutation({
     mutationFn: ({ id, reason }: { id: string; reason: string | null }) => deleteAdminUser(id, reason),
     onSuccess: () => {
-      toast.success('Usuario eliminado', 'El soft delete quedo aplicado.')
+      toast.success('Usuario eliminado', 'La eliminación quedó aplicada.')
       void queryClient.invalidateQueries({ queryKey: ['admin-users'] })
     },
     onError: (error) => notifyAdminError(error, 'No se pudo eliminar el usuario.'),
@@ -76,10 +76,10 @@ export function useDeleteAdminReview() {
   return useMutation({
     mutationFn: ({ id, reason }: { id: string; reason: string | null }) => deleteAdminReview(id, reason),
     onSuccess: () => {
-      toast.success('Review eliminada', 'La accion administrativa quedo guardada.')
+      toast.success('Reseña eliminada', 'La acción administrativa quedó guardada.')
       void queryClient.invalidateQueries({ queryKey: ['admin-reviews'] })
     },
-    onError: (error) => notifyAdminError(error, 'No se pudo eliminar la review.'),
+    onError: (error) => notifyAdminError(error, 'No se pudo eliminar la reseña.'),
   })
 }
 
@@ -92,7 +92,7 @@ export function useDeleteAdminList() {
   return useMutation({
     mutationFn: ({ id, reason }: { id: string; reason: string | null }) => deleteAdminList(id, reason),
     onSuccess: () => {
-      toast.success('Lista eliminada', 'La accion administrativa quedo guardada.')
+      toast.success('Lista eliminada', 'La acción administrativa quedó guardada.')
       void queryClient.invalidateQueries({ queryKey: ['admin-lists'] })
     },
     onError: (error) => notifyAdminError(error, 'No se pudo eliminar la lista.'),
@@ -112,5 +112,5 @@ export function useAdminAuditLogs() {
 }
 
 function notifyAdminError(error: unknown, fallback: string) {
-  toast.error('No se pudo completar la accion admin', getErrorMessage(error, fallback))
+  toast.error('No se pudo completar la acción admin', getErrorMessage(error, fallback))
 }

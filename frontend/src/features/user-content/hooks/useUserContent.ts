@@ -65,7 +65,7 @@ export function useCreateLibraryItem() {
   return useMutation({
     mutationFn: (request: LibraryItemRequest) => createLibraryItem(request),
     onSuccess: () => {
-      toast.success('Guardado en biblioteca', 'El contenido ya esta en tu biblioteca.')
+      toast.success('Guardado en biblioteca', 'El contenido ya está en tu biblioteca.')
       void queryClient.invalidateQueries({ queryKey: ['my-library'] })
     },
     onError: (error) => notifyActionError(error, 'No se pudo guardar en biblioteca.'),
@@ -138,7 +138,7 @@ export function useCreateList() {
   return useMutation({
     mutationFn: (request: UserListRequest) => createList(request),
     onSuccess: (_list, request) => {
-      toast.success('Lista creada', request.visibility === 'Private' ? 'Quedo visible solo para vos.' : 'Ya podes agregar contenido.')
+      toast.success('Lista creada', request.visibility === 'Private' ? 'Quedó visible solo para vos.' : 'Ya podés agregar contenido.')
       void queryClient.invalidateQueries({ queryKey: ['my-lists'] })
       if (request.visibility === 'Public') {
         void queryClient.invalidateQueries({ queryKey: ['public-lists'] })
@@ -179,7 +179,7 @@ export function useAddListItem() {
   return useMutation({
     mutationFn: ({ id, request }: { id: string; request: UserListItemRequest }) => addListItem(id, request),
     onSuccess: (_item, args) => {
-      toast.success('Agregado a la lista', 'El contenido ya esta en la lista seleccionada.')
+      toast.success('Agregado a la lista', 'El contenido ya está en la lista seleccionada.')
       void queryClient.invalidateQueries({ queryKey: ['my-lists'] })
       void queryClient.invalidateQueries({ queryKey: ['my-list', args.id] })
     },
@@ -192,7 +192,7 @@ export function useDeleteListItem() {
   return useMutation({
     mutationFn: ({ listId, itemId }: { listId: string; itemId: string }) => deleteListItem(listId, itemId),
     onSuccess: (_value, args) => {
-      toast.success('Quitado de la lista', 'El contenido ya no esta en esa lista.')
+      toast.success('Quitado de la lista', 'El contenido ya no está en esa lista.')
       void queryClient.invalidateQueries({ queryKey: ['my-lists'] })
       void queryClient.invalidateQueries({ queryKey: ['my-list', args.listId] })
     },
@@ -201,5 +201,5 @@ export function useDeleteListItem() {
 }
 
 function notifyActionError(error: unknown, fallback: string) {
-  toast.error('No se pudo completar la accion', getErrorMessage(error, fallback))
+  toast.error('No se pudo completar la acción', getErrorMessage(error, fallback))
 }

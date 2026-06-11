@@ -5,6 +5,7 @@ import { PublicLayout } from '../layouts/PublicLayout'
 import { getMovieDetails, getSeriesDetails, searchMovies, searchSeries } from '../features/public-media/services/publicMediaApi'
 import type { ExternalRating, MediaPerson, MediaSummary, MovieDetails, SeriesDetails, WatchProvider } from '../features/public-media/types/publicMedia.types'
 import { formatExternalRating, ratingBySource } from '../features/public-media/utils/externalRatings'
+import { translateSeriesStatus } from '../features/public-media/utils/tmdbLabels'
 
 type CompareSelection = {
   mediaType: 'Movie' | 'Series'
@@ -19,6 +20,7 @@ export function ComparePage() {
   const [searchParams, setSearchParams] = useSearchParams()
   const [query, setQuery] = useState('')
   const [debouncedQuery, setDebouncedQuery] = useState('')
+  const [copyStatus, setCopyStatus] = useState<'idle' | 'copied' | 'failed'>('idle')
   const selections = useMemo(() => parseSelections(searchParams.get('items')), [searchParams])
   const canSearch = debouncedQuery.length >= 2
 
@@ -80,14 +82,25 @@ export function ComparePage() {
     updateSelections(selections.filter((item) => toSelectionKey(item) !== toSelectionKey(selection)))
   }
 
+  async function copyShareLink() {
+    try {
+      await navigator.clipboard.writeText(window.location.href)
+      setCopyStatus('copied')
+    } catch {
+      setCopyStatus('failed')
+    }
+
+    window.setTimeout(() => setCopyStatus('idle'), 1600)
+  }
+
   return (
     <PublicLayout>
       <main className="page-shell">
         <header className="max-w-3xl">
           <p className="kicker">Comparador</p>
-          <h1 className="mt-3 text-4xl font-semibold sm:text-5xl">Decidir que ver sin vueltas</h1>
+          <h1 className="mt-3 text-4xl font-semibold sm:text-5xl">Decidir qué ver sin vueltas</h1>
           <p className="mt-4 text-[var(--color-text-secondary)]">
-            Elegi 2 o 3 titulos y compara ratings, plataformas, duracion, generos, año y reparto principal.
+            Elegí 2 o 3 títulos y compará ratings, plataformas, duración, géneros, año y reparto principal.
           </p>
         </header>
 
@@ -95,21 +108,21 @@ export function ComparePage() {
           <div className="grid gap-5 p-4 sm:p-5 lg:grid-cols-[minmax(0,1fr)_minmax(18rem,24rem)]">
             <div>
               <label htmlFor="compare-search" className="text-sm font-semibold text-white">
-                Buscar titulo
+                Buscar título
               </label>
               <div className="mt-2">
                 <input
                   id="compare-search"
                   value={query}
                   onChange={(event) => setQuery(event.target.value)}
-                  placeholder="Buscar pelicula o serie"
+                  placeholder="Buscar película o serie"
                   className="field min-h-12"
                 />
               </div>
               {canSearch || isSearching || hasSearchError ? (
                 <div className="mt-4">
                   {isSearching ? <p className="rounded-[var(--radius-sm)] bg-white/[0.04] px-3 py-4 text-sm text-[var(--color-text-secondary)]">Buscando...</p> : null}
-                  {hasSearchError ? <p className="rounded-[var(--radius-sm)] bg-red-500/10 px-3 py-4 text-sm text-red-100">No pudimos completar la busqueda.</p> : null}
+                  {hasSearchError ? <p className="rounded-[var(--radius-sm)] bg-red-500/10 px-3 py-4 text-sm text-red-100">No pudimos completar la búsqueda.</p> : null}
                   {canSearch && !isSearching && !hasSearchError && searchResults.length === 0 ? (
                     <p className="rounded-[var(--radius-sm)] bg-white/[0.04] px-3 py-4 text-sm text-[var(--color-text-secondary)]">Sin resultados.</p>
                   ) : null}
@@ -131,11 +144,14 @@ export function ComparePage() {
                             <span className="min-w-0 flex-1">
                               <span className="line-clamp-1 text-sm font-semibold text-white">{item.title}</span>
                               <span className="mt-1 block text-xs text-[var(--color-text-secondary)]">
-                                {item.mediaType === 'Movie' ? 'Pelicula' : 'Serie'} {item.releaseDate ? `- ${item.releaseDate.slice(0, 4)}` : ''}
+                                {item.mediaType === 'Movie' ? 'Película' : 'Serie'} {item.releaseDate ? `- ${item.releaseDate.slice(0, 4)}` : ''}
                               </span>
                             </span>
-                            <span className="grid h-8 w-8 shrink-0 place-items-center rounded-[var(--radius-sm)] border border-white/10 bg-black/25 text-lg font-semibold text-white">
-                              {isSelected ? 'ok' : '+'}
+                            <span className="grid h-8 w-8 shrink-0 place-items-center rounded-[var(--radius-sm)] border border-white/10 bg-black/25 text-white">
+                              {isSelected
+                                ? <svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+                                : <svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+                              }
                             </span>
                           </button>
                         )
@@ -149,13 +165,23 @@ export function ComparePage() {
             <aside className="rounded-[var(--radius-md)] border border-white/10 bg-black/20 p-4">
               <div className="flex items-center justify-between gap-3">
                 <div>
-                  <p className="kicker">Seleccion</p>
+                  <p className="kicker">Selección</p>
                   <h2 className="mt-1 text-lg font-semibold">{selections.length}/{maxSelections}</h2>
                 </div>
                 {selections.length > 0 ? (
-                  <button type="button" onClick={() => updateSelections([])} className="secondary-action min-h-9 px-3 py-2 text-xs">
-                    Limpiar
-                  </button>
+                  <div className="flex flex-wrap justify-end gap-2">
+                    <button
+                      type="button"
+                      onClick={() => void copyShareLink()}
+                      className={`secondary-action min-h-9 gap-2 px-3 py-2 text-xs ${copyStatus === 'copied' ? 'border-emerald-200/35 text-emerald-100' : copyStatus === 'failed' ? 'border-red-200/35 text-red-100' : ''}`}
+                    >
+                      <CopyIcon />
+                      {copyStatus === 'copied' ? 'Copiado' : copyStatus === 'failed' ? 'Error' : 'Copiar link'}
+                    </button>
+                    <button type="button" onClick={() => updateSelections([])} className="secondary-action min-h-9 px-3 py-2 text-xs">
+                      Limpiar
+                    </button>
+                  </div>
                 ) : null}
               </div>
 
@@ -188,8 +214,8 @@ export function ComparePage() {
           {selections.length < 2 ? (
             <div className="surface-panel grid min-h-44 place-items-center p-6 text-center">
               <div>
-                <p className="text-lg font-semibold text-white">Suma al menos 2 titulos</p>
-                <p className="mt-2 text-sm text-[var(--color-text-secondary)]">Cuando esten elegidos aparece la tabla completa.</p>
+                <p className="text-lg font-semibold text-white">Sumá al menos 2 títulos</p>
+                <p className="mt-2 text-sm text-[var(--color-text-secondary)]">Cuando estén elegidos aparece la tabla completa.</p>
               </div>
             </div>
           ) : (
@@ -202,10 +228,10 @@ export function ComparePage() {
 
               <div className="surface-panel overflow-hidden">
                 <CompareRow label="IMDb" items={compareItems} render={(detail) => <RatingCell rating={ratingBySource(detail.externalRatings, 'IMDb')} fallback="Sin dato" />} />
-                <CompareRow label="Critica" items={compareItems} render={(detail) => <CriticCell ratings={detail.externalRatings} />} />
-                <CompareRow label="Duracion" items={compareItems} render={(detail) => <TextCell value={formatDuration(detail)} />} />
+                <CompareRow label="Crítica" items={compareItems} render={(detail) => <CriticCell ratings={detail.externalRatings} />} />
+                <CompareRow label="Duración" items={compareItems} render={(detail) => <TextCell value={formatDuration(detail)} />} />
                 <CompareRow label="Plataformas" items={compareItems} render={(detail) => <ProviderCell providers={detail.watchProviders} />} />
-                <CompareRow label="Generos" items={compareItems} render={(detail) => <TagCell values={detail.genres.slice(0, 5)} />} />
+                <CompareRow label="Géneros" items={compareItems} render={(detail) => <TagCell values={detail.genres.slice(0, 5)} />} />
                 <CompareRow label="Año" items={compareItems} render={(detail) => <TextCell value={getYear(detail)} />} />
                 <CompareRow label="Reparto" items={compareItems} render={(detail) => <CastCell cast={detail.cast} />} />
               </div>
@@ -214,6 +240,15 @@ export function ComparePage() {
         </section>
       </main>
     </PublicLayout>
+  )
+}
+
+function CopyIcon() {
+  return (
+    <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+      <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+    </svg>
   )
 }
 
@@ -228,17 +263,17 @@ function SelectedItem({
   isLoading: boolean
   onRemove: () => void
 }) {
-  const title = detail ? getTitle(detail) : selection.mediaType === 'Movie' ? 'Pelicula' : 'Serie'
+  const title = detail ? getTitle(detail) : selection.mediaType === 'Movie' ? 'Película' : 'Serie'
 
   return (
     <div className="flex min-h-16 min-w-0 items-center gap-3 rounded-[var(--radius-sm)] border border-white/10 bg-white/[0.04] p-2">
       <PosterThumb src={detail?.posterUrl ?? null} title={title} />
       <div className="min-w-0 flex-1">
         <p className="line-clamp-1 text-sm font-semibold text-white">{isLoading ? 'Cargando...' : title}</p>
-        <p className="mt-1 text-xs text-[var(--color-text-secondary)]">{selection.mediaType === 'Movie' ? 'Pelicula' : 'Serie'}</p>
+        <p className="mt-1 text-xs text-[var(--color-text-secondary)]">{selection.mediaType === 'Movie' ? 'Película' : 'Serie'}</p>
       </div>
-      <button type="button" onClick={onRemove} className="grid h-8 w-8 shrink-0 place-items-center rounded-[var(--radius-sm)] text-lg text-[var(--color-text-secondary)] transition hover:bg-white/[0.08] hover:text-white" aria-label={`Quitar ${title}`}>
-        x
+      <button type="button" onClick={onRemove} className="grid h-8 w-8 shrink-0 place-items-center rounded-[var(--radius-sm)] text-[var(--color-text-secondary)] transition hover:bg-white/[0.08] hover:text-white" aria-label={`Quitar ${title}`}>
+        <svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
       </button>
     </div>
   )
@@ -261,7 +296,7 @@ function CompareHeroCard({
   if (item.isError || !detail) {
     return (
       <div className="grid min-h-72 place-items-center rounded-[var(--radius-md)] border border-red-400/20 bg-red-500/10 p-4 text-center text-sm text-red-100">
-        No pudimos cargar este titulo.
+        No pudimos cargar este título.
       </div>
     )
   }
@@ -274,20 +309,20 @@ function CompareHeroCard({
       {detail.backdropUrl ? <img src={detail.backdropUrl} alt="" className="absolute inset-0 h-full w-full object-cover opacity-25" loading="lazy" /> : null}
       <div className="absolute inset-0 bg-gradient-to-t from-[#080a13] via-[#080a13]/85 to-[#080a13]/55" />
       <div className="relative flex min-h-72 flex-col justify-end p-4">
-        <button type="button" onClick={onRemove} className="absolute right-3 top-3 grid h-8 w-8 place-items-center rounded-[var(--radius-sm)] border border-white/10 bg-black/35 text-sm text-white transition hover:bg-black/55" aria-label={`Quitar ${getTitle(detail)}`}>
-          x
+        <button type="button" onClick={onRemove} className="absolute right-3 top-3 grid h-8 w-8 place-items-center rounded-[var(--radius-sm)] border border-white/10 bg-black/35 text-white transition hover:bg-black/55" aria-label={`Quitar ${getTitle(detail)}`}>
+          <svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
         </button>
         <div className="flex gap-4">
           <PosterThumb src={detail.posterUrl} title={getTitle(detail)} large />
           <div className="min-w-0 self-end">
-            <p className="kicker">{item.selection.mediaType === 'Movie' ? 'Pelicula' : 'Serie'}</p>
+            <p className="kicker">{item.selection.mediaType === 'Movie' ? 'Película' : 'Serie'}</p>
             <Link to={href} className="mt-2 block line-clamp-2 text-xl font-semibold leading-tight text-white hover:text-violet-100">
               {getTitle(detail)}
             </Link>
             <p className="mt-2 text-sm text-[var(--color-text-secondary)]">{[getYear(detail), formatDuration(detail)].filter(Boolean).join(' / ')}</p>
             <div className="mt-4 flex flex-wrap gap-2">
               <ScorePill label="IMDb" value={formatExternalRating(imdb) ?? '-'} />
-              <ScorePill label={critic?.label ?? 'Critica'} value={formatExternalRating(critic) ?? '-'} tone="critic" />
+              <ScorePill label={critic?.label ?? 'Crítica'} value={formatExternalRating(critic) ?? '-'} tone="critic" />
             </div>
           </div>
         </div>
@@ -307,10 +342,11 @@ function CompareRow({
 }) {
   return (
     <div className="grid border-b border-white/10 last:border-b-0 lg:grid-cols-[11rem_1fr]">
-      <div className="bg-white/[0.035] px-4 py-3 text-sm font-semibold text-white lg:border-r lg:border-white/10">{label}</div>
-      <div className="grid gap-0 lg:grid-flow-col lg:auto-cols-fr">
+      <div className="hidden bg-white/[0.035] px-4 py-3 text-sm font-semibold text-white lg:block lg:border-r lg:border-white/10">{label}</div>
+      <div className="grid gap-0 sm:grid-cols-2 lg:grid-flow-col lg:auto-cols-fr lg:grid-cols-none">
         {items.map((item, index) => (
-          <div key={index} className="min-h-16 border-t border-white/10 px-4 py-3 first:border-t-0 lg:border-l lg:border-t-0 lg:first:border-l-0">
+          <div key={index} className="min-h-16 border-t border-white/10 px-4 py-3 lg:border-l lg:border-t-0 lg:first:border-l-0">
+            <span className="mb-2 block text-[0.66rem] font-semibold uppercase tracking-[0.12em] text-[var(--color-text-secondary)] lg:hidden">{label}</span>
             {item.isLoading ? <span className="text-sm text-[var(--color-text-secondary)]">Cargando...</span> : null}
             {item.isError ? <span className="text-sm text-red-100">Sin datos</span> : null}
             {!item.isLoading && !item.isError && item.detail ? render(item.detail) : null}
@@ -324,7 +360,7 @@ function CompareRow({
 function PosterThumb({ src, title, large = false }: { src: string | null; title: string; large?: boolean }) {
   return (
     <span className={`grid shrink-0 place-items-center overflow-hidden rounded-[var(--radius-sm)] bg-white/[0.06] ${large ? 'h-32 w-24' : 'h-14 w-10'}`}>
-      {src ? <img src={src} alt="" className="h-full w-full object-cover" loading="lazy" /> : <span className="px-1 text-center text-[10px] text-[var(--color-text-secondary)]">Sin poster</span>}
+      {src ? <img src={src} alt="" className="h-full w-full object-cover" loading="lazy" /> : <span className="px-1 text-center text-[10px] text-[var(--color-text-secondary)]">Sin póster</span>}
       <span className="sr-only">{title}</span>
     </span>
   )
@@ -350,7 +386,7 @@ function CriticCell({ ratings }: { ratings: ExternalRating[] }) {
   const critic = pickCriticRating(ratings)
   const value = formatExternalRating(critic)
 
-  return <TextCell value={value ? `${critic?.label ?? 'Critica'} ${value}` : 'Sin dato'} strong={Boolean(value)} />
+  return <TextCell value={value ? `${critic?.label ?? 'Crítica'} ${value}` : 'Sin dato'} strong={Boolean(value)} />
 }
 
 function TextCell({ value, strong = false }: { value: string | null; strong?: boolean }) {
@@ -384,7 +420,7 @@ function ProviderCell({ providers }: { providers: WatchProvider[] }) {
   return (
     <div className="flex flex-wrap gap-2">
       {fallback.map((provider) => (
-        <span key={`${provider.type}-${provider.providerId}`} className="flex min-h-8 max-w-full items-center gap-2 rounded-[var(--radius-sm)] border border-white/10 bg-white/[0.045] px-2 py-1 text-xs font-semibold text-white">
+        <span key={`${provider.type}-${provider.providerId}`} className="flex min-h-8 max-w-full items-center gap-2 rounded-[var(--radius-sm)] border border-white/10 bg-white/[0.045] px-2.5 py-1.5 text-xs font-semibold text-white sm:px-3">
           {provider.logoUrl ? <img src={provider.logoUrl} alt="" className="h-5 w-5 shrink-0 rounded object-cover" loading="lazy" /> : null}
           <span className="min-w-0 truncate">{provider.name}</span>
         </span>
@@ -472,7 +508,7 @@ function formatDuration(detail: CompareDetails) {
 
   const seasons = detail.numberOfSeasons ? `${detail.numberOfSeasons} temp.` : null
   const episodes = detail.numberOfEpisodes ? `${detail.numberOfEpisodes} eps.` : null
-  return [seasons, episodes].filter(Boolean).join(' / ') || detail.status || null
+  return [seasons, episodes].filter(Boolean).join(' / ') || translateSeriesStatus(detail.status) || null
 }
 
 function formatRuntime(minutes: number | null) {

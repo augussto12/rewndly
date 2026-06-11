@@ -11,7 +11,7 @@ export function ProtectedRoute({ requiredRole }: ProtectedRouteProps) {
   if (isLoading) {
     return (
       <div className="grid min-h-svh place-items-center bg-[var(--color-background)] p-6 text-[var(--color-text-secondary)]">
-        <div className="surface-panel p-5 text-sm">Cargando sesion...</div>
+        <div className="surface-panel p-5 text-sm">Cargando sesión...</div>
       </div>
     )
   }

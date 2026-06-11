@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { useQueries, useQuery } from '@tanstack/react-query'
 import { ErrorState } from '../components/feedback/ErrorState/ErrorState'
 import { LoadingSkeleton } from '../components/feedback/LoadingSkeleton/LoadingSkeleton'
+import { FilterChip } from '../components/filters/FilterChip'
 import { discoverMovies, discoverSeries, getMovieDetails, getMovieRanking, getPopularMovies, getSeriesDetails, getSeriesRanking, searchMovies, searchSeries } from '../features/public-media/services/publicMediaApi'
 import type {
   CompanySummary,
@@ -31,6 +32,11 @@ type GameStats = {
   streak: number
   bestStreak: number
   lastCompletedDate: string | null
+}
+
+type GameMessage = {
+  text: string
+  tone: 'info' | 'success' | 'error' | 'final'
 }
 
 const maxAttempts = 5
@@ -73,7 +79,7 @@ export function PosterGamePage() {
   const [storedGame, setStoredGame] = useState<StoredGame>(() => readStoredGame(modeStorageKey, gameKey))
   const [query, setQuery] = useState('')
   const [selectedMovie, setSelectedMovie] = useState<MediaSummary | null>(null)
-  const [message, setMessage] = useState<string | null>(null)
+  const [message, setMessage] = useState<GameMessage | null>(null)
   const [stats, setStats] = useState<GameStats>(() => readStats())
   const normalizedQuery = query.trim()
   const guesses = storedGame.guesses
@@ -131,12 +137,12 @@ export function PosterGamePage() {
     const guess = movie ?? fallback
 
     if (!guess) {
-      setMessage(`Elegi ${modeConfig.mediaType === 'Series' ? 'una serie' : 'una pelicula'} de la lista para intentar.`)
+      setMessage({ text: `Elegí ${modeConfig.mediaType === 'Series' ? 'una serie' : 'una película'} de la lista para intentar.`, tone: 'info' })
       return
     }
 
     if (guesses.some((item) => item.tmdbId === guess.tmdbId && item.mediaType === guess.mediaType)) {
-      setMessage(`Ya probaste ${modeConfig.mediaType === 'Series' ? 'esa serie' : 'esa pelicula'}.`)
+      setMessage({ text: `Ya probaste ${modeConfig.mediaType === 'Series' ? 'esa serie' : 'esa película'}.`, tone: 'info' })
       return
     }
 
@@ -149,7 +155,13 @@ export function PosterGamePage() {
     writeStoredGame(modeStorageKey, nextGame)
     setSelectedMovie(null)
     setQuery('')
-    setMessage(solved ? 'Correcto. Lo sacaste.' : completed ? 'Se revelo el poster completo.' : 'No era. Se abrio otra parte del poster.')
+    setMessage(
+      solved
+        ? { text: 'Correcto. Lo sacaste.', tone: 'success' }
+        : completed
+          ? { text: 'Se reveló el póster completo.', tone: 'final' }
+          : { text: 'No era. Se abrió otra parte del póster.', tone: 'error' },
+    )
 
     if (completed && !storedGame.completed) {
       const nextStats = updateStats(stats, dateKey, solved)
@@ -186,17 +198,17 @@ export function PosterGamePage() {
       <main className="page-shell">
         <header className="mb-8 max-w-3xl">
           <p className="kicker">Posterle</p>
-          <h1 className="mt-3 text-4xl font-semibold sm:text-5xl">Adivina el poster</h1>
+          <h1 className="mt-3 text-4xl font-semibold sm:text-5xl">Adiviná el póster</h1>
           <p className="mt-4 text-[var(--color-text-secondary)]">
-            El poster arranca con apenas dos zonas visibles. Cada fallo abre nuevos cuadrantes hasta mostrarlo completo.
+            El póster arranca con apenas dos zonas visibles. Cada fallo abre nuevos cuadrantes hasta mostrarlo completo.
           </p>
         </header>
 
         <div className="scrollbar-cinema -mx-4 mb-8 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0">
           {gameModeCollections.map((option) => (
-            <button key={option.value} type="button" onClick={() => setMode(option.value)} className={modeClass(mode === option.value)}>
+            <FilterChip key={option.value} active={mode === option.value} onClick={() => setMode(option.value)}>
               {option.label}
-            </button>
+            </FilterChip>
           ))}
         </div>
 
@@ -208,27 +220,29 @@ export function PosterGamePage() {
             <section className="surface-panel overflow-hidden p-4 sm:p-5">
               <div className="relative mx-auto aspect-[2/3] max-w-[18rem] overflow-hidden rounded-[var(--radius-md)] border border-white/10 bg-black">
                 {target.posterUrl ? (
-                  <img src={target.posterUrl} alt={isRevealed ? target.title : ''} className="h-full w-full object-cover" />
+                  <img
+                    src={target.posterUrl}
+                    alt={isRevealed ? target.title : ''}
+                    className={`h-full w-full object-cover transition duration-700 ${isRevealed ? 'scale-100 opacity-100' : 'scale-[1.01] opacity-95'}`}
+                  />
                 ) : (
-                  <div className="grid h-full place-items-center px-4 text-center text-sm text-[var(--color-text-secondary)]">Sin poster</div>
+                  <div className="grid h-full place-items-center px-4 text-center text-sm text-[var(--color-text-secondary)]">Sin póster</div>
                 )}
-                {!isRevealed ? (
-                  <div className="absolute inset-0 grid grid-cols-5 grid-rows-6 gap-0.5 bg-black/55 p-0.5">
-                    {Array.from({ length: posterTileCount }).map((_, index) => (
-                      <div
-                        key={index}
-                        className={`transition duration-500 ${
-                          isPosterTileRevealed(index, revealLevel)
-                            ? 'bg-transparent'
-                            : 'border border-white/[0.035] bg-[#070914]/96 shadow-[inset_0_0_24px_rgba(255,255,255,0.025)] backdrop-blur-sm'
-                        }`}
-                      />
-                    ))}
-                  </div>
-                ) : null}
+                <div className={`absolute inset-0 grid grid-cols-5 grid-rows-6 gap-0.5 bg-black/55 p-0.5 transition-opacity duration-700 ${isRevealed ? 'pointer-events-none opacity-0' : 'opacity-100'}`}>
+                  {Array.from({ length: posterTileCount }).map((_, index) => (
+                    <div
+                      key={index}
+                      className={`transition duration-500 ${
+                        isPosterTileRevealed(index, revealLevel)
+                          ? 'bg-transparent'
+                          : 'border border-white/[0.035] bg-[#070914]/96 shadow-[inset_0_0_24px_rgba(255,255,255,0.025)] backdrop-blur-sm'
+                      }`}
+                    />
+                  ))}
+                </div>
               </div>
               <div className="mt-4 flex items-center justify-between gap-3 text-xs text-[var(--color-text-secondary)]">
-                <span>{isRevealed ? 'Poster completo' : `${revealedTileCount}/${posterTileCount} zonas visibles`}</span>
+                <span>{isRevealed ? 'Póster completo' : `${revealedTileCount}/${posterTileCount} zonas visibles`}</span>
                 <span>{isRevealed ? target.title : 'Sin blur injusto'}</span>
               </div>
               <div className="mt-5 grid grid-cols-5 gap-2" aria-label="Intentos">
@@ -244,8 +258,7 @@ export function PosterGamePage() {
             <section className="surface-panel p-4 sm:p-5">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
-                  <p className="kicker">Posterle</p>
-                  <h2 className="mt-2 text-2xl font-semibold">{storedGame.completed ? (hasWon ? 'Ganaste' : 'Casi') : 'Tu intento'}</h2>
+                  <h2 className="text-2xl font-semibold">{storedGame.completed ? (hasWon ? 'Ganaste' : 'Casi') : 'Tu intento'}</h2>
                 </div>
                 <div className="rounded-[var(--radius-sm)] border border-white/10 bg-white/[0.045] px-3 py-2 text-sm font-semibold">
                   {progressLabel}
@@ -271,7 +284,7 @@ export function PosterGamePage() {
                   }}
                 >
                   <label className="block text-sm text-[var(--color-text-secondary)]">
-                    {modeConfig.mediaType === 'Series' ? 'Serie' : 'Pelicula'}
+                    {modeConfig.mediaType === 'Series' ? 'Serie' : 'Película'}
                     <input
                       value={query}
                       onChange={(event) => {
@@ -279,7 +292,7 @@ export function PosterGamePage() {
                         setSelectedMovie(null)
                         setMessage(null)
                       }}
-                      placeholder="Escribi el titulo"
+                      placeholder="Escribí el título"
                       className="field mt-2"
                     />
                   </label>
@@ -301,11 +314,11 @@ export function PosterGamePage() {
                           }`}
                         >
                           <span className="grid h-10 w-14 shrink-0 place-items-center rounded-[var(--radius-sm)] border border-white/10 bg-white/[0.045] text-[0.65rem] font-bold uppercase tracking-[0.1em] text-[var(--color-text-secondary)]">
-                            {movie.releaseDate?.slice(0, 4) ?? (movie.mediaType === 'Series' ? 'Serie' : 'Film')}
+                            {movie.releaseDate?.slice(0, 4) ?? (movie.mediaType === 'Series' ? 'Serie' : 'Película')}
                           </span>
                           <span className="min-w-0">
                             <span className="line-clamp-1 text-sm font-semibold">{movie.title}</span>
-                            <span className="mt-1 block text-xs text-[var(--color-text-secondary)]">{movie.releaseDate?.slice(0, 4) ?? (movie.mediaType === 'Series' ? 'Serie' : 'Pelicula')}</span>
+                            <span className="mt-1 block text-xs text-[var(--color-text-secondary)]">{movie.releaseDate?.slice(0, 4) ?? (movie.mediaType === 'Series' ? 'Serie' : 'Película')}</span>
                           </span>
                         </button>
                       ))}
@@ -318,20 +331,24 @@ export function PosterGamePage() {
                 </form>
               )}
 
-              {message ? <p className="mt-4 rounded-[var(--radius-sm)] border border-white/10 bg-white/[0.045] px-3 py-2 text-sm text-[var(--color-text-secondary)]">{message}</p> : null}
+              {message ? <GameStatusMessage message={message} /> : null}
 
               <div className="mt-5 grid gap-3 sm:grid-cols-3">
                 <StatBox label="Racha" value={stats.streak} />
-                <StatBox label="Mejor" value={stats.bestStreak} />
+                <StatBox label="Mejor racha" value={stats.bestStreak} />
                 <StatBox label="Victorias" value={`${stats.wins}/${stats.played}`} />
               </div>
 
               <div className="mt-5 flex flex-wrap gap-3">
-                <button type="button" onClick={resetLocalGame} className="secondary-action">
+                <button
+                  type="button"
+                  onClick={resetLocalGame}
+                  className="inline-flex min-h-10 items-center justify-center rounded-[var(--radius-sm)] border border-red-300/25 bg-red-500/10 px-4 py-2 text-sm font-semibold text-red-100 transition hover:border-red-200/45 hover:bg-red-500/15"
+                >
                   Reiniciar
                 </button>
                 <button type="button" onClick={startAnotherMovie} className="secondary-action">
-                  Otro poster
+                  Otro póster
                 </button>
                 {storedGame.completed ? (
                   <Link to={getDetailHref(target)} className="secondary-action">
@@ -345,7 +362,7 @@ export function PosterGamePage() {
                   <div className="flex flex-wrap items-end justify-between gap-3">
                     <div>
                       <p className="kicker">Pistas</p>
-                      <h3 className="mt-1 text-lg font-semibold">Comparacion por intento</h3>
+                      <h3 className="mt-1 text-lg font-semibold">Comparación por intento</h3>
                     </div>
                     {targetDetails.isLoading ? <span className="text-xs text-[var(--color-text-secondary)]">Armando pistas...</span> : null}
                   </div>
@@ -379,6 +396,21 @@ function StatBox({ label, value }: { label: string; value: string | number }) {
   )
 }
 
+function GameStatusMessage({ message }: { message: GameMessage }) {
+  const toneClass = {
+    info: 'border-violet-200/20 bg-violet-300/[0.08] text-violet-100',
+    success: 'border-emerald-200/30 bg-emerald-400/[0.09] text-emerald-100',
+    error: 'border-rose-200/25 bg-rose-400/[0.08] text-rose-100',
+    final: 'border-cyan-200/25 bg-cyan-400/[0.08] text-cyan-100',
+  }[message.tone]
+
+  return (
+    <p className={`mt-4 rounded-[var(--radius-sm)] border px-3 py-2 text-sm font-medium ${toneClass}`}>
+      {message.text}
+    </p>
+  )
+}
+
 function GuessComparisonCard({
   result,
   target,
@@ -397,7 +429,7 @@ function GuessComparisonCard({
       <div className="flex min-w-0 items-center justify-between gap-3">
         <div className="min-w-0">
           <p className="line-clamp-1 text-sm font-semibold text-white">{result.guess.title}</p>
-          <p className="mt-1 text-xs text-[var(--color-text-secondary)]">{result.guess.releaseDate?.slice(0, 4) ?? (result.guess.mediaType === 'Series' ? 'Serie' : 'Pelicula')}</p>
+          <p className="mt-1 text-xs text-[var(--color-text-secondary)]">{result.guess.releaseDate?.slice(0, 4) ?? (result.guess.mediaType === 'Series' ? 'Serie' : 'Película')}</p>
         </div>
         <span className={`shrink-0 rounded-[var(--radius-sm)] px-2 py-1 text-xs font-semibold ${isCorrect ? 'bg-emerald-300/15 text-emerald-100' : 'bg-white/[0.055] text-[var(--color-text-secondary)]'}`}>
           {isCorrect ? 'Correcta' : 'No'}
@@ -413,11 +445,11 @@ function GuessComparisonCard({
           <ScalarHint hint={compareYear(result.detail, targetDetails)} />
           <ScalarHint hint={compareImdb(result.detail, targetDetails)} />
           <ScalarHint hint={compareDuration(result.detail, targetDetails)} />
-          <OverlapHint label="Generos" values={compareStrings(result.detail.genres, targetDetails.genres, 5)} />
+          <OverlapHint label="Géneros" values={compareStrings(result.detail.genres, targetDetails.genres, 5)} />
           <OverlapHint label="Plataformas" values={compareProviders(result.detail.watchProviders, targetDetails.watchProviders)} />
           <OverlapHint label="Productoras" values={compareCompanies(result.detail.productionCompanies, targetDetails.productionCompanies)} />
           <OverlapHint label="Reparto" values={comparePeople(result.detail.cast, targetDetails.cast, 6)} />
-          <OverlapHint label="Direccion" values={compareCrew(getMainCrew(result.detail), getMainCrew(targetDetails))} />
+          <OverlapHint label="Dirección" values={compareCrew(getMainCrew(result.detail), getMainCrew(targetDetails))} />
         </div>
       ) : null}
     </article>
@@ -501,8 +533,8 @@ function compareYear(guess: GameDetails, target: GameDetails): ScalarComparison 
     targetValue: targetYear,
     matchTolerance: 0,
     equalText: 'Mismo año.',
-    higherText: 'La correcta es mas nueva.',
-    lowerText: 'La correcta es mas vieja.',
+    higherText: 'La correcta es más nueva.',
+    lowerText: 'La correcta es más vieja.',
   })
 }
 
@@ -517,7 +549,7 @@ function compareImdb(guess: GameDetails, target: GameDetails): ScalarComparison 
     targetValue: targetRating?.value ?? null,
     matchTolerance: 0.1,
     equalText: 'Rating casi igual.',
-    higherText: 'La correcta tiene mas IMDb.',
+    higherText: 'La correcta tiene más IMDb.',
     lowerText: 'La correcta tiene menos IMDb.',
   })
 }
@@ -527,14 +559,14 @@ function compareDuration(guess: GameDetails, target: GameDetails): ScalarCompari
   const targetValue = getDurationValue(target)
 
   return compareScalar({
-    label: guess.mediaType === 'Movie' ? 'Duracion' : 'Episodios',
+    label: guess.mediaType === 'Movie' ? 'Duración' : 'Episodios',
     value: formatDurationValue(guess),
     guessValue,
     targetValue,
     matchTolerance: guess.mediaType === 'Movie' ? 5 : 0,
     equalText: guess.mediaType === 'Movie' ? 'Muy parecida.' : 'Misma cantidad.',
-    higherText: guess.mediaType === 'Movie' ? 'La correcta es mas larga.' : 'La correcta tiene mas episodios.',
-    lowerText: guess.mediaType === 'Movie' ? 'La correcta es mas corta.' : 'La correcta tiene menos episodios.',
+    higherText: guess.mediaType === 'Movie' ? 'La correcta es más larga.' : 'La correcta tiene más episodios.',
+    lowerText: guess.mediaType === 'Movie' ? 'La correcta es más corta.' : 'La correcta tiene menos episodios.',
   })
 }
 
@@ -704,14 +736,6 @@ async function getGameCandidatePage(mode: GameMode, page: number): Promise<Paged
   }
 
   return getPopularMovies(page)
-}
-
-function modeClass(isActive: boolean) {
-  return `min-h-10 shrink-0 rounded-[var(--radius-sm)] border px-3 text-sm font-semibold transition ${
-    isActive
-      ? 'border-violet-200/40 bg-[var(--color-accent)] text-white'
-      : 'border-white/10 bg-white/[0.045] text-[var(--color-text-secondary)] hover:bg-white/[0.08] hover:text-white'
-  }`
 }
 
 function getDetailHref(item: MediaSummary) {

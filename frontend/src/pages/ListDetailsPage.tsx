@@ -49,7 +49,7 @@ export function ListDetailsPage() {
               <h1 className="mt-5 text-4xl font-semibold">{data.title}</h1>
               <p className="mt-3 text-[var(--color-text-secondary)]">{data.description || data.visibility}</p>
             </header>
-            {data.items.length === 0 ? <EmptyState title="Lista vacia" message="Agrega contenido desde el detalle de pelicula o serie." /> : null}
+            {data.items.length === 0 ? <EmptyState title="Lista vacía" message="Agregá contenido desde el detalle de película o serie." /> : null}
             {data.items.length > 0 ? (
               <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <p className="text-sm text-[var(--color-text-secondary)]">{data.items.length} items</p>
@@ -57,13 +57,13 @@ export function ListDetailsPage() {
                   Ordenar
                   <select value={sort} onChange={(event) => setSort(event.target.value as ListSort)} className="field mt-2">
                     <option value="position">Orden de la lista</option>
-                    <option value="rating-desc">Clasificacion: mayor a menor</option>
-                    <option value="rating-asc">Clasificacion: menor a mayor</option>
+                    <option value="rating-desc">Clasificación: mayor a menor</option>
+                    <option value="rating-asc">Clasificación: menor a mayor</option>
                     <option value="external-IMDb">IMDb</option>
                     <option value="external-RottenTomatoes">Rotten Tomatoes</option>
                     <option value="external-Metacritic">Metacritic</option>
                     <option value="external-Letterboxd">Letterboxd</option>
-                    <option value="title">Titulo</option>
+                    <option value="title">Título</option>
                     <option value="added">Agregadas recientemente</option>
                   </select>
                 </label>
@@ -83,7 +83,7 @@ export function ListDetailsPage() {
                       <h2 className="line-clamp-2 text-sm font-semibold leading-snug sm:text-base">{item.title}</h2>
                     </Link>
                     <p className="mt-2 text-xs text-[var(--color-text-secondary)]">
-                      {item.mediaType === 'Movie' ? 'Pelicula' : 'Serie'} {item.rating ? `/ ${item.rating}/10` : '/ Sin clasificacion'}
+                      {item.mediaType === 'Movie' ? 'Película' : 'Serie'} {item.rating ? `/ ${item.rating}/10` : '/ Sin clasificación'}
                     </p>
                     {externalSortSource ? <ExternalRatingLine item={item} ratingsMap={ratingsMap} source={externalSortSource} /> : null}
                     <button onClick={() => void removeItem(data.id, item.id)} className="secondary-action mt-auto min-h-9 self-start px-3 py-2 text-xs">

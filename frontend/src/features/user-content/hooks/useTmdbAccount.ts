@@ -30,10 +30,10 @@ export function useConnectTmdbAccount() {
   return useMutation({
     mutationFn: connectTmdbAccount,
     onSuccess: () => {
-      toast.info('Redirigiendo a TMDB', 'Aproba el acceso y volves automaticamente.')
+      toast.info('Redirigiendo a TMDB', 'Aprobá el acceso y volvés automáticamente.')
       void queryClient.invalidateQueries({ queryKey: ['tmdb-connection-status'] })
     },
-    onError: (error) => notifyTmdbError(error, 'No se pudo iniciar la conexion con TMDB.'),
+    onError: (error) => notifyTmdbError(error, 'No se pudo iniciar la conexión con TMDB.'),
   })
 }
 
@@ -42,10 +42,10 @@ export function useCompleteTmdbConnection() {
   return useMutation({
     mutationFn: completeTmdbConnection,
     onSuccess: () => {
-      toast.success('TMDB conectado', 'Ya podes sincronizar favoritos, watchlist y ratings.')
+      toast.success('TMDB conectado', 'Ya podés sincronizar favoritos, watchlist y ratings.')
       void queryClient.invalidateQueries({ queryKey: ['tmdb-connection-status'] })
     },
-    onError: (error) => notifyTmdbError(error, 'No se pudo completar la conexion con TMDB.'),
+    onError: (error) => notifyTmdbError(error, 'No se pudo completar la conexión con TMDB.'),
   })
 }
 
@@ -54,7 +54,7 @@ export function useDisconnectTmdbAccount() {
   return useMutation({
     mutationFn: disconnectTmdbAccount,
     onSuccess: () => {
-      toast.success('TMDB desconectado', 'La cuenta remota dejo de estar vinculada.')
+      toast.success('TMDB desconectado', 'La cuenta remota dejó de estar vinculada.')
       void queryClient.invalidateQueries({ queryKey: ['tmdb-connection-status'] })
       void queryClient.removeQueries({ queryKey: ['tmdb-media-state'] })
       void queryClient.removeQueries({ queryKey: ['tmdb-remote-library'] })
@@ -118,7 +118,7 @@ function useTmdbStateMutation<TArgs extends { mediaType: MediaKind; tmdbId: numb
   return useMutation({
     mutationFn,
     onSuccess: (_value, args) => {
-      toast.success(successTitle, 'El cambio quedo aplicado en tu cuenta TMDB.')
+      toast.success(successTitle, 'El cambio quedó aplicado en tu cuenta TMDB.')
       void queryClient.invalidateQueries({ queryKey: ['tmdb-media-state', args.mediaType, args.tmdbId] })
       void queryClient.invalidateQueries({ queryKey: ['tmdb-remote-library'] })
     },
@@ -127,5 +127,5 @@ function useTmdbStateMutation<TArgs extends { mediaType: MediaKind; tmdbId: numb
 }
 
 function notifyTmdbError(error: unknown, fallback: string) {
-  toast.error('TMDB no pudo completar la accion', getErrorMessage(error, fallback))
+  toast.error('TMDB no pudo completar la acción', getErrorMessage(error, fallback))
 }

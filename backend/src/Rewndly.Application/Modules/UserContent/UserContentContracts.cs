@@ -39,6 +39,7 @@ public sealed record ReviewResponse(
     string MediaType,
     int TmdbId,
     string MediaTitle,
+    string? PosterUrl,
     decimal? RatingSnapshot,
     string Title,
     string Body,

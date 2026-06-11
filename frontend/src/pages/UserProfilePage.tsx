@@ -23,19 +23,19 @@ export function UserProfilePage() {
   return (
     <PublicLayout>
       {profile.isLoading ? (
-        <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
+        <main className="mx-auto max-w-[90rem] px-4 py-8 sm:px-6">
           <LoadingSkeleton />
         </main>
       ) : null}
       {profile.isError ? (
         <main className="mx-auto max-w-4xl px-4 py-16 sm:px-6">
-          <ErrorState title="Perfil no disponible" message="No existe o no tenes permiso para verlo." />
+          <ErrorState title="Perfil no disponible" message="No existe o no tenés permiso para verlo." />
         </main>
       ) : null}
       {profile.data ? (
         <>
           <ProfileHeader profile={profile.data} />
-          <main className="mx-auto max-w-7xl space-y-8 px-4 py-8 sm:px-6">
+          <main className="mx-auto max-w-[90rem] space-y-8 px-4 py-8 sm:px-6">
             {stats.data ? <ProfileStats stats={stats.data} /> : null}
             <section>
               <h2 className="mb-4 text-2xl font-semibold">Listas visibles</h2>
@@ -80,7 +80,7 @@ function LoadMoreButton({ hasMore, isLoading, onClick }: { hasMore: boolean; isL
   return (
     <div className="mt-6 flex justify-center">
       <button type="button" onClick={onClick} disabled={isLoading} className="secondary-action">
-        {isLoading ? 'Cargando...' : 'Mostrar mas'}
+        {isLoading ? 'Cargando...' : 'Mostrar más'}
       </button>
     </div>
   )

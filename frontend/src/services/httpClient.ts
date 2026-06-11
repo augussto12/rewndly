@@ -69,6 +69,6 @@ async function sendRequest(path: string, options: RequestOptions = {}) {
       headers,
     })
   } catch {
-    throw new Error('No pudimos conectar con el servidor. Revisa que la API este levantada e intenta de nuevo.')
+    throw new Error('No pudimos conectar con el servidor. Revisá que la API esté levantada e intentá de nuevo.')
   }
 }

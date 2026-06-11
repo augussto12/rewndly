@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import { PasswordField } from '../components/forms/PasswordField'
 import { useAuth } from '../features/auth/useAuth'
 import { APP_VERSION } from '../lib/appVersion'
 import { ApiError, getErrorMessage } from '../services/apiError'
@@ -22,8 +23,8 @@ export function LoginPage() {
     } catch (error) {
       setError(
         error instanceof ApiError && error.status === 401
-          ? 'No encontramos una cuenta con ese email/usuario y password.'
-          : getErrorMessage(error, 'No se pudo iniciar sesion. Proba nuevamente.'),
+          ? 'No encontramos una cuenta con ese correo/usuario y contraseña.'
+          : getErrorMessage(error, 'No se pudo iniciar sesión. Probá nuevamente.'),
       )
     }
   }
@@ -34,31 +35,22 @@ export function LoginPage() {
         <Link to="/" className="text-sm font-semibold uppercase tracking-[0.18em] text-white">
           Rewndly
         </Link>
-        <p className="kicker mt-8">Sesion</p>
+        <p className="kicker mt-8">Sesión</p>
         <h1 className="mt-3 text-3xl font-semibold">Ingresar</h1>
         <p className="mt-3 text-sm leading-6 text-[var(--color-text-secondary)]">
-          Volve a tu biblioteca, feed y listas sin exponer tokens sensibles en el navegador.
+          Llevá el registro de lo que viste, lo que querés ver y lo que te pareció.
         </p>
         <label className="mt-6 block text-sm text-[var(--color-text-secondary)]">
-          Email o usuario
+          Correo o usuario
           <input value={identifier} onChange={(event) => setIdentifier(event.target.value)} className="field mt-2" autoComplete="username" />
         </label>
-        <label className="mt-4 block text-sm text-[var(--color-text-secondary)]">
-          Password
-          <input
-            type="password"
-            value={password}
-            onChange={(event) => setPassword(event.target.value)}
-            className="field mt-2"
-            autoComplete="current-password"
-          />
-        </label>
+        <PasswordField label="Contraseña" value={password} onChange={setPassword} autoComplete="current-password" className="mt-4" />
         {error ? <p className="mt-4 rounded-[var(--radius-sm)] border border-red-300/20 bg-red-950/25 px-3 py-2 text-sm text-red-200">{error}</p> : null}
         <button className="primary-action mt-6 w-full">Entrar</button>
         <Link to="/register" className="mt-4 block text-center text-sm text-[var(--color-text-secondary)] hover:text-white">
           Crear cuenta
         </Link>
-        <p className="mt-5 text-center text-xs font-semibold text-[var(--color-text-tertiary)]">Rewndly {APP_VERSION}</p>
+        <p className="mt-5 text-center text-[0.65rem] font-medium text-[var(--color-text-tertiary)] opacity-60">v{APP_VERSION}</p>
       </form>
     </main>
   )

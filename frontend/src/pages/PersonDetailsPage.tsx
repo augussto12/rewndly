@@ -3,6 +3,7 @@ import { useParams } from 'react-router-dom'
 import { EmptyState } from '../components/feedback/EmptyState/EmptyState'
 import { ErrorState } from '../components/feedback/ErrorState/ErrorState'
 import { LoadingSkeleton } from '../components/feedback/LoadingSkeleton/LoadingSkeleton'
+import { FilterChip } from '../components/filters/FilterChip'
 import { MediaGrid } from '../components/media/MediaGrid/MediaGrid'
 import { BackButton } from '../components/navigation/BackButton'
 import { usePersonDetails } from '../features/public-media/hooks/usePublicMedia'
@@ -20,7 +21,7 @@ export function PersonDetailsPage() {
       data
         ? [
             { id: 'featured' as const, label: 'Destacados', enabled: data.combinedCredits.length > 0 },
-            { id: 'movies' as const, label: 'Peliculas', enabled: data.movieCredits.length > 0 },
+            { id: 'movies' as const, label: 'Películas', enabled: data.movieCredits.length > 0 },
             { id: 'series' as const, label: 'Series', enabled: data.tvCredits.length > 0 },
             { id: 'images' as const, label: 'Fotos', enabled: data.images.length > 0 },
             { id: 'tagged' as const, label: 'Tagged', enabled: data.taggedImages.length > 0 },
@@ -70,7 +71,7 @@ export function PersonDetailsPage() {
                   <p className="mt-6 max-w-3xl text-base leading-7 text-[var(--color-text-secondary)]">{data.biography}</p>
                 ) : (
                   <p className="mt-6 max-w-3xl text-base leading-7 text-[var(--color-text-secondary)]">
-                    Todavia no hay biografia disponible.
+                    Todavía no hay biografía disponible.
                   </p>
                 )}
                 <div className="mt-6 flex flex-wrap gap-3">
@@ -133,7 +134,7 @@ function PersonDeepDive({
   if (tabs.length === 0) {
     return (
       <section className="mx-auto max-w-7xl px-4 pb-16 sm:px-6">
-        <EmptyState title="Sin datos para mostrar" message="Cuando TMDB devuelva creditos o imagenes, apareceran aca." />
+        <EmptyState title="Sin datos para mostrar" message="Cuando TMDB devuelva créditos o imágenes, aparecerán acá." />
       </section>
     )
   }
@@ -145,26 +146,21 @@ function PersonDeepDive({
           <p className="kicker">Perfil profundo</p>
           <div className="scrollbar-cinema mt-4 flex gap-2 overflow-x-auto pb-1">
             {tabs.map((tab) => (
-              <button
+              <FilterChip
                 key={tab.id}
-                type="button"
                 onClick={() => onTabChange(tab.id)}
-                className={`shrink-0 rounded-[var(--radius-sm)] px-3 py-2 text-sm font-semibold transition ${
-                  activeTab === tab.id
-                    ? 'bg-[var(--color-accent)] text-white'
-                    : 'bg-white/[0.045] text-[var(--color-text-secondary)] hover:bg-white/[0.08] hover:text-white'
-                }`}
+                active={activeTab === tab.id}
               >
                 {tab.label}
-              </button>
+              </FilterChip>
             ))}
           </div>
         </div>
 
         <div className="p-4 sm:p-5">
-          {activeTab === 'featured' ? <CreditsGrid title="Peliculas y series destacadas" items={combinedCredits} /> : null}
-          {activeTab === 'movies' ? <CreditsGrid title="Creditos de peliculas" items={movieCredits} /> : null}
-          {activeTab === 'series' ? <CreditsGrid title="Creditos de series" items={tvCredits} /> : null}
+          {activeTab === 'featured' ? <CreditsGrid title="Películas y series destacadas" items={combinedCredits} /> : null}
+          {activeTab === 'movies' ? <CreditsGrid title="Créditos de películas" items={movieCredits} /> : null}
+          {activeTab === 'series' ? <CreditsGrid title="Créditos de series" items={tvCredits} /> : null}
           {activeTab === 'images' ? <PersonImages images={images} /> : null}
           {activeTab === 'tagged' ? <TaggedImages images={taggedImages} /> : null}
           {activeTab === 'data' ? <PersonData externalLinks={externalLinks} translations={translations} /> : null}
@@ -178,7 +174,7 @@ function CreditsGrid({ title, items }: { title: string; items: MediaSummary[] })
   return (
     <div>
       <h2 className="mb-6 text-2xl font-semibold">{title}</h2>
-      {items.length > 0 ? <MediaGrid items={items} /> : <EmptyState title="Sin creditos" message="No hay resultados para esta seccion." />}
+      {items.length > 0 ? <MediaGrid items={items} /> : <EmptyState title="Sin créditos" message="No hay resultados para esta sección." />}
     </div>
   )
 }

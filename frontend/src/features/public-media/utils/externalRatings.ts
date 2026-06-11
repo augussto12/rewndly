@@ -85,15 +85,15 @@ export function buildExternalRatingInsight(ratings: ExternalRating[]) {
 
   if (critic !== null && audience !== null) {
     if (critic - audience >= 0.8) {
-      return 'La critica la acompana mas fuerte que la audiencia.'
+      return 'La crítica la acompaña más fuerte que la audiencia.'
     }
 
     if (audience - critic >= 0.8) {
-      return 'La audiencia la empuja mas que la critica.'
+      return 'La audiencia la empuja más que la crítica.'
     }
 
     if (critic >= 8 && audience >= 8) {
-      return 'Muy fuerte tanto en critica como en audiencia.'
+      return 'Muy fuerte tanto en crítica como en audiencia.'
     }
   }
 
@@ -130,7 +130,7 @@ export function buildExternalRatingBadges(ratings: ExternalRating[], releaseYear
   }
 
   if (releaseYear && releaseYear <= 2005 && strongestValue >= 8) {
-    badges.add('Clasico moderno')
+    badges.add('Clásico moderno')
   }
 
   return Array.from(badges).slice(0, 4)

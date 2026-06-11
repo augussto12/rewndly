@@ -13,15 +13,15 @@ export function PublicReviewsPage() {
 
   return (
     <PublicLayout>
-      <main className="mx-auto max-w-5xl px-4 py-10 sm:px-6">
+      <main className="page-shell">
         <header className="mb-8">
           <p className="kicker">Explorar</p>
-          <h1 className="mt-3 text-4xl font-semibold">Reseñas publicas</h1>
+          <h1 className="mt-3 text-4xl font-semibold">Reseñas públicas</h1>
           <p className="mt-3 text-[var(--color-text-secondary)]">Lecturas cortas y opiniones visibles para todos.</p>
         </header>
         {reviews.isLoading ? <LoadingSkeleton /> : null}
         {reviews.isError ? <ErrorState /> : null}
-        {!reviews.isLoading && !reviews.isError && data.length === 0 ? <EmptyState title="Sin reseñas publicas" message="Todavia no hay reseñas visibles." /> : null}
+        {!reviews.isLoading && !reviews.isError && data.length === 0 ? <EmptyState title="Sin reseñas públicas" message="Todavía no hay reseñas visibles." /> : null}
         <div className="grid gap-4">
           {data.map((review) => <ReviewCard key={review.id} review={review} />)}
         </div>
@@ -43,7 +43,7 @@ function LoadMoreButton({ hasMore, isLoading, onClick }: { hasMore: boolean; isL
   return (
     <div className="mt-8 flex justify-center">
       <button type="button" onClick={onClick} disabled={isLoading} className="secondary-action">
-        {isLoading ? 'Cargando...' : 'Mostrar mas'}
+        {isLoading ? 'Cargando...' : 'Mostrar más'}
       </button>
     </div>
   )

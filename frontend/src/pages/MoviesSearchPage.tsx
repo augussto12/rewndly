@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router-dom'
 import { EmptyState } from '../components/feedback/EmptyState/EmptyState'
 import { ErrorState } from '../components/feedback/ErrorState/ErrorState'
 import { LoadingSkeleton } from '../components/feedback/LoadingSkeleton/LoadingSkeleton'
+import { FilterChip } from '../components/filters/FilterChip'
 import { MediaGrid } from '../components/media/MediaGrid/MediaGrid'
 import { PlatformFilter } from '../components/media/PlatformFilter/PlatformFilter'
 import { RankedMediaGrid } from '../components/media/RankedMediaGrid/RankedMediaGrid'
@@ -53,6 +54,12 @@ export function MoviesSearchPage() {
         : collection.label
   const isLoading = activeQuery.isLoading
   const hasResults = collection.kind === 'ranking' && !canSearch && !hasPlatformFilter ? rankedItems.length > 0 : items.length > 0
+  const totalResults = getTotalResults(activeQuery.data)
+  const activeFilterLabels = [
+    canSearch ? `Búsqueda: "${normalizedQuery}"` : '',
+    !canSearch && view !== 'popular' ? `Categoría: ${collection.label}` : '',
+    selectedProvider ? `Plataforma: ${selectedProvider.name}` : hasPlatformFilter ? 'Plataforma seleccionada' : '',
+  ].filter(Boolean)
 
   function changeCategory(value: MovieDiscoveryView) {
     setSearchParams((current) => {
@@ -99,31 +106,54 @@ export function MoviesSearchPage() {
     })
   }
 
+  function clearFilters() {
+    setSearchParams({})
+  }
+
   return (
     <PublicLayout>
       <main className="page-shell">
-        <PageHeader eyebrow="Peliculas" title="Peliculas" subtitle="Explora el catalogo publico o busca por titulo cuando ya tenes algo en mente." />
+        <PageHeader eyebrow="Catálogo" title="Películas" subtitle="Explorá el catálogo o buscá por título cuando ya tenés algo en mente." />
         <div className="mt-8 grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(14rem,18rem)] lg:items-end">
           <div className="max-w-2xl">
-            <SearchInput value={query} placeholder="Buscar por titulo" onChange={changeQuery} />
+            <SearchInput value={query} placeholder="Buscar por título" onChange={changeQuery} />
           </div>
           <PlatformFilter providers={watchProviders.data} value={providerParam} isLoading={watchProviders.isLoading} onChange={changeProvider} />
         </div>
         {!canSearch ? (
           <div className="scrollbar-cinema -mx-4 mt-4 flex gap-2 overflow-x-auto px-4 pb-1 lg:mx-0 lg:flex-wrap lg:overflow-visible lg:px-0">
             {movieDiscoveryCollections.map((option) => (
-              <button key={option.value} type="button" onClick={() => changeCategory(option.value)} className={segmentClass(view === option.value)}>
+              <FilterChip key={option.value} active={view === option.value} onClick={() => changeCategory(option.value)}>
                 {option.label}
-              </button>
+              </FilterChip>
             ))}
           </div>
         ) : null}
 
         <section className="mt-10">
-          <div className="mb-5">
-            <p className="kicker">{canSearch ? 'Busqueda' : 'Catalogo'}</p>
-            <h2 className="mt-2 text-2xl font-semibold">{title}</h2>
+          <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
+            <div>
+              <p className="kicker">{canSearch ? 'Búsqueda' : 'Resultados'}</p>
+              <h2 className="mt-2 text-2xl font-semibold">{title}</h2>
+              {!isLoading && !activeQuery.isError && totalResults !== null ? (
+                <p className="mt-2 text-sm text-[var(--color-text-secondary)]">{formatResultCount(totalResults)}</p>
+              ) : null}
+            </div>
+            {activeFilterLabels.length > 0 ? (
+              <button type="button" onClick={clearFilters} className="secondary-action min-h-9 px-3 py-2 text-xs">
+                Limpiar filtros
+              </button>
+            ) : null}
           </div>
+          {activeFilterLabels.length > 0 ? (
+            <div className="mb-5 flex flex-wrap gap-2">
+              {activeFilterLabels.map((label) => (
+                <span key={label} className="rounded-[var(--radius-sm)] border border-white/10 bg-white/[0.045] px-3 py-1 text-xs text-violet-100">
+                  {label}
+                </span>
+              ))}
+            </div>
+          ) : null}
           {isLoading ? <LoadingSkeleton /> : null}
           {activeQuery.isError ? <ErrorState /> : null}
           {!isLoading && !activeQuery.isError && !hasResults ? (
@@ -164,14 +194,14 @@ function getMovieBrowseDiscoverFilters(category: string | undefined): DiscoverFi
 
 function getEmptyMessage(canSearch: boolean, hasPlatformFilter: boolean, kind: string) {
   if (hasPlatformFilter) {
-    return 'No encontramos peliculas disponibles en esa plataforma para estos filtros.'
+    return 'No encontramos películas disponibles en esa plataforma para estos filtros.'
   }
 
   if (kind === 'ranking' && !canSearch) {
-    return 'Todavia no hay un ranking global cacheado para mostrar.'
+    return 'Todavía no hay un ranking global guardado para mostrar.'
   }
 
-  return 'No encontramos peliculas para esa busqueda.'
+  return 'No encontramos películas para esa búsqueda.'
 }
 
 function LoadMoreButton({ hasMore, isLoading, onClick }: { hasMore: boolean; isLoading: boolean; onClick: () => void }) {
@@ -182,18 +212,20 @@ function LoadMoreButton({ hasMore, isLoading, onClick }: { hasMore: boolean; isL
   return (
     <div className="mt-8 flex justify-center">
       <button type="button" onClick={onClick} disabled={isLoading} className="secondary-action">
-        {isLoading ? 'Cargando...' : 'Mostrar mas'}
+        {isLoading ? 'Cargando...' : 'Mostrar más'}
       </button>
     </div>
   )
 }
 
-function segmentClass(isActive: boolean) {
-  return `min-h-10 shrink-0 rounded-[var(--radius-sm)] border px-3 text-sm font-semibold transition ${
-    isActive
-      ? 'border-violet-200/40 bg-[var(--color-accent)] text-white'
-      : 'border-white/10 bg-white/[0.045] text-[var(--color-text-secondary)] hover:bg-white/[0.08] hover:text-white'
-  }`
+function getTotalResults(data: unknown) {
+  const pages = (data as { pages?: Array<{ totalResults?: number }> } | undefined)?.pages
+  const total = pages?.[0]?.totalResults
+  return typeof total === 'number' ? total : null
+}
+
+function formatResultCount(count: number) {
+  return count === 1 ? '1 resultado' : `${count.toLocaleString('es-AR')} resultados`
 }
 
 function PageHeader({ eyebrow, title, subtitle }: { eyebrow: string; title: string; subtitle: string }) {

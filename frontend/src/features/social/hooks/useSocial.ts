@@ -71,7 +71,7 @@ export function useDeleteFriendship() {
   return useMutation({
     mutationFn: deleteFriendship,
     onSuccess: () => {
-      toast.success('Amigo eliminado', 'La conexion fue quitada de tu cuenta.')
+      toast.success('Amigo eliminado', 'La conexión fue quitada de tu cuenta.')
       void queryClient.invalidateQueries({ queryKey: ['friends'] })
     },
     onError: (error) => notifySocialError(error, 'No se pudo eliminar la amistad.'),
@@ -178,5 +178,5 @@ export function useFeedPages() {
 }
 
 function notifySocialError(error: unknown, fallback: string) {
-  toast.error('No se pudo completar la accion social', getErrorMessage(error, fallback))
+  toast.error('No se pudo completar la acción social', getErrorMessage(error, fallback))
 }

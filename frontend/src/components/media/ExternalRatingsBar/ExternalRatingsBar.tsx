@@ -6,14 +6,16 @@ type ExternalRatingsBarProps = {
 
 export function ExternalRatingsBar({ ratings }: ExternalRatingsBarProps) {
   const visibleRatings = ratings.filter((rating) => Number.isFinite(rating.value) && Number.isFinite(rating.scale))
+  const primaryRatings = visibleRatings.slice(0, 3)
+  const hiddenRatings = visibleRatings.slice(3)
 
   if (visibleRatings.length === 0) {
     return null
   }
 
   return (
-    <div className="mt-4 flex max-w-full gap-2 overflow-x-auto pb-1 sm:flex-wrap sm:overflow-visible sm:pb-0" aria-label="Ratings externos">
-      {visibleRatings.map((rating) => (
+    <div className="mt-4 flex max-w-full flex-wrap gap-2" aria-label="Ratings externos">
+      {primaryRatings.map((rating) => (
         <span
           key={rating.source}
           className="inline-flex h-8 shrink-0 items-center gap-2 rounded-[var(--radius-sm)] border border-white/10 bg-white/[0.075] px-3 text-xs font-medium text-white shadow-[0_10px_24px_rgba(0,0,0,0.18)] backdrop-blur"
@@ -23,6 +25,14 @@ export function ExternalRatingsBar({ ratings }: ExternalRatingsBarProps) {
           <span>{formatRating(rating)}</span>
         </span>
       ))}
+      {hiddenRatings.length > 0 ? (
+        <span
+          className="inline-flex h-8 shrink-0 items-center rounded-[var(--radius-sm)] border border-white/10 bg-white/[0.045] px-3 text-xs font-medium text-[var(--color-text-secondary)]"
+          title={hiddenRatings.map((rating) => `${rating.label}: ${formatRating(rating)}`).join(' · ')}
+        >
+          +{hiddenRatings.length} fuentes
+        </span>
+      ) : null}
     </div>
   )
 }

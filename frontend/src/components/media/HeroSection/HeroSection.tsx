@@ -32,6 +32,7 @@ export function HeroSection({ items }: HeroSectionProps) {
 
   const href = item.mediaType === 'Movie' ? `/movies/${item.tmdbId}` : `/series/${item.tmdbId}`
   const releaseYear = item.releaseDate?.slice(0, 4)
+  const heroBadge = getHeroBadge(item)
 
   function goPrevious() {
     setActiveIndex((index) => (index - 1 + featuredItems.length) % featuredItems.length)
@@ -50,7 +51,7 @@ export function HeroSection({ items }: HeroSectionProps) {
               key={`${featured.mediaType}-${featured.tmdbId}`}
               src={featured.backdropUrl}
               alt=""
-              className={`absolute inset-0 h-full w-full object-cover transition duration-700 ${
+              className={`absolute inset-0 h-full w-full object-cover transition duration-1000 ease-out ${
                 index === normalizedIndex ? 'scale-100 opacity-[0.56]' : 'scale-[1.025] opacity-0'
               }`}
             />
@@ -69,7 +70,7 @@ export function HeroSection({ items }: HeroSectionProps) {
             className="absolute left-4 top-1/2 z-10 hidden h-12 w-12 -translate-y-1/2 place-items-center rounded-full border border-white/10 bg-black/28 text-lg font-semibold text-white/74 shadow-[0_14px_34px_rgba(0,0,0,0.28)] backdrop-blur transition hover:border-violet-100/35 hover:bg-white/12 hover:text-white sm:grid"
             aria-label="Anterior destacado"
           >
-            <span aria-hidden="true">&lt;</span>
+            <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
           </button>
           <button
             type="button"
@@ -77,32 +78,32 @@ export function HeroSection({ items }: HeroSectionProps) {
             className="absolute right-4 top-1/2 z-10 hidden h-12 w-12 -translate-y-1/2 place-items-center rounded-full border border-white/10 bg-black/28 text-lg font-semibold text-white/74 shadow-[0_14px_34px_rgba(0,0,0,0.28)] backdrop-blur transition hover:border-violet-100/35 hover:bg-white/12 hover:text-white sm:grid"
             aria-label="Siguiente destacado"
           >
-            <span aria-hidden="true">&gt;</span>
+            <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M9 18l6-6-6-6"/></svg>
           </button>
         </>
       ) : null}
 
-      <div className="relative mx-auto flex min-h-[72svh] max-w-7xl flex-col justify-end px-4 pb-9 pt-24 sm:px-6 lg:pb-11">
+      <div className="relative mx-auto flex min-h-[72svh] max-w-[90rem] flex-col justify-end px-4 pb-9 pt-24 sm:px-6 lg:pb-11">
         <div className="max-w-2xl">
           <div className="mb-4 flex flex-wrap items-center gap-3">
             <span className="rounded-[var(--radius-sm)] border border-violet-200/20 bg-[var(--color-accent-soft)] px-3 py-1 text-xs font-semibold uppercase tracking-[0.12em] text-violet-100">
-              {activeIndex === 0 ? 'Tendencia' : 'Destacada'}
+              {heroBadge}
             </span>
             <RatingBadge value={item.voteAverage} />
             <span className="text-xs uppercase tracking-[0.12em] text-[var(--color-text-secondary)]">
-              {[item.mediaType === 'Movie' ? 'Pelicula' : 'Serie', releaseYear].filter(Boolean).join(' / ')}
+              {[item.mediaType === 'Movie' ? 'Película' : 'Serie', releaseYear].filter(Boolean).join(' / ')}
             </span>
           </div>
           <h1 className="max-w-3xl text-4xl font-semibold leading-tight text-white sm:text-6xl">{item.title}</h1>
           <p className="mt-5 line-clamp-4 max-w-xl text-base leading-7 text-[var(--color-text-secondary)]">
-            {item.overview || 'Una pieza destacada para empezar a explorar el catalogo.'}
+            {item.overview || 'Una pieza destacada para empezar a explorar el catálogo.'}
           </p>
           <div className="mt-7 flex flex-wrap gap-3">
             <Link to={href} className="primary-action">
               Ver detalle
             </Link>
             <Link to={item.mediaType === 'Movie' ? '/movies/search?category=trending' : '/series/search?category=trending'} className="secondary-action">
-              Explorar mas
+              Explorar más
             </Link>
           </div>
         </div>
@@ -115,7 +116,7 @@ export function HeroSection({ items }: HeroSectionProps) {
               className="grid h-9 w-9 place-items-center rounded-full text-base font-semibold text-white/74 transition hover:bg-white/10 hover:text-white sm:hidden"
               aria-label="Anterior destacado"
             >
-              <span aria-hidden="true">&lt;</span>
+              <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
             </button>
             {featuredItems.slice(0, 5).map((featured, index) => (
               <button
@@ -132,13 +133,28 @@ export function HeroSection({ items }: HeroSectionProps) {
               className="grid h-9 w-9 place-items-center rounded-full text-base font-semibold text-white/74 transition hover:bg-white/10 hover:text-white sm:hidden"
               aria-label="Siguiente destacado"
             >
-              <span aria-hidden="true">&gt;</span>
+              <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M9 18l6-6-6-6"/></svg>
             </button>
           </div>
         ) : null}
       </div>
     </section>
   )
+}
+
+function getHeroBadge(item: MediaSummary) {
+  const releaseYear = Number(item.releaseDate?.slice(0, 4))
+  const currentYear = new Date().getFullYear()
+
+  if (Number.isFinite(releaseYear) && releaseYear >= currentYear - 1) {
+    return item.mediaType === 'Movie' ? 'Estreno reciente' : 'Temporada reciente'
+  }
+
+  if ((item.voteAverage ?? 0) >= 8) {
+    return 'Muy valorada'
+  }
+
+  return item.mediaType === 'Movie' ? 'Película destacada' : 'Serie destacada'
 }
 
 function getFeaturedItems(items: MediaSummary[]) {

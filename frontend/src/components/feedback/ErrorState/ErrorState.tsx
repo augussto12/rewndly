@@ -5,7 +5,7 @@ type ErrorStateProps = {
 
 export function ErrorState({
   title = 'No pudimos cargar el contenido',
-  message = 'El servicio no respondio como esperabamos. Proba nuevamente mas tarde.',
+  message = 'El servicio no respondió como esperábamos. Probá nuevamente más tarde.',
 }: ErrorStateProps) {
   return (
     <div className="surface-panel relative overflow-hidden p-7 text-center sm:p-9">

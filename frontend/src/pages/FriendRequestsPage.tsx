@@ -18,7 +18,7 @@ export function FriendRequestsPage() {
 
   async function submit() {
     if (!username.trim()) {
-      toast.error('Falta el username', 'Escribi el usuario al que queres enviarle solicitud.')
+      toast.error('Falta el usuario', 'Escribí el usuario al que querés enviarle solicitud.')
       return
     }
 
@@ -28,7 +28,7 @@ export function FriendRequestsPage() {
       await sendRequest.mutateAsync(username.trim())
       setUsername('')
     } catch (error) {
-      setActionError(getErrorMessage(error, 'No se pudo enviar la solicitud. Revisa el username e intenta de nuevo.'))
+      setActionError(getErrorMessage(error, 'No se pudo enviar la solicitud. Revisá el usuario e intentá de nuevo.'))
     }
   }
 
@@ -54,11 +54,11 @@ export function FriendRequestsPage() {
 
   return (
     <PublicLayout>
-      <main className="mx-auto max-w-5xl px-4 py-10 sm:px-6">
+      <main className="page-shell">
         <header className="mb-8">
           <p className="kicker">Solicitudes</p>
           <h1 className="mt-3 text-4xl font-semibold">Solicitudes de amistad</h1>
-          <p className="mt-3 text-[var(--color-text-secondary)]">Invita por username y acepta conexiones con criterio.</p>
+          <p className="mt-3 text-[var(--color-text-secondary)]">Invitá por usuario y aceptá conexiones con criterio.</p>
         </header>
         <section className="surface-panel mb-8 flex flex-col gap-3 p-4 sm:flex-row">
           <input value={username} onChange={(event) => setUsername(event.target.value)} placeholder="username" className="field min-w-0 flex-1" />
@@ -69,7 +69,7 @@ export function FriendRequestsPage() {
         {isLoading ? <LoadingSkeleton /> : null}
         {isError ? <ErrorState /> : null}
         {actionError ? <ActionError message={actionError} /> : null}
-        {!isLoading && !isError && data?.length === 0 ? <EmptyState title="Sin solicitudes" message="Las solicitudes entrantes y salientes apareceran aca." /> : null}
+        {!isLoading && !isError && data?.length === 0 ? <EmptyState title="Sin solicitudes" message="Las solicitudes entrantes y salientes aparecerán acá." /> : null}
         <div className="grid gap-4 sm:grid-cols-2">
           {data?.map((request) => (
             <FriendRequestCard

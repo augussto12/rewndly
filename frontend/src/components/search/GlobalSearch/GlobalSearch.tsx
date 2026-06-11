@@ -5,7 +5,7 @@ import { searchMovies, searchPeople, searchSeries } from '../../../features/publ
 import type { MediaSummary, PersonSummary } from '../../../features/public-media/types/publicMedia.types'
 
 type SearchResult =
-  | { id: string; label: string; detail: string; imageUrl: string | null; href: string; group: 'Peliculas' | 'Series' }
+  | { id: string; label: string; detail: string; imageUrl: string | null; href: string; group: 'Películas' | 'Series' }
   | { id: string; label: string; detail: string; imageUrl: string | null; href: string; group: 'Personas' }
 
 export function GlobalSearch({ onNavigate }: { onNavigate?: () => void }) {
@@ -71,7 +71,7 @@ export function GlobalSearch({ onNavigate }: { onNavigate?: () => void }) {
 
   const results = useMemo(
     () => [
-      ...toMediaResults(movies.data?.items ?? [], 'Peliculas'),
+      ...toMediaResults(movies.data?.items ?? [], 'Películas'),
       ...toMediaResults(series.data?.items ?? [], 'Series'),
       ...toPersonResults(people.data?.items ?? []),
     ],
@@ -121,14 +121,14 @@ export function GlobalSearch({ onNavigate }: { onNavigate?: () => void }) {
         <div className="global-search-popover">
           <form onSubmit={submitSearch} className="border-b border-white/10 p-3">
             <label className="sr-only" htmlFor="global-search-input">
-              Buscar peliculas, series o personas
+              Buscar películas, series o personas
             </label>
             <input
               ref={inputRef}
               id="global-search-input"
               value={query}
               onChange={(event) => setQuery(event.target.value)}
-              placeholder="Buscar peliculas, series o personas"
+              placeholder="Buscar películas, series o personas"
               className="field min-h-11"
             />
           </form>
@@ -136,7 +136,7 @@ export function GlobalSearch({ onNavigate }: { onNavigate?: () => void }) {
           {canSearch ? (
             <div className="global-search-results scrollbar-cinema overflow-y-auto p-2">
               {isLoading ? <p className="px-3 py-4 text-sm text-[var(--color-text-secondary)]">Buscando...</p> : null}
-              {hasError ? <p className="px-3 py-4 text-sm text-red-200">No pudimos completar la busqueda.</p> : null}
+              {hasError ? <p className="px-3 py-4 text-sm text-red-200">No pudimos completar la búsqueda.</p> : null}
               {!isLoading && !hasError && results.length === 0 ? (
                 <p className="px-3 py-4 text-sm text-[var(--color-text-secondary)]">Sin resultados.</p>
               ) : null}
@@ -171,7 +171,7 @@ export function GlobalSearch({ onNavigate }: { onNavigate?: () => void }) {
   )
 }
 
-function toMediaResults(items: MediaSummary[], group: 'Peliculas' | 'Series'): SearchResult[] {
+function toMediaResults(items: MediaSummary[], group: 'Películas' | 'Series'): SearchResult[] {
   return items.slice(0, 4).map((item) => ({
     id: `${item.mediaType}-${item.tmdbId}`,
     label: item.title,

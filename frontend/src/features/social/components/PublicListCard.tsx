@@ -14,8 +14,12 @@ export function PublicListCard({ list }: { list: PublicList }) {
       <Link to={`/lists/${list.id}`} className="mt-3 block text-xl font-semibold hover:text-violet-100">
         {list.title}
       </Link>
-      <p className="mt-3 line-clamp-3 text-sm leading-6 text-[var(--color-text-secondary)]">{list.description || 'Lista sin descripcion.'}</p>
-      <p className="mt-4 text-xs uppercase tracking-[0.12em] text-[var(--color-text-secondary)]">{list.itemCount} items</p>
+      <p className="mt-3 line-clamp-3 text-sm leading-6 text-[var(--color-text-secondary)]">{list.description || 'Lista sin descripción.'}</p>
+      <p className="mt-4 text-xs text-[var(--color-text-secondary)]">{formatItemCount(list.itemCount)}</p>
     </article>
   )
+}
+
+function formatItemCount(count: number) {
+  return count === 1 ? '1 título' : `${count} títulos`
 }

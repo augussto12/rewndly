@@ -39,7 +39,7 @@ export function PublicListsPage() {
       setDescription('')
       setVisibility('Public')
     } catch (error) {
-      setActionError(getErrorMessage(error, 'No se pudo crear la lista. Revisa los datos e intenta de nuevo.'))
+      setActionError(getErrorMessage(error, 'No se pudo crear la lista. Revisá los datos e intentá de nuevo.'))
     }
   }
 
@@ -48,20 +48,20 @@ export function PublicListsPage() {
       <main className="page-shell">
         <header className="mb-8">
           <p className="kicker">Explorar</p>
-          <h1 className="mt-3 text-4xl font-semibold">Listas publicas</h1>
-          <p className="mt-3 text-[var(--color-text-secondary)]">Colecciones compartidas por la comunidad, con privacidad visible y lectura comoda.</p>
+          <h1 className="mt-3 text-4xl font-semibold">Listas públicas</h1>
+          <p className="mt-3 text-[var(--color-text-secondary)]">Colecciones compartidas por la comunidad, con privacidad visible y lectura cómoda.</p>
         </header>
         {isAuthenticated ? (
           <section className="surface-panel mb-8 p-5">
             <h2 className="text-xl font-semibold">Crear lista</h2>
             <p className="mt-2 text-sm leading-6 text-[var(--color-text-secondary)]">
-              Crea una lista publica, privada o solo para amigos. Despues podes sumar peliculas y series desde cada detalle.
+              Creá una lista pública, privada o solo para amigos. Después podés sumar películas y series desde cada detalle.
             </p>
             <div className="mt-4 grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_11rem_auto]">
-              <input value={title} onChange={(event) => setTitle(event.target.value)} placeholder="Titulo" className="field" />
-              <input value={description} onChange={(event) => setDescription(event.target.value)} placeholder="Descripcion" className="field" />
+              <input value={title} onChange={(event) => setTitle(event.target.value)} placeholder="Título" className="field" />
+              <input value={description} onChange={(event) => setDescription(event.target.value)} placeholder="Descripción" className="field" />
               <select value={visibility} onChange={(event) => setVisibility(event.target.value as Visibility)} className="field">
-                <option value="Public">Publica</option>
+                <option value="Public">Pública</option>
                 <option value="FriendsOnly">Solo amigos</option>
                 <option value="Private">Privada</option>
               </select>
@@ -74,7 +74,7 @@ export function PublicListsPage() {
         ) : null}
         {lists.isLoading ? <LoadingSkeleton /> : null}
         {lists.isError ? <ErrorState /> : null}
-        {!lists.isLoading && !lists.isError && data.length === 0 ? <EmptyState title="Sin listas publicas" message="Todavia no hay listas visibles." /> : null}
+        {!lists.isLoading && !lists.isError && data.length === 0 ? <EmptyState title="Sin listas públicas" message="Todavía no hay listas visibles." /> : null}
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {data.map((list) => <PublicListCard key={list.id} list={list} />)}
         </div>
@@ -100,7 +100,7 @@ function LoadMoreButton({ hasMore, isLoading, onClick }: { hasMore: boolean; isL
   return (
     <div className="mt-8 flex justify-center">
       <button type="button" onClick={onClick} disabled={isLoading} className="secondary-action">
-        {isLoading ? 'Cargando...' : 'Mostrar mas'}
+        {isLoading ? 'Cargando...' : 'Mostrar más'}
       </button>
     </div>
   )

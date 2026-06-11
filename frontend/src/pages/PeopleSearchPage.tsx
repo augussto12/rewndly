@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router-dom'
 import { EmptyState } from '../components/feedback/EmptyState/EmptyState'
 import { ErrorState } from '../components/feedback/ErrorState/ErrorState'
 import { LoadingSkeleton } from '../components/feedback/LoadingSkeleton/LoadingSkeleton'
+import { FilterChip } from '../components/filters/FilterChip'
 import { PersonGrid } from '../components/media/PersonGrid/PersonGrid'
 import { SearchInput } from '../components/media/SearchInput/SearchInput'
 import { usePeopleBrowse, usePeopleSearchPages } from '../features/public-media/hooks/usePublicMedia'
@@ -49,7 +50,7 @@ export function PeopleSearchPage() {
           <p className="kicker">Personas</p>
           <h1 className="mt-3 text-4xl font-semibold sm:text-5xl">Buscar actores y creadores</h1>
           <p className="mt-4 text-[var(--color-text-secondary)]">
-            Explora perfiles, biografias y filmografias conectadas al catalogo de peliculas y series.
+            Explorá perfiles, biografías y filmografías conectadas al catálogo de películas y series.
           </p>
         </header>
 
@@ -60,9 +61,9 @@ export function PeopleSearchPage() {
           {!canSearch ? (
             <div className="flex flex-wrap gap-2">
               {categories.map((option) => (
-                <button key={option.value} type="button" onClick={() => setCategory(option.value)} className={segmentClass(category === option.value)}>
+                <FilterChip key={option.value} active={category === option.value} onClick={() => setCategory(option.value)}>
                   {option.label}
-                </button>
+                </FilterChip>
               ))}
             </div>
           ) : null}
@@ -70,13 +71,13 @@ export function PeopleSearchPage() {
 
         <section className="mt-10">
           <div className="mb-5">
-            <p className="kicker">{canSearch ? 'Busqueda' : 'Catalogo'}</p>
+            <p className="kicker">{canSearch ? 'Búsqueda' : 'Catálogo'}</p>
             <h2 className="mt-2 text-2xl font-semibold">{title}</h2>
           </div>
           {activeQuery.isLoading ? <LoadingSkeleton /> : null}
           {activeQuery.isError ? <ErrorState /> : null}
           {!activeQuery.isLoading && !activeQuery.isError && items.length === 0 ? (
-            <EmptyState title="Sin resultados" message="No encontramos personas para esa busqueda." />
+            <EmptyState title="Sin resultados" message="No encontramos personas para esa búsqueda." />
           ) : null}
           {!activeQuery.isLoading && !activeQuery.isError && items.length > 0 ? (
             <>
@@ -102,16 +103,8 @@ function LoadMoreButton({ hasMore, isLoading, onClick }: { hasMore: boolean; isL
   return (
     <div className="mt-8 flex justify-center">
       <button type="button" onClick={onClick} disabled={isLoading} className="secondary-action">
-        {isLoading ? 'Cargando...' : 'Mostrar mas'}
+        {isLoading ? 'Cargando...' : 'Mostrar más'}
       </button>
     </div>
   )
-}
-
-function segmentClass(isActive: boolean) {
-  return `min-h-10 rounded-[var(--radius-sm)] border px-3 text-sm font-semibold transition ${
-    isActive
-      ? 'border-violet-200/40 bg-[var(--color-accent)] text-white'
-      : 'border-white/10 bg-white/[0.045] text-[var(--color-text-secondary)] hover:bg-white/[0.08] hover:text-white'
-  }`
 }

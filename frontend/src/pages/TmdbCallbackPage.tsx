@@ -45,17 +45,17 @@ export function TmdbCallbackPage() {
         ) : null}
 
         {denied ? (
-          <ErrorState title="Permiso cancelado" message="TMDB no aprobo el token. Podes intentar conectar de nuevo cuando quieras." />
+          <ErrorState title="Permiso cancelado" message="TMDB no aprobó el token. Podés intentar conectar de nuevo cuando quieras." />
         ) : null}
 
         {!requestToken && !denied ? (
-          <ErrorState title="Falta el token de TMDB" message="Volvi a iniciar la conexion desde Rewndly para generar un token nuevo." />
+          <ErrorState title="Falta el token de TMDB" message="Volvé a iniciar la conexión desde Rewndly para generar un token nuevo." />
         ) : null}
 
         {complete.isError ? (
           <ErrorState
-            title="No pudimos completar la conexion"
-            message={getErrorMessage(complete.error, 'El token puede haber expirado o TMDB no pudo crear la sesion.')}
+            title="No pudimos completar la conexión"
+            message={getErrorMessage(complete.error, 'El token puede haber expirado o TMDB no pudo crear la sesión.')}
           />
         ) : null}
 
@@ -63,7 +63,7 @@ export function TmdbCallbackPage() {
           <section className="surface-panel p-6">
             <p className="kicker">TMDB</p>
             <h1 className="mt-3 text-3xl font-semibold">Cuenta conectada</h1>
-            <p className="mt-3 text-[var(--color-text-secondary)]">Ya podes sincronizar favoritos, watchlist y ratings con Rewndly.</p>
+            <p className="mt-3 text-[var(--color-text-secondary)]">Ya podés sincronizar favoritos, watchlist y ratings con Rewndly.</p>
             <div className="mt-6 flex flex-wrap gap-3">
               <Link to="/me/tmdb" className="primary-action">
                 Ir a cuenta TMDB

@@ -958,6 +958,7 @@ public static class UserContentEndpoints
             review.MediaType.ToString(),
             media.TmdbId,
             media.Title,
+            media.PosterUrl,
             review.RatingSnapshot,
             review.Title,
             review.Body,

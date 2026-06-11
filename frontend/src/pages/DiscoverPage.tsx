@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { EmptyState } from '../components/feedback/EmptyState/EmptyState'
 import { ErrorState } from '../components/feedback/ErrorState/ErrorState'
 import { LoadingSkeleton } from '../components/feedback/LoadingSkeleton/LoadingSkeleton'
+import { FilterChip } from '../components/filters/FilterChip'
 import { MediaGrid } from '../components/media/MediaGrid/MediaGrid'
 import { discoverMovies, discoverSeries } from '../features/public-media/services/publicMediaApi'
 import {
@@ -20,13 +21,13 @@ const movieSortOptions = [
   { value: 'popularity.desc', label: 'Popularidad' },
   { value: 'vote_average.desc', label: 'Mejor rating' },
   { value: 'primary_release_date.desc', label: 'Estrenos recientes' },
-  { value: 'revenue.desc', label: 'Recaudacion' },
+  { value: 'revenue.desc', label: 'Recaudación' },
 ]
 
 const seriesSortOptions = [
   { value: 'popularity.desc', label: 'Popularidad' },
   { value: 'vote_average.desc', label: 'Mejor rating' },
-  { value: 'first_air_date.desc', label: 'Emision reciente' },
+  { value: 'first_air_date.desc', label: 'Emisión reciente' },
 ]
 
 export function DiscoverPage() {
@@ -56,6 +57,7 @@ export function DiscoverPage() {
   const filters = mood?.filters ?? manualFilters
   const results = useDiscoverMediaPages(filters)
   const data = flattenUniquePages<MediaSummary>(results.data, (item) => `${item.mediaType}-${item.tmdbId}`)
+  const totalResults = getTotalResults(results.data)
   const { genres, watchProviders } = useDiscoverOptions(mediaType)
   const topRatedMovies = useTopRatedMovies()
   const criticRanking = useMovieRanking('critics')
@@ -111,9 +113,9 @@ export function DiscoverPage() {
       <main className="page-shell">
         <header className="max-w-3xl">
           <p className="kicker">Explorar</p>
-          <h1 className="mt-3 text-4xl font-semibold sm:text-5xl">No sabes que ver?</h1>
+          <h1 className="mt-3 text-4xl font-semibold sm:text-5xl">¿No sabés qué ver?</h1>
           <p className="mt-4 text-[var(--color-text-secondary)]">
-            Elegi un animo, deja que Rewndly cruce catalogo y ratings, o afina filtros cuando queres hilar mas fino.
+            Elegí un ánimo, dejá que Rewndly cruce catálogo y ratings, o refiná filtros cuando querés hilar más fino.
           </p>
         </header>
 
@@ -121,42 +123,45 @@ export function DiscoverPage() {
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div className="scrollbar-cinema -mx-4 flex gap-2 overflow-x-auto px-4 pb-1 lg:mx-0 lg:flex-wrap lg:overflow-visible lg:px-0">
               {exploreMoodCollections.map((option) => (
-                <button
+                <FilterChip
                   key={option.value}
-                  type="button"
+                  active={activeMood === option.value}
                   onClick={() => setActiveMood(option.value)}
-                  className={pillClass(activeMood === option.value)}
                 >
                   {option.label}
-                </button>
+                </FilterChip>
               ))}
             </div>
             <div className="flex shrink-0 gap-2">
               <button type="button" onClick={() => void surpriseMe()} disabled={data.length === 0 || isSurprising} className="primary-action min-h-10 px-4 py-2 text-sm">
                 {isSurprising ? 'Buscando...' : 'Sorprendeme'}
               </button>
-              <button type="button" onClick={() => setShowFilters((value) => !value)} className="secondary-action min-h-10 px-4 py-2 text-sm">
+              <button type="button" onClick={() => setShowFilters((value) => !value)} className={`secondary-action min-h-10 px-4 py-2 text-sm ${showFilters ? 'border-violet-200/40 bg-white/[0.09]' : ''}`}>
                 Afinar
               </button>
             </div>
           </div>
+          <p className="mt-4 text-sm leading-6 text-[var(--color-text-secondary)]">
+            {mood ? getMoodDescription(mood.value) : 'Filtros manuales activos.'}
+            {totalResults !== null && !results.isLoading ? ` ${formatResultCount(totalResults)}.` : ''}
+          </p>
 
           {showFilters ? (
-            <div className="mt-5 grid gap-4 border-t border-white/10 pt-5 lg:grid-cols-[auto_1fr_1fr_1fr_1fr_12rem]">
+            <div className="mt-5 grid gap-4 border-t border-white/10 pt-5 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-[auto_1fr_1fr_1fr_1fr_12rem]">
               <div>
-                <span className="mb-2 block text-xs font-semibold uppercase text-[var(--color-text-secondary)]">Tipo</span>
-                <div className="grid grid-cols-2 gap-2 rounded-[var(--radius-sm)] border border-white/10 bg-black/20 p-1">
-                  <button type="button" className={segmentClass(mediaType === 'Movie')} onClick={() => changeMediaType('Movie')}>
-                    Peliculas
-                  </button>
-                  <button type="button" className={segmentClass(mediaType === 'Series')} onClick={() => changeMediaType('Series')}>
+                <span className="block text-sm text-[var(--color-text-secondary)]">Tipo</span>
+                <div className="mt-2 grid grid-cols-2 gap-2 rounded-[var(--radius-sm)] border border-white/10 bg-black/20 p-1">
+                  <FilterChip active={mediaType === 'Movie'} onClick={() => changeMediaType('Movie')} className="w-full">
+                    Películas
+                  </FilterChip>
+                  <FilterChip active={mediaType === 'Series'} onClick={() => changeMediaType('Series')} className="w-full">
                     Series
-                  </button>
+                  </FilterChip>
                 </div>
               </div>
 
               <label className="text-sm text-[var(--color-text-secondary)]">
-                Genero
+                Género
                 <select
                   value={genreId}
                   onChange={(event) => {
@@ -249,14 +254,19 @@ export function DiscoverPage() {
         <section className="mt-10">
           <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
             <div>
-              <p className="kicker">{mood ? 'Animo' : 'Resultados'}</p>
-              <h2 className="mt-2 text-2xl font-semibold">{mood?.label ?? (mediaType === 'Movie' ? 'Peliculas encontradas' : 'Series encontradas')}</h2>
+              <p key={mood ? `mood-${activeMood}` : `manual-${mediaType}-${genreId}-${year}-${sortBy}-${minVoteAverage}`} className="kicker animate-[panel-enter_220ms_ease-out]">
+                {mood ? 'Ánimo' : 'Resultados'}
+              </p>
+              <h2 className="mt-2 text-2xl font-semibold">{mood?.label ?? (mediaType === 'Movie' ? 'Películas encontradas' : 'Series encontradas')}</h2>
+              {totalResults !== null && !results.isLoading ? (
+                <p className="mt-2 text-sm text-[var(--color-text-secondary)]">{formatResultCount(totalResults)}</p>
+              ) : null}
             </div>
           </div>
           {results.isLoading ? <LoadingSkeleton /> : null}
           {results.isError ? <ErrorState title="No pudimos cargar discovery" /> : null}
           {!results.isLoading && !results.isError && data.length === 0 ? (
-            <EmptyState title="Sin resultados" message="Proba otro animo o toca Afinar para cambiar filtros." />
+            <EmptyState title="Sin resultados" message="Probá otro ánimo o tocá Afinar para cambiar filtros." />
           ) : null}
           {!results.isLoading && !results.isError && data.length > 0 ? (
             <>
@@ -270,16 +280,16 @@ export function DiscoverPage() {
           ) : null}
         </section>
 
-        <QuickShelf title="Joyas modernas" items={gemsItems} viewAllHref="/movies/search?category=gems" />
-        <QuickShelf title="Aclamadas por critica" items={criticPicks} viewAllHref="/movies/search?category=top-critics" />
-        <QuickShelf title="El publico las ama" items={topRatedMovies.data?.items ?? []} viewAllHref="/movies/search?category=audience" />
-        <QuickShelf title="Clasicos imprescindibles" items={classicsItems} viewAllHref="/movies/search?category=classics" />
+        <QuickShelf kicker="Radar Rewndly" title="Joyas modernas" items={gemsItems} viewAllHref="/movies/search?category=gems" />
+        <QuickShelf kicker="Crítica" title="Aclamadas por crítica" items={criticPicks} viewAllHref="/movies/search?category=top-critics" />
+        <QuickShelf kicker="Audiencia" title="El público las ama" items={topRatedMovies.data?.items ?? []} viewAllHref="/movies/search?category=audience" />
+        <QuickShelf kicker="Archivo" title="Clásicos imprescindibles" items={classicsItems} viewAllHref="/movies/search?category=classics" />
       </main>
     </PublicLayout>
   )
 }
 
-function QuickShelf({ title, items, viewAllHref }: { title: string; items: MediaSummary[]; viewAllHref: string }) {
+function QuickShelf({ kicker, title, items, viewAllHref }: { kicker: string; title: string; items: MediaSummary[]; viewAllHref: string }) {
   if (items.length === 0) {
     return null
   }
@@ -288,7 +298,7 @@ function QuickShelf({ title, items, viewAllHref }: { title: string; items: Media
     <section className="mt-12">
       <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
         <div>
-          <p className="kicker">Coleccion Rewndly</p>
+          <p className="kicker">{kicker}</p>
           <h2 className="mt-2 text-2xl font-semibold">{title}</h2>
         </div>
         <Link to={viewAllHref} className="secondary-action min-h-9 px-3 py-2 text-xs">
@@ -308,24 +318,39 @@ function LoadMoreButton({ hasMore, isLoading, onClick }: { hasMore: boolean; isL
   return (
     <div className="mt-8 flex justify-center">
       <button type="button" onClick={onClick} disabled={isLoading} className="secondary-action">
-        {isLoading ? 'Cargando...' : 'Mostrar mas'}
+        {isLoading ? 'Cargando...' : 'Mostrar más'}
       </button>
     </div>
   )
 }
 
-function pillClass(isActive: boolean) {
-  return `min-h-10 shrink-0 rounded-[var(--radius-sm)] border px-3 text-sm font-semibold transition ${
-    isActive
-      ? 'border-violet-200/40 bg-[var(--color-accent)] text-white'
-      : 'border-white/10 bg-white/[0.045] text-[var(--color-text-secondary)] hover:bg-white/[0.08] hover:text-white'
-  }`
+function getTotalResults(data: unknown) {
+  const pages = (data as { pages?: Array<{ totalResults?: number }> } | undefined)?.pages
+  const total = pages?.[0]?.totalResults
+  return typeof total === 'number' ? total : null
 }
 
-function segmentClass(isActive: boolean) {
-  return `min-h-10 rounded-[var(--radius-sm)] px-3 text-sm font-semibold transition ${
-    isActive ? 'bg-[var(--color-accent)] text-white' : 'text-[var(--color-text-secondary)] hover:bg-white/[0.06] hover:text-white'
-  }`
+function formatResultCount(count: number) {
+  return count === 1 ? '1 resultado encontrado' : `${count.toLocaleString('es-AR')} resultados encontrados`
+}
+
+function getMoodDescription(value: string) {
+  switch (value) {
+    case 'intense':
+      return 'Historias con tensión, conflicto y pulso alto.'
+    case 'light':
+      return 'Opciones más livianas para ver sin demasiado compromiso.'
+    case 'weird':
+      return 'Películas raras, de ciencia ficción o con una vuelta distinta.'
+    case 'classic':
+      return 'Clásicos y títulos consolidados para ir a lo seguro.'
+    case 'short':
+      return 'Películas más cortas para cuando no querés una maratón.'
+    case 'acclaimed':
+      return 'Títulos con buena recepción y rating alto.'
+    default:
+      return 'Recomendaciones cruzadas por catálogo y rating.'
+  }
 }
 
 function toNumber(value: string) {

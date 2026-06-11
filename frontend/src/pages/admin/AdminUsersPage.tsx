@@ -17,8 +17,8 @@ export function AdminUsersPage() {
   return (
     <AdminLayout>
       <main className="px-4 py-8 lg:px-8">
-        <Header title="Usuarios" subtitle="Busqueda y gestion de cuentas." />
-        <AdminFilterBar value={search} onChange={setSearch} placeholder="Buscar por username, email o nombre" />
+        <Header title="Usuarios" subtitle="Búsqueda y gestión de cuentas." />
+        <AdminFilterBar value={search} onChange={setSearch} placeholder="Buscar por usuario, correo o nombre" />
         {isLoading ? <LoadingSkeleton /> : null}
         {isError ? <ErrorState /> : null}
         {data ? (
@@ -27,10 +27,10 @@ export function AdminUsersPage() {
               items={data.items}
               columns={[
                 { header: 'Usuario', cell: (user) => <Link to={`/admin/users/${user.id}`} className="font-medium text-[var(--color-accent-light)]">{user.username}</Link> },
-                { header: 'Email', cell: (user) => user.email },
+                { header: 'Correo', cell: (user) => user.email },
                 { header: 'Rol', cell: (user) => user.role },
-                { header: 'Disabled', cell: (user) => <AdminStatusBadge value={user.isDisabled} /> },
-                { header: 'Deleted', cell: (user) => <AdminStatusBadge value={user.isDeleted} /> },
+                { header: 'Deshabilitado', cell: (user) => <AdminStatusBadge value={user.isDisabled} /> },
+                { header: 'Eliminado', cell: (user) => <AdminStatusBadge value={user.isDeleted} /> },
                 { header: 'Creado', cell: (user) => new Date(user.createdAt).toLocaleDateString() },
               ]}
             />

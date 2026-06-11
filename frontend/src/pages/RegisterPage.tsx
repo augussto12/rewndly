@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import { PasswordField } from '../components/forms/PasswordField'
 import { useAuth } from '../features/auth/useAuth'
 import { getErrorMessage } from '../services/apiError'
 
@@ -20,7 +21,7 @@ export function RegisterPage() {
       await register({ username, email, password })
       navigate('/me')
     } catch (error) {
-      setError(getErrorMessage(error, 'No se pudo crear la cuenta. Revisa los datos e intenta de nuevo.'))
+      setError(getErrorMessage(error, 'No se pudo crear la cuenta. Revisá los datos e intentá de nuevo.'))
     }
   }
 
@@ -33,26 +34,17 @@ export function RegisterPage() {
         <p className="kicker mt-8">Cuenta</p>
         <h1 className="mt-3 text-3xl font-semibold">Crear cuenta</h1>
         <p className="mt-3 text-sm leading-6 text-[var(--color-text-secondary)]">
-          Empeza con una biblioteca propia, reseñas independientes y listas visibles segun tu privacidad.
+          Empezá con una biblioteca propia, reseñas independientes y listas según tu privacidad.
         </p>
         <label className="mt-6 block text-sm text-[var(--color-text-secondary)]">
           Usuario
           <input value={username} onChange={(event) => setUsername(event.target.value)} className="field mt-2" autoComplete="username" />
         </label>
         <label className="mt-4 block text-sm text-[var(--color-text-secondary)]">
-          Email
+          Correo
           <input type="email" value={email} onChange={(event) => setEmail(event.target.value)} className="field mt-2" autoComplete="email" />
         </label>
-        <label className="mt-4 block text-sm text-[var(--color-text-secondary)]">
-          Password
-          <input
-            type="password"
-            value={password}
-            onChange={(event) => setPassword(event.target.value)}
-            className="field mt-2"
-            autoComplete="new-password"
-          />
-        </label>
+        <PasswordField label="Contraseña" value={password} onChange={setPassword} autoComplete="new-password" className="mt-4" />
         {error ? <p className="mt-4 rounded-[var(--radius-sm)] border border-red-300/20 bg-red-950/25 px-3 py-2 text-sm text-red-200">{error}</p> : null}
         <button className="primary-action mt-6 w-full">Registrarse</button>
         <Link to="/login" className="mt-4 block text-center text-sm text-[var(--color-text-secondary)] hover:text-white">

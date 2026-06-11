@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
-import { Navigate, createBrowserRouter, RouterProvider } from 'react-router-dom'
+import { Navigate, createBrowserRouter, RouterProvider, type RouteObject } from 'react-router-dom'
+import { RuntimeErrorBoundary } from './RuntimeErrorBoundary'
 import { ScrollToTop } from './ScrollToTop'
 import { ProtectedRoute } from '../features/auth/components/ProtectedRoute'
 import { AdminActivityEventsPage } from '../pages/admin/AdminActivityEventsPage'
@@ -10,6 +11,7 @@ import { AdminReviewsPage } from '../pages/admin/AdminReviewsPage'
 import { AdminSystemEventsPage } from '../pages/admin/AdminSystemEventsPage'
 import { AdminUserDetailsPage } from '../pages/admin/AdminUserDetailsPage'
 import { AdminUsersPage } from '../pages/admin/AdminUsersPage'
+import { AppErrorPage } from '../pages/AppErrorPage'
 import { HomePage } from '../pages/HomePage'
 import { ComparePage } from '../pages/ComparePage'
 import { CollectionDetailsPage } from '../pages/CollectionDetailsPage'
@@ -40,6 +42,7 @@ import { NetworkDetailsPage } from '../pages/NetworkDetailsPage'
 import { SeasonDetailsPage } from '../pages/SeasonDetailsPage'
 import { SeriesDetailsPage } from '../pages/SeriesDetailsPage'
 import { SeriesSearchPage } from '../pages/SeriesSearchPage'
+import { SearchPage } from '../pages/SearchPage'
 import { TmdbAccountPage } from '../pages/TmdbAccountPage'
 import { TmdbCallbackPage } from '../pages/TmdbCallbackPage'
 import { TmdbReviewDetailsPage } from '../pages/TmdbReviewDetailsPage'
@@ -49,7 +52,14 @@ function withScroll(element: ReactNode) {
   return <ScrollToTop>{element}</ScrollToTop>
 }
 
-const router = createBrowserRouter([
+function withAppError(route: RouteObject): RouteObject {
+  return {
+    ...route,
+    errorElement: route.errorElement ?? withScroll(<AppErrorPage />),
+  }
+}
+
+const routes: RouteObject[] = [
   {
     path: '/',
     element: withScroll(<HomePage />),
@@ -61,6 +71,10 @@ const router = createBrowserRouter([
   {
     path: '/register',
     element: withScroll(<RegisterPage />),
+  },
+  {
+    path: '/search',
+    element: withScroll(<SearchPage />),
   },
   {
     path: '/movies/search',
@@ -236,8 +250,18 @@ const router = createBrowserRouter([
       },
     ],
   },
-])
+  {
+    path: '*',
+    element: withScroll(<AppErrorPage mode="not-found" />),
+  },
+]
+
+const router = createBrowserRouter(routes.map(withAppError))
 
 export function App() {
-  return <RouterProvider router={router} />
+  return (
+    <RuntimeErrorBoundary>
+      <RouterProvider router={router} />
+    </RuntimeErrorBoundary>
+  )
 }

@@ -37,7 +37,7 @@ export function MediaDetailsExtras({
   }
 
   return (
-    <section className="mx-auto max-w-7xl px-4 pb-16 sm:px-6">
+    <section className="mx-auto max-w-[90rem] px-4 pb-16 sm:px-6">
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1.25fr)_minmax(20rem,0.75fr)]">
         {trailer ? (
           <section className="surface-panel overflow-hidden">
@@ -59,7 +59,7 @@ export function MediaDetailsExtras({
 
         {hasProviders ? (
           <section className="surface-panel p-4 sm:p-5">
-            <p className="kicker">Donde ver</p>
+            <p className="kicker">Dónde ver</p>
             <div className="mt-4 space-y-5">
               {providerGroups.map((group) => (
                 <div key={group.type}>

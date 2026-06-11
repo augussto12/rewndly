@@ -3,6 +3,7 @@ import { Link, useParams } from 'react-router-dom'
 import { EmptyState } from '../components/feedback/EmptyState/EmptyState'
 import { ErrorState } from '../components/feedback/ErrorState/ErrorState'
 import { LoadingSkeleton } from '../components/feedback/LoadingSkeleton/LoadingSkeleton'
+import { FilterChip } from '../components/filters/FilterChip'
 import { MediaGrid } from '../components/media/MediaGrid/MediaGrid'
 import { useKeywordDetails } from '../features/public-media/hooks/usePublicMedia'
 import { PublicLayout } from '../layouts/PublicLayout'
@@ -16,7 +17,7 @@ export function KeywordDetailsPage() {
     () =>
       data
         ? [
-            { id: 'movies' as const, label: 'Peliculas', enabled: data.movies.length > 0 },
+            { id: 'movies' as const, label: 'Películas', enabled: data.movies.length > 0 },
             { id: 'series' as const, label: 'Series', enabled: data.series.length > 0 },
           ].filter((tab) => tab.enabled)
         : [],
@@ -35,18 +36,18 @@ export function KeywordDetailsPage() {
 
       {isError || !Number.isFinite(keywordId) ? (
         <main className="mx-auto max-w-4xl px-4 py-16 sm:px-6">
-          <ErrorState title="No pudimos cargar la keyword" />
+          <ErrorState title="No pudimos cargar la palabra clave" />
         </main>
       ) : null}
 
       {!isLoading && !isError && data ? (
         <main className="page-shell">
           <section>
-            <p className="kicker">Keyword</p>
+            <p className="kicker">Palabra clave</p>
             <h1 className="mt-3 text-4xl font-semibold leading-tight sm:text-6xl">{data.name}</h1>
             <div className="mt-6 flex flex-wrap gap-3">
               <Link to="/discover" className="secondary-action">
-                Explorar catalogo
+                Explorar catálogo
               </Link>
             </div>
           </section>
@@ -56,23 +57,18 @@ export function KeywordDetailsPage() {
               <p className="kicker">Resultados</p>
               <div className="scrollbar-cinema mt-4 flex gap-2 overflow-x-auto pb-1">
                 {tabs.map((tab) => (
-                  <button
+                  <FilterChip
                     key={tab.id}
-                    type="button"
                     onClick={() => setActiveTab(tab.id)}
-                    className={`shrink-0 rounded-[var(--radius-sm)] px-3 py-2 text-sm font-semibold transition ${
-                      selectedTab === tab.id
-                        ? 'bg-[var(--color-accent)] text-white'
-                        : 'bg-white/[0.045] text-[var(--color-text-secondary)] hover:bg-white/[0.08] hover:text-white'
-                    }`}
+                    active={selectedTab === tab.id}
                   >
                     {tab.label}
-                  </button>
+                  </FilterChip>
                 ))}
               </div>
             </div>
             <div className="p-4 sm:p-5">
-              {tabs.length === 0 ? <EmptyState title="Sin resultados" message="TMDB no devolvio contenido para esta keyword." /> : null}
+              {tabs.length === 0 ? <EmptyState title="Sin resultados" message="TMDB no devolvió contenido para esta palabra clave." /> : null}
               {selectedTab === 'movies' ? <MediaGrid items={data.movies} /> : null}
               {selectedTab === 'series' ? <MediaGrid items={data.series} /> : null}
             </div>

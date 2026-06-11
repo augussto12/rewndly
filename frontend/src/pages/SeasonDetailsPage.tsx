@@ -35,7 +35,7 @@ export function SeasonDetailsPage() {
                 {data.posterUrl ? (
                   <img src={data.posterUrl} alt={data.name} className="h-full w-full object-cover" />
                 ) : (
-                  <div className="grid h-full place-items-center text-sm text-[var(--color-text-secondary)]">Sin poster</div>
+                  <div className="grid h-full place-items-center text-sm text-[var(--color-text-secondary)]">Sin póster</div>
                 )}
               </div>
             </div>
@@ -49,7 +49,7 @@ export function SeasonDetailsPage() {
               <p className="kicker">Temporada {data.seasonNumber}</p>
               <h1 className="mt-3 text-4xl font-semibold leading-tight sm:text-5xl">{data.name}</h1>
               <p className="mt-6 max-w-3xl text-base leading-7 text-[var(--color-text-secondary)]">
-                {data.overview || 'Todavia no hay sinopsis disponible para esta temporada.'}
+                {data.overview || 'Todavía no hay sinopsis disponible para esta temporada.'}
               </p>
               <div className="mt-6 flex flex-wrap gap-3">
                 <BackButton fallbackHref={`/series/${data.seriesTmdbId}`} />

@@ -29,7 +29,7 @@ export function FriendsPage() {
         {isLoading ? <LoadingSkeleton /> : null}
         {isError ? <ErrorState /> : null}
         {actionError ? <ActionError message={actionError} /> : null}
-        {!isLoading && !isError && data?.length === 0 ? <EmptyState title="Sin amigos todavia" message="Busca perfiles y envia solicitudes." /> : null}
+        {!isLoading && !isError && data?.length === 0 ? <EmptyState title="Sin amigos todavía" message="Buscá perfiles y enviá solicitudes." /> : null}
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {data?.map((friend) => (
             <FriendCard key={friend.friendshipId} friend={friend} onRemove={(id) => void removeFriendship(id)} />

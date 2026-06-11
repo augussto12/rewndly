@@ -7,6 +7,7 @@ import { MediaDetailsMetadata } from '../components/media/MediaDetailsMetadata/M
 import { MediaEntityLinks } from '../components/media/MediaEntityLinks/MediaEntityLinks'
 import { SeriesSeasonsSection } from '../components/media/SeriesSeasonsSection/SeriesSeasonsSection'
 import { useSeriesDetails } from '../features/public-media/hooks/usePublicMedia'
+import { translateSeriesStatus, translateTmdbLabels } from '../features/public-media/utils/tmdbLabels'
 import { MediaActionsPanel, MediaQuickActions } from '../features/user-content/components/MediaActionsPanel'
 import { PublicLayout } from '../layouts/PublicLayout'
 
@@ -39,18 +40,18 @@ export function SeriesDetailsPage() {
             voteAverage={data.voteAverage}
             externalRatings={data.externalRatings}
             releaseYear={toYear(data.firstAirDate)}
-            genres={data.genres}
+            genres={translateTmdbLabels(data.genres)}
             meta={[
               data.firstAirDate?.slice(0, 4) ?? '',
               data.numberOfSeasons ? `${data.numberOfSeasons} temporadas` : '',
               data.numberOfEpisodes ? `${data.numberOfEpisodes} episodios` : '',
-              data.status ?? '',
+              translateSeriesStatus(data.status),
             ]}
             backHref="/series/search"
             actionSlot={<MediaQuickActions mediaType="Series" tmdbId={data.tmdbId} title={data.name} />}
           />
           <div className="detail-content-flow">
-            <MediaEntityLinks companies={data.productionCompanies} networks={data.networks} />
+            <MediaEntityLinks companies={data.productionCompanies} networks={data.networks} watchProviders={data.watchProviders} />
             <SeriesSeasonsSection seriesTmdbId={data.tmdbId} seasons={data.seasons} />
             <MediaDetailsExtras
               mediaTitle={data.name}

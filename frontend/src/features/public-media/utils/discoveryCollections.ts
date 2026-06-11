@@ -61,7 +61,7 @@ export const movieDiscoveryCollections: MovieDiscoveryCollection[] = [
   { value: 'popular', label: 'Populares', kind: 'browse', browseCategory: 'popular' },
   { value: 'trending', label: 'Tendencia', kind: 'browse', browseCategory: 'trending' },
   { value: 'top-imdb', label: 'Mejor IMDb', kind: 'ranking', rankingKey: 'imdb' },
-  { value: 'top-critics', label: 'Critica', kind: 'ranking', rankingKey: 'critics' },
+  { value: 'top-critics', label: 'Crítica', kind: 'ranking', rankingKey: 'critics' },
   {
     value: 'audience',
     label: 'Audiencia',
@@ -76,7 +76,7 @@ export const movieDiscoveryCollections: MovieDiscoveryCollection[] = [
   },
   {
     value: 'classics',
-    label: 'Clasicos',
+    label: 'Clásicos',
     kind: 'discover',
     filters: { mediaType: 'Movie', sortBy: 'vote_average.desc', minVoteAverage: 7.4, yearTo: 1999 },
   },
@@ -88,13 +88,13 @@ export const movieDiscoveryCollections: MovieDiscoveryCollection[] = [
   },
   {
     value: 'scifi',
-    label: 'Ciencia ficcion',
+    label: 'Ciencia ficción',
     kind: 'discover',
     filters: { mediaType: 'Movie', genreId: genre.movie.scifi, sortBy: 'vote_average.desc', minVoteAverage: 6.8 },
   },
   {
     value: 'animation',
-    label: 'Animacion',
+    label: 'Animación',
     kind: 'discover',
     filters: { mediaType: 'Movie', genreId: genre.movie.animation, sortBy: 'vote_average.desc', minVoteAverage: 7 },
   },
@@ -104,7 +104,7 @@ export const seriesDiscoveryCollections: SeriesDiscoveryCollection[] = [
   { value: 'popular', label: 'Populares', kind: 'browse', browseCategory: 'popular' },
   { value: 'trending', label: 'Tendencia', kind: 'browse', browseCategory: 'trending' },
   { value: 'top-imdb', label: 'Mejor IMDb', kind: 'ranking', rankingKey: 'imdb' },
-  { value: 'top-critics', label: 'Critica', kind: 'ranking', rankingKey: 'critics' },
+  { value: 'top-critics', label: 'Crítica', kind: 'ranking', rankingKey: 'critics' },
   {
     value: 'audience',
     label: 'Audiencia',
@@ -125,7 +125,7 @@ export const seriesDiscoveryCollections: SeriesDiscoveryCollection[] = [
   },
   {
     value: 'classics',
-    label: 'Clasicos',
+    label: 'Clásicos',
     kind: 'discover',
     filters: { mediaType: 'Series', sortBy: 'vote_average.desc', minVoteAverage: 7.6, yearTo: 2005 },
   },
@@ -153,7 +153,7 @@ export const exploreMoodCollections: Array<{
   },
   {
     value: 'classic',
-    label: 'Clasica',
+    label: 'Clásica',
     filters: { mediaType: 'Movie', sortBy: 'vote_average.desc', minVoteAverage: 7.5, yearTo: 1999 },
   },
   {
@@ -179,7 +179,7 @@ export const gameModeCollections: Array<{
   { value: 'popular', label: 'Popular', mediaType: 'Movie', browseCategory: 'popular' },
   {
     value: 'classics',
-    label: 'Clasicos',
+    label: 'Clásicos',
     mediaType: 'Movie',
     filters: { mediaType: 'Movie', sortBy: 'vote_average.desc', minVoteAverage: 7.4, yearTo: 1999 },
   },
@@ -192,7 +192,7 @@ export const gameModeCollections: Array<{
   },
   {
     value: 'animation',
-    label: 'Animacion',
+    label: 'Animación',
     mediaType: 'Movie',
     filters: { mediaType: 'Movie', genreId: genre.movie.animation, sortBy: 'vote_average.desc', minVoteAverage: 7 },
   },
