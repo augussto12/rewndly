@@ -14,7 +14,7 @@ export default function RootLayout() {
         <StatusBar style="light" />
         <Stack
           screenOptions={{
-            headerStyle: { backgroundColor: colors.bg },
+            headerStyle: { backgroundColor: colors.bgSoft },
             headerTintColor: colors.text,
             headerTitleStyle: { fontWeight: '800' },
             contentStyle: { backgroundColor: colors.bg }
@@ -22,6 +22,8 @@ export default function RootLayout() {
         >
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
           <Stack.Screen name="auth" options={{ title: 'Cuenta', presentation: 'modal' }} />
+          <Stack.Screen name="lists" options={{ title: 'Mis listas' }} />
+          <Stack.Screen name="list/[id]" options={{ title: 'Lista' }} />
           <Stack.Screen name="movie/[id]" options={{ title: 'Pelicula' }} />
           <Stack.Screen name="series/[id]" options={{ title: 'Serie' }} />
           <Stack.Screen name="person/[id]" options={{ title: 'Persona' }} />

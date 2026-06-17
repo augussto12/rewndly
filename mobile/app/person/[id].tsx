@@ -10,7 +10,12 @@ import { colors } from '../../src/theme/colors'
 export default function PersonDetailsScreen() {
   const { id } = useLocalSearchParams<{ id: string }>()
   const tmdbId = Number(id)
-  const details = useQuery({ queryKey: ['person', tmdbId], queryFn: () => getPersonDetails(tmdbId), enabled: Number.isFinite(tmdbId) })
+  const details = useQuery({
+    queryKey: ['person', tmdbId],
+    queryFn: () => getPersonDetails(tmdbId),
+    enabled: Number.isFinite(tmdbId),
+    staleTime: 1000 * 60 * 5
+  })
 
   if (details.isLoading) {
     return <Screen><LoadingState /></Screen>
@@ -26,17 +31,17 @@ export default function PersonDetailsScreen() {
     <Screen>
       <View style={styles.header}>
         <View style={styles.photo}>
-          {person.profileUrl ? <Image source={{ uri: person.profileUrl }} style={styles.photoImage} /> : <AppText tone="faint">Sin foto</AppText>}
+          {person.profileUrl ? <Image source={{ uri: person.profileUrl }} style={styles.photoImage} resizeMode="cover" fadeDuration={0} /> : <AppText tone="faint">Sin foto</AppText>}
         </View>
         <View style={{ flex: 1, gap: 8 }}>
           <AppText weight="bold" style={styles.title}>{person.name}</AppText>
-          <AppText tone="muted">{person.knownForDepartment ?? 'Persona'}{person.birthday ? ` · ${person.birthday}` : ''}</AppText>
+          <AppText tone="muted">{person.knownForDepartment ?? 'Persona'}{person.birthday ? ` / ${person.birthday}` : ''}</AppText>
           {person.placeOfBirth ? <AppText tone="muted">{person.placeOfBirth}</AppText> : null}
         </View>
       </View>
-      <AppText tone="muted" style={styles.bio}>{person.biography ?? 'Sin biografia disponible.'}</AppText>
+      <AppText tone="muted" style={styles.bio} numberOfLines={12}>{person.biography ?? 'Sin biografia disponible.'}</AppText>
       <MediaRail title="Peliculas" items={person.movieCredits ?? []} />
-      <MediaRail title="Series" items={person.seriesCredits ?? []} />
+      <MediaRail title="Series" items={person.tvCredits ?? []} />
     </Screen>
   )
 }
@@ -44,18 +49,23 @@ export default function PersonDetailsScreen() {
 const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
-    gap: 16,
-    alignItems: 'center'
+    gap: 14,
+    alignItems: 'center',
+    padding: 14,
+    borderRadius: 12,
+    backgroundColor: colors.surface,
+    borderColor: colors.borderStrong,
+    borderWidth: 1
   },
   photo: {
-    width: 116,
-    height: 154,
-    borderRadius: 16,
+    width: 108,
+    height: 144,
+    borderRadius: 8,
     overflow: 'hidden',
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: colors.panel,
-    borderColor: colors.border,
+    borderColor: colors.borderStrong,
     borderWidth: 1
   },
   photoImage: {
@@ -63,8 +73,8 @@ const styles = StyleSheet.create({
     height: '100%'
   },
   title: {
-    fontSize: 30,
-    lineHeight: 34
+    fontSize: 28,
+    lineHeight: 32
   },
   bio: {
     lineHeight: 23

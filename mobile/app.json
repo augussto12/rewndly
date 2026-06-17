@@ -9,8 +9,14 @@
       "android"
     ],
     "orientation": "portrait",
+    "icon": "./assets/icon.png",
     "userInterfaceStyle": "dark",
     "jsEngine": "jsc",
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#0B1020"
+    },
     "assetBundlePatterns": [
       "**/*"
     ],
@@ -21,18 +27,21 @@
     "android": {
       "package": "com.rewndly.app",
       "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#111827"
       }
     },
     "extra": {
       "apiBaseUrl": "https://rewndly.com",
+      "router": {},
       "eas": {
-        "projectId": "00000000-0000-0000-0000-000000000000"
+        "projectId": "c41e7602-4fc8-4484-a3d9-f0e333dbe3c8"
       }
     },
     "plugins": [
       "expo-router",
       "expo-secure-store"
-    ]
+    ],
+    "owner": "colucho"
   }
 }

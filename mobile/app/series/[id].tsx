@@ -1,24 +1,25 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { useLocalSearchParams, useRouter } from 'expo-router'
-import { ImageBackground, StyleSheet, View } from 'react-native'
-import { addToLibrary, getSeriesDetails } from '../../src/api/services'
-import { useAuth } from '../../src/auth/AuthProvider'
+import { useQuery } from '@tanstack/react-query'
+import { useLocalSearchParams } from 'expo-router'
+import { FlatList, Image, StyleSheet, View } from 'react-native'
+import { getSeriesDetails } from '../../src/api/services'
+import type { SeasonSummary } from '../../src/api/types'
 import { AppText } from '../../src/components/AppText'
-import { LoadingState, MediaRail } from '../../src/components/MediaComponents'
-import { PrimaryButton } from '../../src/components/PrimaryButton'
+import { LibraryPanel } from '../../src/components/LibraryPanel'
+import { EmptyState, LoadingState } from '../../src/components/MediaComponents'
+import { MediaDetailLayout } from '../../src/components/MediaDetailLayout'
 import { Screen } from '../../src/components/Screen'
 import { colors } from '../../src/theme/colors'
+import { pickTrailer } from '../../src/lib/mediaFormat'
+import { translateSeriesStatus } from '../../src/lib/seriesStatus'
 
 export default function SeriesDetailsScreen() {
   const { id } = useLocalSearchParams<{ id: string }>()
   const tmdbId = Number(id)
-  const router = useRouter()
-  const auth = useAuth()
-  const queryClient = useQueryClient()
-  const details = useQuery({ queryKey: ['series', tmdbId], queryFn: () => getSeriesDetails(tmdbId), enabled: Number.isFinite(tmdbId) })
-  const add = useMutation({
-    mutationFn: () => addToLibrary('Series', tmdbId),
-    onSuccess: async () => queryClient.invalidateQueries({ queryKey: ['library'] })
+  const details = useQuery({
+    queryKey: ['series', tmdbId],
+    queryFn: () => getSeriesDetails(tmdbId),
+    enabled: Number.isFinite(tmdbId),
+    staleTime: 1000 * 60 * 5
   })
 
   if (details.isLoading) {
@@ -26,94 +27,125 @@ export default function SeriesDetailsScreen() {
   }
 
   if (!details.data) {
-    return <Screen><AppText>No encontramos esta serie.</AppText></Screen>
+    return <Screen><EmptyState title="No encontramos esta serie" message="Proba volver e intentar de nuevo." /></Screen>
   }
 
   const series = details.data
 
   return (
     <Screen>
-      <ImageBackground source={{ uri: series.backdropUrl ?? series.posterUrl ?? undefined }} style={styles.hero} imageStyle={styles.heroImage}>
-        <View style={styles.overlay}>
-          <AppText weight="bold" style={styles.title}>{series.name}</AppText>
-          <AppText tone="muted">{series.firstAirDate?.slice(0, 4) ?? 'S/F'} · {series.voteAverage?.toFixed(1) ?? 'S/R'} · {series.numberOfSeasons ?? '-'} temp.</AppText>
-        </View>
-      </ImageBackground>
-
-      <PrimaryButton onPress={() => auth.isAuthenticated ? add.mutate() : router.push('/auth')} disabled={add.isPending}>
-        {auth.isAuthenticated ? add.isPending ? 'Guardando...' : 'Agregar a biblioteca' : 'Iniciar sesion'}
-      </PrimaryButton>
-
-      <AppText tone="muted" style={styles.overview}>{series.overview ?? 'Sin sinopsis disponible.'}</AppText>
-      <Chips title="Generos" items={series.genres} />
-      <Chips title="Ratings externos" items={series.externalRatings.map((rating) => `${rating.label} ${formatRating(rating.value, rating.scale)}`)} />
-      <Chips title="Donde ver" items={series.watchProviders.map((provider) => provider.name)} />
-      <Chips title="Reparto" items={series.cast.slice(0, 10).map((person) => `${person.name}${person.role ? ` como ${person.role}` : ''}`)} />
-      <MediaRail title="Tambien podria gustarte" items={series.recommendations} />
+      <MediaDetailLayout
+        title={series.name}
+        subtitle={series.originalName !== series.name ? series.originalName : translateSeriesStatus(series.status)}
+        backdropUrl={series.backdropUrl}
+        posterUrl={series.posterUrl}
+        metaItems={[
+          series.firstAirDate?.slice(0, 4) ?? '',
+          formatSeasons(series.numberOfSeasons),
+          formatEpisodes(series.numberOfEpisodes),
+          series.voteAverage ? `★ ${series.voteAverage.toFixed(1)}` : ''
+        ]}
+        genres={series.genres}
+        overview={series.overview ?? null}
+        trailer={pickTrailer(series.videos)}
+        cast={series.cast}
+        providers={series.watchProviders}
+        externalRatings={series.externalRatings}
+        recommendations={series.recommendations}
+        similar={series.similar}
+        libraryPanel={<LibraryPanel mediaType="Series" tmdbId={series.tmdbId} />}
+        extra={<SeasonsSection seasons={series.seasons} />}
+      />
     </Screen>
   )
 }
 
-function Chips({ title, items }: { title: string; items: string[] }) {
-  if (!items.length) {
+function SeasonsSection({ seasons }: { seasons: SeasonSummary[] | undefined }) {
+  const visibleSeasons = (seasons ?? []).filter((season) => season.seasonNumber > 0)
+  if (!visibleSeasons.length) {
     return null
   }
 
   return (
-    <View style={styles.block}>
-      <AppText weight="bold" style={styles.blockTitle}>{title}</AppText>
-      <View style={styles.chips}>{items.map((item) => <AppText key={item} style={styles.chip}>{item}</AppText>)}</View>
+    <View style={styles.section}>
+      <AppText weight="bold" style={styles.sectionTitle}>Temporadas</AppText>
+      <FlatList
+        data={visibleSeasons}
+        horizontal
+        keyExtractor={(item) => String(item.tmdbId)}
+        renderItem={({ item }) => <SeasonCard season={item} />}
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.railContent}
+      />
     </View>
   )
 }
 
-function formatRating(value: number, scale: number) {
-  return scale === 100 ? `${Math.round(value)}%` : `${value.toFixed(1)}/${scale}`
+function SeasonCard({ season }: { season: SeasonSummary }) {
+  return (
+    <View style={styles.seasonCard}>
+      <View style={styles.seasonPoster}>
+        {season.posterUrl ? <Image source={{ uri: season.posterUrl }} style={styles.seasonImage} resizeMode="cover" fadeDuration={0} /> : <AppText tone="faint">Sin poster</AppText>}
+      </View>
+      <AppText weight="semibold" numberOfLines={1} style={styles.seasonName}>{season.name}</AppText>
+      <AppText tone="muted" style={styles.seasonMeta}>
+        {[season.airDate?.slice(0, 4), season.episodeCount ? `${season.episodeCount} eps.` : null].filter(Boolean).join('  ·  ') || 'Sin datos'}
+      </AppText>
+    </View>
+  )
+}
+
+function formatSeasons(count: number | null) {
+  if (!count) {
+    return ''
+  }
+  return count === 1 ? '1 temporada' : `${count} temporadas`
+}
+
+function formatEpisodes(count: number | null) {
+  if (!count) {
+    return ''
+  }
+  return count === 1 ? '1 episodio' : `${count} episodios`
 }
 
 const styles = StyleSheet.create({
-  hero: {
-    minHeight: 360,
-    borderRadius: 22,
-    overflow: 'hidden',
-    backgroundColor: colors.panel
-  },
-  heroImage: {
-    borderRadius: 22
-  },
-  overlay: {
-    flex: 1,
-    justifyContent: 'flex-end',
-    gap: 8,
-    padding: 18,
-    backgroundColor: 'rgba(5,8,15,0.70)'
-  },
-  title: {
-    fontSize: 34,
-    lineHeight: 38
-  },
-  overview: {
-    fontSize: 16,
-    lineHeight: 24
-  },
-  block: {
+  section: {
     gap: 10
   },
-  blockTitle: {
-    fontSize: 19
+  sectionTitle: {
+    fontSize: 19,
+    lineHeight: 23
   },
-  chips: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8
+  railContent: {
+    gap: 12,
+    paddingRight: 8
   },
-  chip: {
+  seasonCard: {
+    width: 116,
+    gap: 6
+  },
+  seasonPoster: {
+    width: 116,
+    height: 174,
+    borderRadius: 8,
     overflow: 'hidden',
-    borderRadius: 999,
-    paddingHorizontal: 10,
-    paddingVertical: 7,
+    alignItems: 'center',
+    justifyContent: 'center',
     backgroundColor: colors.panel,
-    borderColor: colors.border,
+    borderColor: 'rgba(255,255,255,0.12)',
     borderWidth: 1
+  },
+  seasonImage: {
+    width: '100%',
+    height: '100%'
+  },
+  seasonName: {
+    fontSize: 13,
+    lineHeight: 17
+  },
+  seasonMeta: {
+    fontSize: 11,
+    lineHeight: 15
   }
 })

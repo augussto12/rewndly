@@ -2,21 +2,27 @@ import { useQuery } from '@tanstack/react-query'
 import { useMemo, useState } from 'react'
 import { Image, StyleSheet, TextInput, View } from 'react-native'
 import { getHome } from '../../src/api/services'
+import type { MediaSummary } from '../../src/api/types'
 import { AppText } from '../../src/components/AppText'
 import { EmptyState, LoadingState } from '../../src/components/MediaComponents'
 import { PrimaryButton } from '../../src/components/PrimaryButton'
 import { Screen } from '../../src/components/Screen'
 import { colors } from '../../src/theme/colors'
+import { rf } from '../../src/theme/typography'
 
 const maxAttempts = 5
 
 export default function GameScreen() {
-  const home = useQuery({ queryKey: ['home'], queryFn: getHome })
+  const home = useQuery({ queryKey: ['home'], queryFn: getHome, staleTime: 1000 * 60 * 5 })
   const [guess, setGuess] = useState('')
   const [attempts, setAttempts] = useState(0)
   const [won, setWon] = useState(false)
   const [roundOffset, setRoundOffset] = useState(0)
-  const candidates = home.data?.trendingMovies?.filter((item) => item.posterUrl) ?? []
+  const candidates = useMemo(() => uniqueMedia([
+    ...(home.data?.trendingMovies ?? []),
+    ...(home.data?.popularMovies ?? []),
+    ...(home.data?.nowPlayingMovies ?? [])
+  ]).filter((item) => item.posterUrl), [home.data])
   const movie = useMemo(() => candidates.length ? candidates[(dayIndex() + roundOffset) % candidates.length] : null, [candidates, roundOffset])
 
   function submit() {
@@ -45,26 +51,32 @@ export default function GameScreen() {
     return <Screen><LoadingState /></Screen>
   }
 
-  if (!movie?.posterUrl) {
-    return <Screen><EmptyState title="Sin juego" message="No encontramos posters para armar la ronda." /></Screen>
+  if (home.isError) {
+    return <Screen><EmptyState title="No pudimos cargar el juego" message="No llegaron los posters de la portada." /></Screen>
   }
 
-  const revealed = won ? 9 : Math.min(9, 2 + attempts)
+  if (!movie?.posterUrl) {
+    return <Screen><EmptyState title="Sin poster" message="No encontramos posters para armar la ronda." /></Screen>
+  }
+
+  const revealed = won ? 9 : Math.min(9, 3 + attempts)
+  const finished = won || attempts >= maxAttempts
 
   return (
     <Screen>
       <View style={styles.header}>
-        <AppText weight="bold" style={styles.title}>Poster Quiz</AppText>
-        <AppText tone="muted">Adivina la pelicula. Cada fallo libera otra parte del poster.</AppText>
+        <AppText tone="accent" weight="bold">JUEGOS</AppText>
+        <AppText weight="bold" style={styles.title}>Posterle</AppText>
+        <AppText tone="muted">Adivina la pelicula. Cada intento revela un poco mas del poster.</AppText>
       </View>
 
       <View style={styles.board}>
-        <Image source={{ uri: movie.posterUrl }} style={styles.poster} blurRadius={won ? 0 : 8} />
+        <Image source={{ uri: movie.posterUrl }} style={styles.poster} resizeMode="cover" blurRadius={won ? 0 : 7} fadeDuration={0} />
         {Array.from({ length: 9 }).map((_, index) => index < revealed ? null : <View key={index} style={[styles.cover, cellStyle(index)]} />)}
       </View>
 
       <View style={styles.panel}>
-        <AppText weight="semibold">{won ? `Era ${movie.title}` : `Intento ${attempts + 1}/${maxAttempts}`}</AppText>
+        <AppText weight="semibold">{won ? `Era ${movie.title}` : `Intento ${Math.min(attempts + 1, maxAttempts)}/${maxAttempts}`}</AppText>
         {!won && attempts >= maxAttempts ? <AppText tone="accent">Era {movie.title}</AppText> : null}
         <TextInput
           value={guess}
@@ -72,14 +84,28 @@ export default function GameScreen() {
           placeholder="Tu respuesta"
           placeholderTextColor={colors.faint}
           style={styles.input}
-          editable={!won && attempts < maxAttempts}
+          editable={!finished}
+          returnKeyType="done"
+          onSubmitEditing={finished ? nextRound : submit}
         />
-        <PrimaryButton onPress={won || attempts >= maxAttempts ? nextRound : submit}>
-          {won || attempts >= maxAttempts ? 'Otra pelicula' : 'Probar'}
+        <PrimaryButton onPress={finished ? nextRound : submit}>
+          {finished ? 'Otra pelicula' : 'Probar'}
         </PrimaryButton>
       </View>
     </Screen>
   )
+}
+
+function uniqueMedia(items: MediaSummary[]) {
+  const seen = new Set<string>()
+  return items.filter((item) => {
+    const key = `${item.mediaType}-${item.tmdbId}`
+    if (seen.has(key)) {
+      return false
+    }
+    seen.add(key)
+    return true
+  })
 }
 
 function normalize(value: string) {
@@ -104,17 +130,25 @@ const styles = StyleSheet.create({
     gap: 8
   },
   title: {
-    fontSize: 34
+    fontSize: rf(32),
+    lineHeight: rf(36)
   },
   board: {
     alignSelf: 'center',
-    width: 270,
-    height: 405,
-    borderRadius: 20,
+    width: '72%',
+    maxWidth: 270,
+    minWidth: 220,
+    aspectRatio: 2 / 3,
+    borderRadius: 12,
     overflow: 'hidden',
     backgroundColor: colors.panel,
-    borderColor: colors.border,
-    borderWidth: 1
+    borderColor: colors.borderStrong,
+    borderWidth: 1,
+    shadowColor: colors.shadow,
+    shadowOpacity: 0.34,
+    shadowRadius: 18,
+    shadowOffset: { width: 0, height: 12 },
+    elevation: 4
   },
   poster: {
     width: '100%',
@@ -124,21 +158,23 @@ const styles = StyleSheet.create({
     position: 'absolute',
     width: '33.334%',
     height: '33.334%',
-    backgroundColor: colors.panel
+    backgroundColor: 'rgba(17,20,35,0.56)',
+    borderColor: 'rgba(255,255,255,0.07)',
+    borderWidth: 1
   },
   panel: {
     gap: 12,
     padding: 16,
-    borderRadius: 18,
-    backgroundColor: colors.panel,
-    borderColor: colors.border,
+    borderRadius: 12,
+    backgroundColor: colors.surface,
+    borderColor: colors.borderStrong,
     borderWidth: 1
   },
   input: {
     minHeight: 50,
-    borderRadius: 12,
+    borderRadius: 8,
     paddingHorizontal: 14,
-    backgroundColor: colors.bg,
+    backgroundColor: colors.field,
     borderColor: colors.border,
     borderWidth: 1,
     color: colors.text,

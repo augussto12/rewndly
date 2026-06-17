@@ -1,49 +1,98 @@
 import { useQuery } from '@tanstack/react-query'
-import { ImageBackground, Pressable, StyleSheet, View } from 'react-native'
+import { LinearGradient } from 'expo-linear-gradient'
 import { Link } from 'expo-router'
-import { getHome } from '../../src/api/services'
+import { Pressable, StyleSheet, View } from 'react-native'
+import { discoverMovies, getHome, getMovieRanking } from '../../src/api/services'
+import type { RankedMediaSummary } from '../../src/api/types'
 import { AppText } from '../../src/components/AppText'
-import { LoadingState, MediaRail } from '../../src/components/MediaComponents'
+import { FeaturedCarousel } from '../../src/components/FeaturedCarousel'
+import { EmptyState, LoadingState, MediaRail } from '../../src/components/MediaComponents'
 import { Screen } from '../../src/components/Screen'
-import { colors } from '../../src/theme/colors'
+import { gemsFilters } from '../../src/lib/discoveryCollections'
+import { colors, gradients } from '../../src/theme/colors'
+import { rf } from '../../src/theme/typography'
 
 export default function HomeScreen() {
-  const home = useQuery({ queryKey: ['home'], queryFn: getHome })
-  const featured = home.data?.trendingMovies?.[0] ?? home.data?.popularSeries?.[0]
+  const home = useQuery({ queryKey: ['home'], queryFn: getHome, staleTime: 1000 * 60 * 5 })
+  const rankingEnabled = Boolean(home.data)
+  const imdb = useQuery({
+    queryKey: ['movie-ranking', 'imdb'],
+    queryFn: () => getMovieRanking('imdb', 1, 10),
+    enabled: rankingEnabled,
+    staleTime: 1000 * 60 * 10
+  })
+  const critics = useQuery({
+    queryKey: ['movie-ranking', 'critics'],
+    queryFn: () => getMovieRanking('critics', 1, 10),
+    enabled: rankingEnabled,
+    staleTime: 1000 * 60 * 10
+  })
+  const gems = useQuery({
+    queryKey: ['home-gems'],
+    queryFn: () => discoverMovies(gemsFilters, 1),
+    enabled: rankingEnabled,
+    staleTime: 1000 * 60 * 10
+  })
+  const featuredItems = [
+    ...(home.data?.trendingMovies ?? []),
+    ...(home.data?.nowPlayingMovies ?? []),
+    ...(home.data?.popularMovies ?? []),
+    ...(home.data?.trendingSeries ?? [])
+  ]
+  const imdbItems = (imdb.data?.items ?? []).map((item) => item.media)
+  const criticItems = (critics.data?.items ?? []).map((item) => item.media)
 
   return (
     <Screen>
       <View style={styles.header}>
         <AppText tone="accent" weight="bold">REWNDLY</AppText>
-        <AppText weight="bold" style={styles.title}>Tu cine, tus listas, tu juego.</AppText>
-        <AppText tone="muted">Busca peliculas, series y personas; guarda lo que queres ver y juga con posters.</AppText>
+        <AppText weight="bold" style={styles.title}>Tu cine, tus rankings.</AppText>
+        <AppText tone="muted">Destacadas, ratings y recomendaciones para elegir rapido.</AppText>
       </View>
 
       {home.isLoading ? <LoadingState /> : null}
+      {home.isError ? <EmptyState title="Catalogo en espera" message="No pudimos cargar la portada publica." /> : null}
 
-      {featured ? (
-        <Link href={featured.mediaType === 'Movie' ? `/movie/${featured.tmdbId}` : `/series/${featured.tmdbId}`} asChild>
-          <Pressable style={({ pressed }) => [styles.hero, pressed ? { opacity: 0.86 } : null]}>
-            <ImageBackground source={{ uri: featured.backdropUrl ?? featured.posterUrl ?? undefined }} style={styles.heroImage} imageStyle={styles.heroImageRadius}>
-              <View style={styles.heroOverlay}>
-                <AppText tone="accent" weight="bold">Destacada</AppText>
-                <AppText weight="bold" style={styles.heroTitle} numberOfLines={2}>{featured.title}</AppText>
-                <AppText tone="muted" numberOfLines={3}>{featured.overview ?? 'Sinopsis no disponible.'}</AppText>
-              </View>
-            </ImageBackground>
-          </Pressable>
-        </Link>
-      ) : null}
+      <FeaturedCarousel items={featuredItems} />
 
-      {home.data ? (
-        <>
-          <MediaRail title="Tendencia en peliculas" items={home.data.trendingMovies} />
-          <MediaRail title="Series populares" items={home.data.popularSeries} />
-          <MediaRail title="Ahora en cartelera" items={home.data.nowPlayingMovies} />
-        </>
-      ) : null}
+      <View style={styles.actions}>
+        <ActionCard href="/discover" title="Explorar" message="Filtros y recomendaciones." />
+        <ActionCard href="/game" title="Juegos" message="Adivina posters." />
+      </View>
+
+      <MediaRail title="Peliculas destacadas" items={home.data?.trendingMovies ?? []} />
+      <MediaRail title="Mejor rating IMDb" items={imdbItems} rankLabels={toRankLabels(imdb.data?.items ?? [])} />
+      <MediaRail title="Mejor valoradas por la critica" items={criticItems} rankLabels={toRankLabels(critics.data?.items ?? [])} />
+      <MediaRail title="Joyas para descubrir" items={gems.data?.items ?? []} />
+      <MediaRail title="Favoritas de la audiencia" items={home.data?.popularMovies ?? []} />
+      <MediaRail title="Series en tendencia" items={home.data?.trendingSeries ?? []} />
     </Screen>
   )
+}
+
+function ActionCard({ href, title, message }: { href: '/discover' | '/game'; title: string; message: string }) {
+  return (
+    <Link href={href} asChild>
+      <Pressable style={({ pressed }) => [styles.actionCard, pressed ? { opacity: 0.78 } : null]}>
+        <LinearGradient colors={gradients.surfaceMuted} style={styles.actionFill}>
+          <AppText weight="bold" style={styles.actionTitle}>{title}</AppText>
+          <AppText tone="muted" numberOfLines={2}>{message}</AppText>
+        </LinearGradient>
+      </Pressable>
+    </Link>
+  )
+}
+
+function toRankLabels(items: RankedMediaSummary[]) {
+  return new Map(items.map((item) => [`${item.media.mediaType}-${item.media.tmdbId}`, formatRank(item)]))
+}
+
+function formatRank(item: RankedMediaSummary) {
+  if (item.score !== null && item.scoreScale) {
+    return `#${item.rank} ${item.scoreScale === 100 ? Math.round(item.score) : item.score.toFixed(1)}`
+  }
+
+  return `#${item.rank}`
 }
 
 const styles = StyleSheet.create({
@@ -51,32 +100,27 @@ const styles = StyleSheet.create({
     gap: 8
   },
   title: {
-    fontSize: 34,
-    lineHeight: 38
+    fontSize: rf(32),
+    lineHeight: rf(36)
   },
-  hero: {
-    minHeight: 310,
-    borderRadius: 20,
-    overflow: 'hidden',
-    borderColor: colors.border,
-    borderWidth: 1,
-    backgroundColor: colors.panel
+  actions: {
+    flexDirection: 'row',
+    gap: 12
   },
-  heroImage: {
+  actionCard: {
     flex: 1,
-    justifyContent: 'flex-end'
+    minHeight: 86,
+    borderRadius: 8,
+    overflow: 'hidden',
+    borderColor: colors.borderStrong,
+    borderWidth: 1
   },
-  heroImageRadius: {
-    borderRadius: 20
+  actionFill: {
+    flex: 1,
+    gap: 6,
+    padding: 14
   },
-  heroOverlay: {
-    gap: 8,
-    padding: 18,
-    minHeight: 170,
-    justifyContent: 'flex-end',
-    backgroundColor: 'rgba(5,8,15,0.72)'
-  },
-  heroTitle: {
-    fontSize: 30
+  actionTitle: {
+    fontSize: 18
   }
 })

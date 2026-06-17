@@ -7,6 +7,7 @@ import { AppText } from '../src/components/AppText'
 import { PrimaryButton } from '../src/components/PrimaryButton'
 import { Screen } from '../src/components/Screen'
 import { colors } from '../src/theme/colors'
+import { rf } from '../src/theme/typography'
 
 export default function AuthScreen() {
   const [mode, setMode] = useState<'login' | 'register'>('login')
@@ -76,16 +77,22 @@ const styles = StyleSheet.create({
     gap: 8
   },
   title: {
-    fontSize: 34
+    fontSize: rf(34),
+    lineHeight: rf(38)
   },
   form: {
-    gap: 12
+    gap: 12,
+    padding: 14,
+    borderRadius: 12,
+    backgroundColor: colors.surface,
+    borderColor: colors.borderStrong,
+    borderWidth: 1
   },
   input: {
     minHeight: 52,
-    borderRadius: 14,
+    borderRadius: 8,
     paddingHorizontal: 16,
-    backgroundColor: colors.panel,
+    backgroundColor: colors.field,
     borderColor: colors.border,
     borderWidth: 1,
     color: colors.text,
