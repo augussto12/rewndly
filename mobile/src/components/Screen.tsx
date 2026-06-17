@@ -8,10 +8,9 @@ export function Screen({ children }: PropsWithChildren) {
   const insets = useSafeAreaInsets()
 
   return (
-    <SafeAreaView edges={['top', 'left', 'right']} style={styles.safe}>
-      <LinearGradient colors={gradients.appBackground} style={styles.background}>
-        <LinearGradient pointerEvents="none" colors={['rgba(45,212,191,0.16)', 'rgba(45,212,191,0)']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.topWash} />
-        <LinearGradient pointerEvents="none" colors={['rgba(124,58,237,0)', 'rgba(124,58,237,0.16)', 'rgba(124,58,237,0)']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.midWash} />
+    <View style={styles.root}>
+      <Background />
+      <SafeAreaView edges={['top', 'left', 'right']} style={styles.flex}>
         <ScrollView
           contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 108 }]}
           showsVerticalScrollIndicator={false}
@@ -19,43 +18,50 @@ export function Screen({ children }: PropsWithChildren) {
         >
           {children}
         </ScrollView>
-      </LinearGradient>
-    </SafeAreaView>
+      </SafeAreaView>
+    </View>
   )
 }
 
 export function StaticScreen({ children }: PropsWithChildren) {
   return (
-    <SafeAreaView edges={['top', 'left', 'right']} style={styles.safe}>
-      <LinearGradient colors={gradients.appBackground} style={styles.background}>
-        <LinearGradient pointerEvents="none" colors={['rgba(45,212,191,0.14)', 'rgba(45,212,191,0)']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.topWash} />
+    <View style={styles.root}>
+      <Background />
+      <SafeAreaView edges={['top', 'left', 'right']} style={styles.flex}>
         <View style={styles.staticContent}>{children}</View>
-      </LinearGradient>
-    </SafeAreaView>
+      </SafeAreaView>
+    </View>
+  )
+}
+
+function Background() {
+  return (
+    <View style={StyleSheet.absoluteFill} pointerEvents="none">
+      <LinearGradient colors={gradients.appBackground} start={{ x: 0, y: 0 }} end={{ x: 0, y: 1 }} style={StyleSheet.absoluteFill} />
+      <LinearGradient
+        colors={['rgba(45,212,191,0.12)', 'rgba(45,212,191,0)']}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 0.9, y: 0.7 }}
+        style={styles.topGlow}
+      />
+    </View>
   )
 }
 
 const styles = StyleSheet.create({
-  safe: {
+  root: {
     flex: 1,
     backgroundColor: colors.bg
   },
-  background: {
+  flex: {
     flex: 1
   },
-  topWash: {
+  topGlow: {
     position: 'absolute',
-    left: 0,
-    right: 0,
     top: 0,
-    height: '28%'
-  },
-  midWash: {
-    position: 'absolute',
     left: 0,
     right: 0,
-    top: '34%',
-    height: '24%'
+    height: '32%'
   },
   content: {
     padding: 18,

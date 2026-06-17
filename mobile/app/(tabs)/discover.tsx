@@ -15,7 +15,7 @@ import {
 } from '../../src/api/services'
 import type { DiscoverFilters, Genre, MediaSummary, WatchProviderOption } from '../../src/api/types'
 import { AppText } from '../../src/components/AppText'
-import { EmptyState, LoadingState, MediaGrid, MediaRail, PersonCard } from '../../src/components/MediaComponents'
+import { EmptyState, LoadingState, MediaRail, PersonCard } from '../../src/components/MediaComponents'
 import { PrimaryButton } from '../../src/components/PrimaryButton'
 import { Screen } from '../../src/components/Screen'
 import { classicsFilters, exploreMoods, gemsFilters } from '../../src/lib/discoveryCollections'
@@ -106,6 +106,7 @@ export default function DiscoverScreen() {
   const [providerKey, setProviderKey] = useState('all')
   const [openSelect, setOpenSelect] = useState<SelectKey>(null)
   const [activeMood, setActiveMood] = useState<string | null>(null)
+  const [showFilters, setShowFilters] = useState(false)
   const liveQuery = query.trim()
   const normalizedQuery = debouncedQuery.trim()
   const sortOptions = mediaType === 'Movie' ? movieSortOptions : seriesSortOptions
@@ -153,7 +154,6 @@ export default function DiscoverScreen() {
     staleTime: 1000 * 60 * 3
   })
   const items = useMemo(() => dedupeMedia(results.data?.pages.flatMap((page) => page.items) ?? []), [results.data])
-  const totalResults = results.data?.pages[0]?.totalResults ?? null
   const surprise = useMemo(() => pickSurprise(items), [items])
   const gems = useQuery({ queryKey: ['discover-gems'], queryFn: () => discoverMovies(gemsFilters, 1), staleTime: 1000 * 60 * 10 })
   const classics = useQuery({ queryKey: ['discover-classics'], queryFn: () => discoverMovies(classicsFilters, 1), staleTime: 1000 * 60 * 10 })
@@ -251,38 +251,42 @@ export default function DiscoverScreen() {
         ))}
       </View>
 
-      <View style={styles.filterPanel}>
-        <View style={styles.segment}>
-          <SegmentButton label="Peliculas" active={effectiveType === 'Movie'} onPress={() => changeType('Movie')} />
-          <SegmentButton label="Series" active={effectiveType === 'Series'} onPress={() => changeType('Series')} />
-        </View>
-
-        <View style={styles.selectGrid}>
-          <SelectControl label="Orden" value={selectedSort.label} options={sortOptions} expanded={openSelect === 'sort'} onToggle={() => toggleSelect('sort', openSelect, setOpenSelect)} onChange={(value) => changeFilter(value, setSortKey)} />
-          <SelectControl label="Genero" value={selectedGenre.label} options={genreOptions} expanded={openSelect === 'genre'} onToggle={() => toggleSelect('genre', openSelect, setOpenSelect)} onChange={(value) => changeFilter(value, setGenreKey)} />
-          <SelectControl label="Epoca" value={selectedPeriod.label} options={periodOptions} expanded={openSelect === 'period'} onToggle={() => toggleSelect('period', openSelect, setOpenSelect)} onChange={(value) => changeFilter(value, setPeriodKey)} />
-          <SelectControl label="Rating" value={selectedRating.label} options={ratingOptions} expanded={openSelect === 'rating'} onToggle={() => toggleSelect('rating', openSelect, setOpenSelect)} onChange={(value) => changeFilter(value, setRatingKey)} />
-          {mediaType === 'Movie' ? <SelectControl label="Duracion" value={selectedRuntime.label} options={runtimeOptions} expanded={openSelect === 'runtime'} onToggle={() => toggleSelect('runtime', openSelect, setOpenSelect)} onChange={(value) => changeFilter(value, setRuntimeKey)} /> : null}
-          <SelectControl label="Plataforma" value={selectedProvider.label} options={providerOptions} expanded={openSelect === 'provider'} onToggle={() => toggleSelect('provider', openSelect, setOpenSelect)} onChange={(value) => changeFilter(value, setProviderKey)} />
-        </View>
-
-        <View style={styles.panelFooter}>
-          <View style={{ flex: 1, gap: 4 }}>
-            <AppText weight="bold">{formatResultCount(totalResults)}</AppText>
-            <AppText tone="muted" numberOfLines={2}>{mood ? mood.description : activeFilterCount ? `${activeFilterCount} filtros activos` : 'Catalogo general'}</AppText>
-          </View>
-          <PrimaryButton variant="secondary" onPress={clearFilters}>Limpiar</PrimaryButton>
-          <PrimaryButton onPress={surpriseMe} disabled={!surprise}>Sorpresa</PrimaryButton>
-        </View>
+      <View style={styles.toolbar}>
+        <Pressable onPress={() => setShowFilters((value) => !value)} style={[styles.filterToggle, showFilters ? styles.filterToggleActive : null]}>
+          <AppText weight="bold">{showFilters ? 'Ocultar filtros' : 'Filtros'}{activeFilterCount && !showFilters ? ` (${activeFilterCount})` : ''}</AppText>
+        </Pressable>
+        <PrimaryButton onPress={surpriseMe} disabled={!surprise}>Sorpresa</PrimaryButton>
       </View>
 
+      {showFilters ? (
+        <View style={styles.filterPanel}>
+          <View style={styles.segment}>
+            <SegmentButton label="Peliculas" active={effectiveType === 'Movie'} onPress={() => changeType('Movie')} />
+            <SegmentButton label="Series" active={effectiveType === 'Series'} onPress={() => changeType('Series')} />
+          </View>
+
+          <View style={styles.selectGrid}>
+            <SelectControl label="Orden" value={selectedSort.label} options={sortOptions} expanded={openSelect === 'sort'} onToggle={() => toggleSelect('sort', openSelect, setOpenSelect)} onChange={(value) => changeFilter(value, setSortKey)} />
+            <SelectControl label="Genero" value={selectedGenre.label} options={genreOptions} expanded={openSelect === 'genre'} onToggle={() => toggleSelect('genre', openSelect, setOpenSelect)} onChange={(value) => changeFilter(value, setGenreKey)} />
+            <SelectControl label="Epoca" value={selectedPeriod.label} options={periodOptions} expanded={openSelect === 'period'} onToggle={() => toggleSelect('period', openSelect, setOpenSelect)} onChange={(value) => changeFilter(value, setPeriodKey)} />
+            <SelectControl label="Rating" value={selectedRating.label} options={ratingOptions} expanded={openSelect === 'rating'} onToggle={() => toggleSelect('rating', openSelect, setOpenSelect)} onChange={(value) => changeFilter(value, setRatingKey)} />
+            {mediaType === 'Movie' ? <SelectControl label="Duracion" value={selectedRuntime.label} options={runtimeOptions} expanded={openSelect === 'runtime'} onToggle={() => toggleSelect('runtime', openSelect, setOpenSelect)} onChange={(value) => changeFilter(value, setRuntimeKey)} /> : null}
+            <SelectControl label="Plataforma" value={selectedProvider.label} options={providerOptions} expanded={openSelect === 'provider'} onToggle={() => toggleSelect('provider', openSelect, setOpenSelect)} onChange={(value) => changeFilter(value, setProviderKey)} />
+          </View>
+
+          <View style={styles.panelFooter}>
+            <AppText tone="muted" numberOfLines={2} style={{ flex: 1 }}>{mood ? mood.description : activeFilterCount ? `${activeFilterCount} filtros activos` : 'Catalogo general'}</AppText>
+            <PrimaryButton variant="secondary" onPress={clearFilters}>Limpiar</PrimaryButton>
+          </View>
+        </View>
+      ) : null}
+
       <View style={styles.resultsBlock}>
-        <AppText weight="bold" style={styles.sectionTitle}>{mood ? mood.label : effectiveType === 'Movie' ? 'Peliculas encontradas' : 'Series encontradas'}</AppText>
         {results.isLoading ? <LoadingState /> : null}
         {results.isError ? <EmptyState title="No pudimos explorar" message="Proba otro filtro o revisa la conexion." /> : null}
         {!results.isLoading && !results.isError && !items.length ? <EmptyState title="Sin resultados" message="Cambia algun filtro para ver otras opciones." /> : null}
-        <MediaGrid items={items} />
-        {results.hasNextPage ? (
+        <MediaRail title={mood ? mood.label : effectiveType === 'Movie' ? 'Peliculas encontradas' : 'Series encontradas'} items={items} limit={items.length} />
+        {results.hasNextPage && items.length ? (
           <PrimaryButton variant="secondary" onPress={() => results.fetchNextPage()} disabled={results.isFetchingNextPage}>
             {results.isFetchingNextPage ? 'Cargando...' : 'Mostrar mas'}
           </PrimaryButton>
@@ -390,14 +394,6 @@ function pickSurprise(items: MediaSummary[]) {
   return items[Math.floor(Math.random() * items.length)]
 }
 
-function formatResultCount(count: number | null) {
-  if (count === null) {
-    return 'Explorando catalogo'
-  }
-
-  return count === 1 ? '1 resultado' : `${count.toLocaleString('es-AR')} resultados`
-}
-
 const styles = StyleSheet.create({
   header: {
     gap: 6
@@ -452,6 +448,24 @@ const styles = StyleSheet.create({
   },
   moodText: {
     fontSize: 13
+  },
+  toolbar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10
+  },
+  filterToggle: {
+    flex: 1,
+    minHeight: 46,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 8,
+    backgroundColor: colors.surface,
+    borderColor: colors.borderStrong,
+    borderWidth: 1
+  },
+  filterToggleActive: {
+    borderColor: colors.accent
   },
   resultsBlock: {
     gap: 12

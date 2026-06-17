@@ -1,6 +1,6 @@
 import { Link } from 'expo-router'
 import { LinearGradient } from 'expo-linear-gradient'
-import { ActivityIndicator, Dimensions, FlatList, Image, Pressable, StyleSheet, View } from 'react-native'
+import { ActivityIndicator, FlatList, Image, Pressable, StyleSheet, View } from 'react-native'
 import type { MediaPerson, MediaSummary, PersonSummary } from '../api/types'
 import { colors } from '../theme/colors'
 import { AppText } from './AppText'
@@ -8,10 +8,6 @@ import { AppText } from './AppText'
 const CARD_WIDTH = 122
 const CARD_STRIDE = CARD_WIDTH + 12
 const POSTER_HEIGHT = 183
-
-const GRID_GAP = 10
-const GRID_COLUMNS = 3
-const GRID_CARD_WIDTH = Math.floor((Dimensions.get('window').width - 18 * 2 - GRID_GAP * (GRID_COLUMNS - 1)) / GRID_COLUMNS)
 
 type MediaCardProps = {
   item: MediaSummary
@@ -57,12 +53,12 @@ export function PersonCard({ item }: { item: PersonSummary }) {
   )
 }
 
-export function MediaRail({ title, items, rankLabels }: { title: string; items: MediaSummary[]; rankLabels?: Map<string, string> }) {
+export function MediaRail({ title, items, rankLabels, limit = 10 }: { title: string; items: MediaSummary[]; rankLabels?: Map<string, string>; limit?: number }) {
   if (!items.length) {
     return null
   }
 
-  const visibleItems = items.slice(0, 10)
+  const visibleItems = items.slice(0, limit)
 
   return (
     <View style={styles.rail}>
@@ -81,36 +77,6 @@ export function MediaRail({ title, items, rankLabels }: { title: string; items: 
         getItemLayout={(_, index) => ({ length: CARD_STRIDE, offset: CARD_STRIDE * index, index })}
       />
     </View>
-  )
-}
-
-export function MediaGrid({ items }: { items: MediaSummary[] }) {
-  if (!items.length) {
-    return null
-  }
-
-  return (
-    <View style={styles.grid}>
-      {items.map((item) => <GridCard key={mediaKey(item)} item={item} />)}
-    </View>
-  )
-}
-
-function GridCard({ item }: { item: MediaSummary }) {
-  const href = item.mediaType === 'Movie' ? `/movie/${item.tmdbId}` : `/series/${item.tmdbId}`
-  return (
-    <Link href={href} asChild>
-      <Pressable style={({ pressed }) => [styles.gridCard, pressed ? styles.pressed : null]}>
-        <View style={styles.gridPoster}>
-          {item.posterUrl ? <Image source={{ uri: item.posterUrl }} style={styles.posterImage} resizeMode="cover" fadeDuration={0} /> : <AppText tone="faint">Sin poster</AppText>}
-          <LinearGradient pointerEvents="none" colors={['rgba(5,8,15,0)', 'rgba(5,8,15,0.46)']} style={styles.posterShade} />
-        </View>
-        <AppText numberOfLines={2} ellipsizeMode="tail" weight="semibold" style={styles.gridTitle}>{item.title}</AppText>
-        <AppText tone="muted" style={styles.meta}>
-          {item.voteAverage ? item.voteAverage.toFixed(1) : 'S/R'} · {item.mediaType === 'Movie' ? 'Peli' : 'Serie'}
-        </AppText>
-      </Pressable>
-    </Link>
   )
 }
 
@@ -248,30 +214,6 @@ const styles = StyleSheet.create({
   meta: {
     fontSize: 11,
     lineHeight: 15
-  },
-  grid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: GRID_GAP
-  },
-  gridCard: {
-    width: GRID_CARD_WIDTH,
-    gap: 6
-  },
-  gridPoster: {
-    width: '100%',
-    aspectRatio: 2 / 3,
-    borderRadius: 8,
-    overflow: 'hidden',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.panel,
-    borderColor: 'rgba(255,255,255,0.12)',
-    borderWidth: 1
-  },
-  gridTitle: {
-    fontSize: 12,
-    lineHeight: 16
   },
   castCard: {
     width: 104,
