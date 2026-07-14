@@ -48,3 +48,8 @@ qa-*.png
 
 # Docker/local volumes
 .docker/
+
+# Local tooling (Claude Code / Codex)
+.claude/
+.codex-logs/
+.codex-remote-attachments/

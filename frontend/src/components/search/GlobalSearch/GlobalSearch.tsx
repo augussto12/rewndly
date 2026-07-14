@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { searchMovies, searchPeople, searchSeries } from '../../../features/public-media/services/publicMediaApi'
+import { ClearButton } from '../../ui/ClearButton'
 import type { MediaSummary, PersonSummary } from '../../../features/public-media/types/publicMedia.types'
 
 type SearchResult =
@@ -20,6 +21,19 @@ export function GlobalSearch({ onNavigate }: { onNavigate?: () => void }) {
     const timeout = window.setTimeout(() => setDebouncedQuery(query.trim()), 220)
     return () => window.clearTimeout(timeout)
   }, [query])
+
+  // Ctrl/⌘+K opens the search from anywhere
+  useEffect(() => {
+    function openOnShortcut(event: KeyboardEvent) {
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
+        event.preventDefault()
+        setIsOpen(true)
+      }
+    }
+
+    document.addEventListener('keydown', openOnShortcut)
+    return () => document.removeEventListener('keydown', openOnShortcut)
+  }, [])
 
   useEffect(() => {
     if (!isOpen) {
@@ -109,7 +123,7 @@ export function GlobalSearch({ onNavigate }: { onNavigate?: () => void }) {
         className="inline-grid h-10 w-10 place-items-center rounded-[var(--radius-sm)] border border-white/10 bg-white/[0.06] text-white transition hover:bg-white/[0.1]"
         aria-label="Buscar"
         aria-expanded={isOpen}
-        title="Buscar"
+        title="Buscar (Ctrl + K)"
       >
         <span className="relative h-4 w-4" aria-hidden="true">
           <span className="absolute left-0 top-0 h-3 w-3 rounded-full border-2 border-current" />
@@ -123,14 +137,23 @@ export function GlobalSearch({ onNavigate }: { onNavigate?: () => void }) {
             <label className="sr-only" htmlFor="global-search-input">
               Buscar películas, series o personas
             </label>
-            <input
-              ref={inputRef}
-              id="global-search-input"
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-              placeholder="Buscar películas, series o personas"
-              className="field min-h-11"
-            />
+            <div className="relative">
+              <input
+                ref={inputRef}
+                id="global-search-input"
+                type="search"
+                value={query}
+                onChange={(event) => setQuery(event.target.value)}
+                placeholder="Buscar películas, series o personas"
+                className={`field min-h-11 ${query ? 'pr-11' : ''}`}
+              />
+              {query ? <ClearButton onClick={() => setQuery('')} label="Borrar búsqueda" className="right-2" /> : null}
+            </div>
+            <p className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-[0.7rem] text-[var(--color-text-secondary)]">
+              <span>Enter abre el primer resultado</span>
+              <span aria-hidden="true">·</span>
+              <span>Esc cierra</span>
+            </p>
           </form>
 
           {canSearch ? (

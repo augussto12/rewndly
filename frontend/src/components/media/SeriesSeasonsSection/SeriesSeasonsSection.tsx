@@ -12,7 +12,7 @@ export function SeriesSeasonsSection({ seriesTmdbId, seasons }: SeriesSeasonsSec
   }
 
   return (
-    <section className="mx-auto max-w-7xl px-4 pb-12 sm:px-6">
+    <section className="mx-auto max-w-[90rem] px-4 pb-12 sm:px-6">
       <div className="mb-5">
         <p className="kicker">Temporadas</p>
         <h2 className="mt-2 text-2xl font-semibold">Guia de episodios</h2>
@@ -29,7 +29,7 @@ export function SeriesSeasonsSection({ seriesTmdbId, seasons }: SeriesSeasonsSec
                 <img src={season.posterUrl} alt={season.name} className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.045]" loading="lazy" />
               ) : (
                 <div className="grid h-full place-items-center px-4 text-center text-sm text-[var(--color-text-secondary)]">
-                  Sin poster
+                  Sin póster
                 </div>
               )}
             </div>

@@ -7,6 +7,10 @@ import { BackButton } from '../components/navigation/BackButton'
 import { useExternalRatingsBatch } from '../features/public-media/hooks/usePublicMedia'
 import { formatExternalRating, getRatingsKey, ratingBySource, ratingValueForSort, toRatingsMap, type ExternalRatingSource } from '../features/public-media/utils/externalRatings'
 import { useDeleteListItem, useListDetails } from '../features/user-content/hooks/useUserContent'
+import { visibilityLabel } from '../features/user-content/utils/visibility'
+import { PaginationFooter } from '../components/ui/PaginationFooter'
+import { useClientPagination } from '../components/ui/useClientPagination'
+import { InlineError } from '../components/feedback/InlineError/InlineError'
 import { PublicLayout } from '../layouts/PublicLayout'
 import { getErrorMessage } from '../services/apiError'
 import type { ExternalRating } from '../features/public-media/types/publicMedia.types'
@@ -25,6 +29,7 @@ export function ListDetailsPage() {
   const ratingsMap = useMemo(() => toRatingsMap(externalRatings.data), [externalRatings.data])
 
   const sortedItems = useMemo(() => sortListItems(data?.items ?? [], sort, ratingsMap), [data?.items, ratingsMap, sort])
+  const pager = useClientPagination(sortedItems, 24)
 
   async function removeItem(listId: string, itemId: string) {
     setActionError(null)
@@ -47,12 +52,12 @@ export function ListDetailsPage() {
             <header className="mb-8">
               <BackButton fallbackHref="/me/lists" />
               <h1 className="mt-5 text-4xl font-semibold">{data.title}</h1>
-              <p className="mt-3 text-[var(--color-text-secondary)]">{data.description || data.visibility}</p>
+              <p className="mt-3 text-[var(--color-text-secondary)]">{data.description || `Lista ${visibilityLabel(data.visibility).toLowerCase()}`}</p>
             </header>
             {data.items.length === 0 ? <EmptyState title="Lista vacía" message="Agregá contenido desde el detalle de película o serie." /> : null}
             {data.items.length > 0 ? (
               <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <p className="text-sm text-[var(--color-text-secondary)]">{data.items.length} items</p>
+                <p className="text-sm text-[var(--color-text-secondary)]">{data.items.length} {data.items.length === 1 ? 'título' : 'títulos'}</p>
                 <label className="text-sm text-[var(--color-text-secondary)] sm:w-64">
                   Ordenar
                   <select value={sort} onChange={(event) => setSort(event.target.value as ListSort)} className="field mt-2">
@@ -70,7 +75,7 @@ export function ListDetailsPage() {
               </div>
             ) : null}
             <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-              {sortedItems.map((item) => (
+              {pager.pagedItems.map((item) => (
                 <article key={item.id} className="surface-panel flex min-h-28 gap-3 p-3">
                   <Link
                     to={item.mediaType === 'Movie' ? `/movies/${item.tmdbId}` : `/series/${item.tmdbId}`}
@@ -86,13 +91,14 @@ export function ListDetailsPage() {
                       {item.mediaType === 'Movie' ? 'Película' : 'Serie'} {item.rating ? `/ ${item.rating}/10` : '/ Sin clasificación'}
                     </p>
                     {externalSortSource ? <ExternalRatingLine item={item} ratingsMap={ratingsMap} source={externalSortSource} /> : null}
-                    <button onClick={() => void removeItem(data.id, item.id)} className="secondary-action mt-auto min-h-9 self-start px-3 py-2 text-xs">
+                    <button onClick={() => void removeItem(data.id, item.id)} className="danger-action mt-auto min-h-9 self-start px-3 py-2 text-xs">
                       Quitar
                     </button>
                   </div>
                 </article>
               ))}
             </div>
+            <PaginationFooter pager={pager} unit="títulos" />
           </>
         ) : null}
       </main>
@@ -153,5 +159,5 @@ function ratingValue(value: number | null) {
 }
 
 function ActionError({ message }: { message: string }) {
-  return <p className="mb-6 rounded-[var(--radius-sm)] border border-red-300/20 bg-red-950/25 px-3 py-2 text-sm text-red-200">{message}</p>
+  return <InlineError message={message} className="mb-6" />
 }

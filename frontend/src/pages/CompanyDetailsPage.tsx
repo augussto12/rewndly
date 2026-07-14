@@ -3,6 +3,7 @@ import { EmptyState } from '../components/feedback/EmptyState/EmptyState'
 import { ErrorState } from '../components/feedback/ErrorState/ErrorState'
 import { LoadingSkeleton } from '../components/feedback/LoadingSkeleton/LoadingSkeleton'
 import { MediaGrid } from '../components/media/MediaGrid/MediaGrid'
+import { BackButton } from '../components/navigation/BackButton'
 import { useCompanyDetails } from '../features/public-media/hooks/usePublicMedia'
 import type { CompanyDetails } from '../features/public-media/types/publicMedia.types'
 import { formatCountryName, getEntityInitials } from '../features/public-media/utils/tmdbLabels'
@@ -35,6 +36,7 @@ export function CompanyDetailsPage() {
 function CompanyProfile({ data }: { data: CompanyDetails }) {
   return (
     <main className="page-shell">
+      <BackButton fallbackHref="/discover" className="mb-6" />
       <EntityHeader
         eyebrow="Productora"
         name={data.name}
@@ -44,7 +46,7 @@ function CompanyProfile({ data }: { data: CompanyDetails }) {
         homepage={data.homepage}
       />
 
-      <section className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
+      <section className="mt-10 grid gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
         <div className="surface-panel p-4 sm:p-5">
           <p className="kicker">Catálogo</p>
           <h2 className="mt-2 text-2xl font-semibold">Películas populares</h2>
@@ -57,7 +59,7 @@ function CompanyProfile({ data }: { data: CompanyDetails }) {
         />
       </section>
 
-      <section className="surface-panel p-4 sm:p-5">
+      <section className="mt-10 surface-panel p-4 sm:p-5">
         <p className="kicker">Series</p>
         <h2 className="mt-2 text-2xl font-semibold">Series relacionadas</h2>
         <div className="mt-6">{data.series.length > 0 ? <MediaGrid items={data.series} /> : <EmptyState title="Sin series" message="TMDB no devolvió series para esta productora." />}</div>

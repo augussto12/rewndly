@@ -5,6 +5,7 @@ import { ReviewCard } from '../features/social/components/ReviewCard'
 import { usePublicReviewsPages } from '../features/social/hooks/useSocial'
 import type { PublicReview } from '../features/social/types/social.types'
 import { flattenUniqueArrayPages } from '../lib/pagination'
+import { LoadMoreButton } from '../components/ui/LoadMoreButton'
 import { PublicLayout } from '../layouts/PublicLayout'
 
 export function PublicReviewsPage() {
@@ -35,16 +36,3 @@ export function PublicReviewsPage() {
   )
 }
 
-function LoadMoreButton({ hasMore, isLoading, onClick }: { hasMore: boolean; isLoading: boolean; onClick: () => void }) {
-  if (!hasMore) {
-    return null
-  }
-
-  return (
-    <div className="mt-8 flex justify-center">
-      <button type="button" onClick={onClick} disabled={isLoading} className="secondary-action">
-        {isLoading ? 'Cargando...' : 'Mostrar más'}
-      </button>
-    </div>
-  )
-}

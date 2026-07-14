@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { useInfiniteQuery } from '@tanstack/react-query'
 import { ErrorState } from '../components/feedback/ErrorState/ErrorState'
 import { FilterChip } from '../components/filters/FilterChip'
+import { ClearButton } from '../components/ui/ClearButton'
 import { getAdminActivityEventsPage } from '../features/admin/services/adminApi'
 import type { AdminActivityEvent, AdminPagedResponse } from '../features/admin/types/admin.types'
 import { PublicLayout } from '../layouts/PublicLayout'
@@ -260,8 +261,9 @@ export function FeedPage() {
               placeholder="Buscar por usuario o título…"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="field w-full pl-9"
+              className={`field w-full pl-9 ${search ? 'pr-10' : ''}`}
             />
+            {search ? <ClearButton onClick={() => setSearch('')} label="Borrar búsqueda" className="right-1.5" /> : null}
           </div>
 
           {/* Type chips — horizontally scrollable */}

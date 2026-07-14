@@ -1,4 +1,4 @@
-import { useParams } from 'react-router-dom'
+import { Link, useParams } from 'react-router-dom'
 import { ErrorState } from '../components/feedback/ErrorState/ErrorState'
 import { LoadingSkeleton } from '../components/feedback/LoadingSkeleton/LoadingSkeleton'
 import { MediaDetailsExtras } from '../components/media/MediaDetailsExtras/MediaDetailsExtras'
@@ -24,7 +24,14 @@ export function MovieDetailsPage() {
 
       {isError || !Number.isFinite(tmdbId) ? (
         <main className="mx-auto max-w-4xl px-4 py-16 sm:px-6">
-          <ErrorState title="No pudimos cargar la película" />
+          <ErrorState
+            title="No pudimos cargar la película"
+            action={
+              <Link to="/movies/search" className="secondary-action">
+                Explorar películas
+              </Link>
+            }
+          />
         </main>
       ) : null}
 

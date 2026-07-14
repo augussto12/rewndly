@@ -2,7 +2,7 @@ import { useMemo, type ReactNode } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { EmptyState } from '../components/feedback/EmptyState/EmptyState'
 import { ErrorState } from '../components/feedback/ErrorState/ErrorState'
-import { LoadingSkeleton } from '../components/feedback/LoadingSkeleton/LoadingSkeleton'
+import { MediaGridSkeleton } from '../components/feedback/GridSkeleton/GridSkeleton'
 import { MediaGrid } from '../components/media/MediaGrid/MediaGrid'
 import { PersonGrid } from '../components/media/PersonGrid/PersonGrid'
 import { SearchInput } from '../components/media/SearchInput/SearchInput'
@@ -18,7 +18,8 @@ export function SearchPage() {
   const series = useSeriesSearch(normalizedQuery)
   const people = usePeopleSearch(normalizedQuery)
   const isLoading = canSearch && (movies.isLoading || series.isLoading || people.isLoading)
-  const isError = movies.isError || series.isError || people.isError
+  const anyError = movies.isError || series.isError || people.isError
+  const allError = movies.isError && series.isError && people.isError
   const movieItems = movies.data?.items ?? []
   const seriesItems = series.data?.items ?? []
   const peopleItems = people.data?.items ?? []
@@ -70,9 +71,9 @@ export function SearchPage() {
           )}
         </section>
 
-        {isLoading ? <div className="mt-10"><LoadingSkeleton /></div> : null}
-        {isError ? <div className="mt-10"><ErrorState title="No pudimos completar la búsqueda" message="Probá de nuevo en unos segundos." /></div> : null}
-        {!isLoading && !isError && canSearch && !hasResults ? (
+        {isLoading ? <div className="mt-10"><MediaGridSkeleton /></div> : null}
+        {allError ? <div className="mt-10"><ErrorState title="No pudimos completar la búsqueda" message="Probá de nuevo en unos segundos." /></div> : null}
+        {!isLoading && !allError && canSearch && !hasResults && !anyError ? (
           <div className="mt-10">
             <EmptyState title="Sin resultados" message="Probá con otro título, persona o una palabra más corta." />
           </div>
@@ -92,16 +93,34 @@ export function SearchPage() {
           </div>
         ) : null}
 
-        {!isLoading && !isError && hasResults ? (
+        {!isLoading && !allError && canSearch && (hasResults || anyError) ? (
           <div className="mt-10 space-y-12">
-            <ResultSection title="Películas" count={movies.data?.totalResults ?? movieItems.length} viewAllHref={`/movies/search?q=${encodeURIComponent(normalizedQuery)}`}>
-              {movieItems.length > 0 ? <MediaGrid items={movieItems.slice(0, 12)} /> : <EmptyMini label="Sin películas para esta búsqueda." />}
+            <ResultSection title="Películas" count={movies.data?.totalResults ?? movieItems.length} hasError={movies.isError} viewAllHref={`/movies/search?q=${encodeURIComponent(normalizedQuery)}`}>
+              {movies.isError ? (
+                <EmptyMini label="No pudimos cargar películas. Probá de nuevo." tone="error" />
+              ) : movieItems.length > 0 ? (
+                <MediaGrid items={movieItems.slice(0, 12)} />
+              ) : (
+                <EmptyMini label="Sin películas para esta búsqueda." />
+              )}
             </ResultSection>
-            <ResultSection title="Series" count={series.data?.totalResults ?? seriesItems.length} viewAllHref={`/series/search?q=${encodeURIComponent(normalizedQuery)}`}>
-              {seriesItems.length > 0 ? <MediaGrid items={seriesItems.slice(0, 12)} /> : <EmptyMini label="Sin series para esta búsqueda." />}
+            <ResultSection title="Series" count={series.data?.totalResults ?? seriesItems.length} hasError={series.isError} viewAllHref={`/series/search?q=${encodeURIComponent(normalizedQuery)}`}>
+              {series.isError ? (
+                <EmptyMini label="No pudimos cargar series. Probá de nuevo." tone="error" />
+              ) : seriesItems.length > 0 ? (
+                <MediaGrid items={seriesItems.slice(0, 12)} />
+              ) : (
+                <EmptyMini label="Sin series para esta búsqueda." />
+              )}
             </ResultSection>
-            <ResultSection title="Personas" count={people.data?.totalResults ?? peopleItems.length} viewAllHref={`/people/search?q=${encodeURIComponent(normalizedQuery)}`}>
-              {peopleItems.length > 0 ? <PersonGrid items={peopleItems.slice(0, 12)} /> : <EmptyMini label="Sin personas para esta búsqueda." />}
+            <ResultSection title="Personas" count={people.data?.totalResults ?? peopleItems.length} hasError={people.isError} viewAllHref={`/people/search?q=${encodeURIComponent(normalizedQuery)}`}>
+              {people.isError ? (
+                <EmptyMini label="No pudimos cargar personas. Probá de nuevo." tone="error" />
+              ) : peopleItems.length > 0 ? (
+                <PersonGrid items={peopleItems.slice(0, 12)} />
+              ) : (
+                <EmptyMini label="Sin personas para esta búsqueda." />
+              )}
             </ResultSection>
           </div>
         ) : null}
@@ -110,15 +129,15 @@ export function SearchPage() {
   )
 }
 
-function ResultSection({ title, count, viewAllHref, children }: { title: string; count: number; viewAllHref: string; children: ReactNode }) {
+function ResultSection({ title, count, hasError = false, viewAllHref, children }: { title: string; count: number; hasError?: boolean; viewAllHref: string; children: ReactNode }) {
   return (
     <section>
       <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
         <div>
-          <p className="kicker">{formatCount(count)}</p>
+          <p className="kicker">{hasError ? 'No disponible' : formatCount(count)}</p>
           <h2 className="mt-2 text-2xl font-semibold">{title}</h2>
         </div>
-        {count > 0 ? (
+        {!hasError && count > 0 ? (
           <Link to={viewAllHref} className="secondary-action min-h-9 px-3 py-2 text-xs">
             Ver todo
           </Link>
@@ -129,12 +148,9 @@ function ResultSection({ title, count, viewAllHref, children }: { title: string;
   )
 }
 
-function EmptyMini({ label }: { label: string }) {
-  return (
-    <div className="rounded-[var(--radius-md)] border border-white/10 bg-white/[0.035] px-4 py-5 text-sm text-[var(--color-text-secondary)]">
-      {label}
-    </div>
-  )
+function EmptyMini({ label, tone = 'muted' }: { label: string; tone?: 'muted' | 'error' }) {
+  const toneClass = tone === 'error' ? 'border-red-300/20 bg-red-950/20 text-red-200' : 'border-white/10 bg-white/[0.035] text-[var(--color-text-secondary)]'
+  return <div className={`rounded-[var(--radius-md)] border px-4 py-5 text-sm ${toneClass}`}>{label}</div>
 }
 
 function formatSearchSummary(count: number, query: string) {

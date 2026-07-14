@@ -53,6 +53,18 @@ export function formatExternalRating(rating: ExternalRating | null) {
   return `${value}/${Math.round(rating.scale)}`
 }
 
+/**
+ * Blended 0–10 quality score from IMDb + Rotten Tomatoes only (the two sources the
+ * user cares about). Returns null when neither is available so callers can rank
+ * externally-rated titles ahead of ones with no IMDb/RT data.
+ */
+export function externalQualityScore(ratings: ExternalRating[] | undefined): number | null {
+  const imdb = normalizeToTen(ratingBySource(ratings, 'IMDb'))
+  const tomatoes = normalizeToTen(ratingBySource(ratings, 'RottenTomatoes'))
+  const values = [imdb, tomatoes].filter((value): value is number => value !== null)
+  return values.length > 0 ? average(values) : null
+}
+
 export function filterByQuality(items: MediaSummary[], ratingsMap: Map<string, ExternalRating[]>, filter: QualityFilter) {
   const option = qualityFilterOptions.find((candidate) => candidate.value === filter)
   if (!option?.source || option.min === undefined) {

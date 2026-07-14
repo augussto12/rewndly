@@ -3,8 +3,7 @@ import { ErrorState } from '../components/feedback/ErrorState/ErrorState'
 import { LoadingSkeleton } from '../components/feedback/LoadingSkeleton/LoadingSkeleton'
 import { MediaDetailsExtras } from '../components/media/MediaDetailsExtras/MediaDetailsExtras'
 import { MediaDetailsMetadata } from '../components/media/MediaDetailsMetadata/MediaDetailsMetadata'
-import { RatingBadge } from '../components/media/RatingBadge/RatingBadge'
-import { BackButton } from '../components/navigation/BackButton'
+import { DetailHero } from '../components/media/DetailHero/DetailHero'
 import { useEpisodeDetails } from '../features/public-media/hooks/usePublicMedia'
 import { PublicLayout } from '../layouts/PublicLayout'
 
@@ -30,37 +29,27 @@ export function EpisodeDetailsPage() {
 
       {!isLoading && !isError && data ? (
         <main>
-          <section className="relative overflow-hidden">
-            {data.stillUrl ? <img src={data.stillUrl} alt="" className="absolute inset-0 h-full w-full object-cover opacity-35" /> : null}
-            <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(9,9,11,0.72)_0%,rgba(9,9,11,0.94)_64%,#09090b_100%)] backdrop-blur-[2px]" />
-            <div className="relative mx-auto max-w-7xl px-4 py-14 sm:px-6 md:py-20">
-              <div className="max-w-4xl">
-                <div className="mb-4 flex flex-wrap items-center gap-3">
-                  <RatingBadge value={data.voteAverage} />
-                  <span className="text-sm text-[var(--color-text-secondary)]">
-                    {[
-                      `T${data.seasonNumber} E${data.episodeNumber}`,
-                      data.airDate?.slice(0, 10),
-                      data.runtimeMinutes ? `${data.runtimeMinutes} min` : '',
-                    ]
-                      .filter(Boolean)
-                      .join(' / ')}
-                  </span>
-                </div>
-                <p className="kicker">Episodio</p>
-                <h1 className="mt-3 text-4xl font-semibold leading-tight sm:text-6xl">{data.name}</h1>
-                <p className="mt-6 max-w-3xl text-base leading-7 text-[var(--color-text-secondary)]">
-                  {data.overview || 'Todavía no hay sinopsis disponible para este episodio.'}
-                </p>
-                <div className="mt-6 flex flex-wrap gap-3">
-                  <BackButton fallbackHref={`/series/${data.seriesTmdbId}/seasons/${data.seasonNumber}`} />
-                  <Link to={`/series/${data.seriesTmdbId}`} className="secondary-action">
-                    Ver serie
-                  </Link>
-                </div>
-              </div>
-            </div>
-          </section>
+          <DetailHero
+            eyebrow="Episodio"
+            title={data.name}
+            meta={[
+              `T${data.seasonNumber} E${data.episodeNumber}`,
+              data.airDate?.slice(0, 10),
+              data.runtimeMinutes ? `${data.runtimeMinutes} min` : undefined,
+            ]}
+            voteAverage={data.voteAverage}
+            backdropUrl={data.stillUrl}
+            backHref={`/series/${data.seriesTmdbId}/seasons/${data.seasonNumber}`}
+            actions={
+              <Link to={`/series/${data.seriesTmdbId}`} className="secondary-action">
+                Ver serie
+              </Link>
+            }
+          >
+            <p className="text-base leading-7 text-[var(--color-text-secondary)]">
+              {data.overview || 'Todavía no hay sinopsis disponible para este episodio.'}
+            </p>
+          </DetailHero>
 
           {data.crew.length > 0 ? (
             <section className="mx-auto max-w-7xl px-4 pb-12 sm:px-6">

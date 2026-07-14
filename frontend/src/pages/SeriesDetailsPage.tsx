@@ -1,4 +1,4 @@
-import { useParams } from 'react-router-dom'
+import { Link, useParams } from 'react-router-dom'
 import { ErrorState } from '../components/feedback/ErrorState/ErrorState'
 import { LoadingSkeleton } from '../components/feedback/LoadingSkeleton/LoadingSkeleton'
 import { MediaDetailsExtras } from '../components/media/MediaDetailsExtras/MediaDetailsExtras'
@@ -25,7 +25,14 @@ export function SeriesDetailsPage() {
 
       {isError || !Number.isFinite(tmdbId) ? (
         <main className="mx-auto max-w-4xl px-4 py-16 sm:px-6">
-          <ErrorState title="No pudimos cargar la serie" />
+          <ErrorState
+            title="No pudimos cargar la serie"
+            action={
+              <Link to="/series/search" className="secondary-action">
+                Explorar series
+              </Link>
+            }
+          />
         </main>
       ) : null}
 

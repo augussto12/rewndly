@@ -3,8 +3,7 @@ import { ErrorState } from '../components/feedback/ErrorState/ErrorState'
 import { LoadingSkeleton } from '../components/feedback/LoadingSkeleton/LoadingSkeleton'
 import { MediaDetailsExtras } from '../components/media/MediaDetailsExtras/MediaDetailsExtras'
 import { MediaDetailsMetadata } from '../components/media/MediaDetailsMetadata/MediaDetailsMetadata'
-import { RatingBadge } from '../components/media/RatingBadge/RatingBadge'
-import { BackButton } from '../components/navigation/BackButton'
+import { DetailHero } from '../components/media/DetailHero/DetailHero'
 import { useSeasonDetails } from '../features/public-media/hooks/usePublicMedia'
 import { PublicLayout } from '../layouts/PublicLayout'
 
@@ -29,33 +28,18 @@ export function SeasonDetailsPage() {
 
       {!isLoading && !isError && data ? (
         <main>
-          <section className="mx-auto grid max-w-7xl gap-8 px-4 py-12 sm:px-6 md:grid-cols-[14rem_1fr] md:py-16">
-            <div className="w-44 md:w-full">
-              <div className="aspect-[2/3] overflow-hidden rounded-[var(--radius-md)] border border-white/[0.12] bg-[var(--color-surface-elevated)] shadow-[var(--shadow-poster)]">
-                {data.posterUrl ? (
-                  <img src={data.posterUrl} alt={data.name} className="h-full w-full object-cover" />
-                ) : (
-                  <div className="grid h-full place-items-center text-sm text-[var(--color-text-secondary)]">Sin póster</div>
-                )}
-              </div>
-            </div>
-            <div className="self-end">
-              <div className="mb-4 flex flex-wrap items-center gap-3">
-                <RatingBadge value={data.voteAverage} />
-                <span className="text-sm text-[var(--color-text-secondary)]">
-                  {[data.airDate?.slice(0, 4), `${data.episodes.length} episodios`].filter(Boolean).join(' / ')}
-                </span>
-              </div>
-              <p className="kicker">Temporada {data.seasonNumber}</p>
-              <h1 className="mt-3 text-4xl font-semibold leading-tight sm:text-5xl">{data.name}</h1>
-              <p className="mt-6 max-w-3xl text-base leading-7 text-[var(--color-text-secondary)]">
-                {data.overview || 'Todavía no hay sinopsis disponible para esta temporada.'}
-              </p>
-              <div className="mt-6 flex flex-wrap gap-3">
-                <BackButton fallbackHref={`/series/${data.seriesTmdbId}`} />
-              </div>
-            </div>
-          </section>
+          <DetailHero
+            eyebrow={`Temporada ${data.seasonNumber}`}
+            title={data.name}
+            meta={[data.airDate?.slice(0, 4), `${data.episodes.length} episodios`]}
+            voteAverage={data.voteAverage}
+            poster={{ url: data.posterUrl, alt: data.name }}
+            backHref={`/series/${data.seriesTmdbId}`}
+          >
+            <p className="text-base leading-7 text-[var(--color-text-secondary)]">
+              {data.overview || 'Todavía no hay sinopsis disponible para esta temporada.'}
+            </p>
+          </DetailHero>
 
           <section className="mx-auto max-w-7xl px-4 pb-12 sm:px-6">
             <div className="mb-5">

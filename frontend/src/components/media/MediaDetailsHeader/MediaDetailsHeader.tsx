@@ -43,10 +43,10 @@ export function MediaDetailsHeader({
       {backdropUrl ? <img src={backdropUrl} alt="" className="absolute inset-0 h-full w-full object-cover opacity-38" /> : null}
       <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(9,9,11,0.72)_0%,rgba(9,9,11,0.9)_50%,rgba(9,9,11,0.98)_82%,rgba(16,34,54,0)_100%)] backdrop-blur-[2px]" />
       <div className="absolute inset-x-0 bottom-0 h-28 bg-[linear-gradient(180deg,rgba(16,34,54,0),rgba(16,34,54,0.74)_62%,rgba(16,34,54,0.96)_100%)]" />
-      <div className="relative mx-auto max-w-[90rem] px-4 pb-20 pt-12 sm:px-6 md:pb-28 md:pt-20">
-        <BackButton fallbackHref={backHref} className="mb-7" />
-        <div className="grid gap-8 md:grid-cols-[16rem_1fr]">
-          <div className="w-56 sm:w-60 md:w-full">
+      <div className="relative mx-auto max-w-[90rem] px-4 pb-14 pt-10 sm:px-6 md:pb-20 md:pt-16">
+        <BackButton fallbackHref={backHref} className="mb-6 md:mb-7" />
+        <div className="grid gap-6 md:gap-8 md:grid-cols-[16rem_1fr]">
+          <div className="w-40 sm:w-56 md:w-full">
             <div className="aspect-[2/3] overflow-hidden rounded-[var(--radius-md)] border border-white/[0.12] bg-[var(--color-surface-elevated)] shadow-[var(--shadow-poster)]">
               {posterUrl ? (
                 <img src={posterUrl} alt={title} className="h-full w-full object-cover" />
@@ -61,7 +61,7 @@ export function MediaDetailsHeader({
               <span className="text-resilient text-sm text-[var(--color-text-secondary)]">{meta.filter(Boolean).join(' / ')}</span>
             </div>
             <div className={`grid min-w-0 gap-4 ${actionSlot ? 'grid-cols-[minmax(0,1fr)_auto] items-start' : ''}`}>
-              <h1 className="text-resilient text-4xl font-semibold leading-tight sm:text-6xl">{title}</h1>
+              <h1 className="text-resilient text-3xl font-semibold leading-tight sm:text-5xl md:text-6xl">{title}</h1>
               {actionSlot ? <div className="shrink-0 justify-self-end pt-1 sm:pt-2">{actionSlot}</div> : null}
             </div>
             {subtitle ? <p className="text-resilient mt-2 text-[var(--color-text-secondary)]">{subtitle}</p> : null}

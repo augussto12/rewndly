@@ -1,52 +1,71 @@
-import type { ReactNode } from 'react'
+import { lazy, Suspense, type ComponentType, type ReactNode } from 'react'
 import { Navigate, createBrowserRouter, RouterProvider, type RouteObject } from 'react-router-dom'
 import { RuntimeErrorBoundary } from './RuntimeErrorBoundary'
 import { ScrollToTop } from './ScrollToTop'
 import { ProtectedRoute } from '../features/auth/components/ProtectedRoute'
-import { AdminActivityEventsPage } from '../pages/admin/AdminActivityEventsPage'
-import { AdminAuditLogsPage } from '../pages/admin/AdminAuditLogsPage'
-import { AdminDashboardPage } from '../pages/admin/AdminDashboardPage'
-import { AdminListsPage } from '../pages/admin/AdminListsPage'
-import { AdminReviewsPage } from '../pages/admin/AdminReviewsPage'
-import { AdminSystemEventsPage } from '../pages/admin/AdminSystemEventsPage'
-import { AdminUserDetailsPage } from '../pages/admin/AdminUserDetailsPage'
-import { AdminUsersPage } from '../pages/admin/AdminUsersPage'
+// AppErrorPage stays eager: it's the error boundary + 404 fallback and must render instantly.
 import { AppErrorPage } from '../pages/AppErrorPage'
-import { HomePage } from '../pages/HomePage'
-import { ComparePage } from '../pages/ComparePage'
-import { CollectionDetailsPage } from '../pages/CollectionDetailsPage'
-import { CompanyDetailsPage } from '../pages/CompanyDetailsPage'
-import { LoginPage } from '../pages/LoginPage'
-import { ListDetailsPage } from '../pages/ListDetailsPage'
-import { MePage } from '../pages/MePage'
-import { MovieDetailsPage } from '../pages/MovieDetailsPage'
-import { MoviesSearchPage } from '../pages/MoviesSearchPage'
-import { MyLibraryPage } from '../pages/MyLibraryPage'
-import { MyListsPage } from '../pages/MyListsPage'
-import { MyReviewsPage } from '../pages/MyReviewsPage'
-import { PeopleSearchPage } from '../pages/PeopleSearchPage'
-import { PersonDetailsPage } from '../pages/PersonDetailsPage'
-import { PosterGamePage } from '../pages/PosterGamePage'
-import { KeywordDetailsPage } from '../pages/KeywordDetailsPage'
-import { FeedPage } from '../pages/FeedPage'
-import { FriendsPage } from '../pages/FriendsPage'
-import { FriendRequestsPage } from '../pages/FriendRequestsPage'
-import { DiscoverPage } from '../pages/DiscoverPage'
-import { EpisodeDetailsPage } from '../pages/EpisodeDetailsPage'
-import { PublicListDetailsPage } from '../pages/PublicListDetailsPage'
-import { PublicListsPage } from '../pages/PublicListsPage'
-import { PublicProfilePage } from '../pages/PublicProfilePage'
-import { PublicReviewsPage } from '../pages/PublicReviewsPage'
-import { RegisterPage } from '../pages/RegisterPage'
-import { NetworkDetailsPage } from '../pages/NetworkDetailsPage'
-import { SeasonDetailsPage } from '../pages/SeasonDetailsPage'
-import { SeriesDetailsPage } from '../pages/SeriesDetailsPage'
-import { SeriesSearchPage } from '../pages/SeriesSearchPage'
-import { SearchPage } from '../pages/SearchPage'
-import { TmdbAccountPage } from '../pages/TmdbAccountPage'
-import { TmdbCallbackPage } from '../pages/TmdbCallbackPage'
-import { TmdbReviewDetailsPage } from '../pages/TmdbReviewDetailsPage'
-import { UserProfilePage } from '../pages/UserProfilePage'
+
+// Every page is code-split into its own chunk so the initial load only ships the
+// shell + the landing route; the rest streams in on navigation (cached after first visit).
+function lazyPage(loader: () => Promise<Record<string, unknown>>, name: string) {
+  return lazy(async () => ({ default: (await loader())[name] as ComponentType }))
+}
+
+const HomePage = lazyPage(() => import('../pages/HomePage'), 'HomePage')
+const ComparePage = lazyPage(() => import('../pages/ComparePage'), 'ComparePage')
+const CollectionDetailsPage = lazyPage(() => import('../pages/CollectionDetailsPage'), 'CollectionDetailsPage')
+const CompanyDetailsPage = lazyPage(() => import('../pages/CompanyDetailsPage'), 'CompanyDetailsPage')
+const LoginPage = lazyPage(() => import('../pages/LoginPage'), 'LoginPage')
+const ListDetailsPage = lazyPage(() => import('../pages/ListDetailsPage'), 'ListDetailsPage')
+const MePage = lazyPage(() => import('../pages/MePage'), 'MePage')
+const MovieDetailsPage = lazyPage(() => import('../pages/MovieDetailsPage'), 'MovieDetailsPage')
+const MoviesSearchPage = lazyPage(() => import('../pages/MoviesSearchPage'), 'MoviesSearchPage')
+const MyLibraryPage = lazyPage(() => import('../pages/MyLibraryPage'), 'MyLibraryPage')
+const MyListsPage = lazyPage(() => import('../pages/MyListsPage'), 'MyListsPage')
+const MyReviewsPage = lazyPage(() => import('../pages/MyReviewsPage'), 'MyReviewsPage')
+const PeopleSearchPage = lazyPage(() => import('../pages/PeopleSearchPage'), 'PeopleSearchPage')
+const PersonDetailsPage = lazyPage(() => import('../pages/PersonDetailsPage'), 'PersonDetailsPage')
+const PosterGamePage = lazyPage(() => import('../pages/PosterGamePage'), 'PosterGamePage')
+const KeywordDetailsPage = lazyPage(() => import('../pages/KeywordDetailsPage'), 'KeywordDetailsPage')
+const FeedPage = lazyPage(() => import('../pages/FeedPage'), 'FeedPage')
+const FriendsPage = lazyPage(() => import('../pages/FriendsPage'), 'FriendsPage')
+const FriendRequestsPage = lazyPage(() => import('../pages/FriendRequestsPage'), 'FriendRequestsPage')
+const DiscoverPage = lazyPage(() => import('../pages/DiscoverPage'), 'DiscoverPage')
+const EpisodeDetailsPage = lazyPage(() => import('../pages/EpisodeDetailsPage'), 'EpisodeDetailsPage')
+const PublicListDetailsPage = lazyPage(() => import('../pages/PublicListDetailsPage'), 'PublicListDetailsPage')
+const PublicListsPage = lazyPage(() => import('../pages/PublicListsPage'), 'PublicListsPage')
+const PublicProfilePage = lazyPage(() => import('../pages/PublicProfilePage'), 'PublicProfilePage')
+const PublicReviewsPage = lazyPage(() => import('../pages/PublicReviewsPage'), 'PublicReviewsPage')
+const RegisterPage = lazyPage(() => import('../pages/RegisterPage'), 'RegisterPage')
+const NetworkDetailsPage = lazyPage(() => import('../pages/NetworkDetailsPage'), 'NetworkDetailsPage')
+const SeasonDetailsPage = lazyPage(() => import('../pages/SeasonDetailsPage'), 'SeasonDetailsPage')
+const SeriesDetailsPage = lazyPage(() => import('../pages/SeriesDetailsPage'), 'SeriesDetailsPage')
+const SeriesSearchPage = lazyPage(() => import('../pages/SeriesSearchPage'), 'SeriesSearchPage')
+const SearchPage = lazyPage(() => import('../pages/SearchPage'), 'SearchPage')
+const TmdbReviewDetailsPage = lazyPage(() => import('../pages/TmdbReviewDetailsPage'), 'TmdbReviewDetailsPage')
+const UserProfilePage = lazyPage(() => import('../pages/UserProfilePage'), 'UserProfilePage')
+const AdminActivityEventsPage = lazyPage(() => import('../pages/admin/AdminActivityEventsPage'), 'AdminActivityEventsPage')
+const AdminAuditLogsPage = lazyPage(() => import('../pages/admin/AdminAuditLogsPage'), 'AdminAuditLogsPage')
+const AdminDashboardPage = lazyPage(() => import('../pages/admin/AdminDashboardPage'), 'AdminDashboardPage')
+const AdminListsPage = lazyPage(() => import('../pages/admin/AdminListsPage'), 'AdminListsPage')
+const AdminReviewsPage = lazyPage(() => import('../pages/admin/AdminReviewsPage'), 'AdminReviewsPage')
+const AdminSystemEventsPage = lazyPage(() => import('../pages/admin/AdminSystemEventsPage'), 'AdminSystemEventsPage')
+const AdminUserDetailsPage = lazyPage(() => import('../pages/admin/AdminUserDetailsPage'), 'AdminUserDetailsPage')
+const AdminUsersPage = lazyPage(() => import('../pages/admin/AdminUsersPage'), 'AdminUsersPage')
+
+function PageFallback() {
+  return (
+    <div className="cinema-page grid min-h-svh place-items-center">
+      <div className="flex flex-col items-center gap-4">
+        <span className="brand-mark animate-pulse" aria-hidden="true">
+          <span className="brand-mark-play" />
+        </span>
+        <span className="text-sm text-[var(--color-text-secondary)]">Cargando…</span>
+      </div>
+    </div>
+  )
+}
 
 function withScroll(element: ReactNode) {
   return <ScrollToTop>{element}</ScrollToTop>
@@ -192,14 +211,6 @@ const routes: RouteObject[] = [
         element: <ListDetailsPage />,
       },
       {
-        path: '/me/tmdb',
-        element: <TmdbAccountPage />,
-      },
-      {
-        path: '/me/tmdb/callback',
-        element: <TmdbCallbackPage />,
-      },
-      {
         path: '/feed',
         element: <FeedPage />,
       },
@@ -261,7 +272,9 @@ const router = createBrowserRouter(routes.map(withAppError))
 export function App() {
   return (
     <RuntimeErrorBoundary>
-      <RouterProvider router={router} />
+      <Suspense fallback={<PageFallback />}>
+        <RouterProvider router={router} />
+      </Suspense>
     </RuntimeErrorBoundary>
   )
 }

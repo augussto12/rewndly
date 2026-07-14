@@ -124,7 +124,6 @@ a {
     conic-gradient(from 214deg at 50% -12%, transparent 0deg, rgba(var(--ambient-b), var(--ambient-b-strength)) 40deg, rgba(var(--ambient-a), var(--ambient-a-strength)) 68deg, transparent 124deg);
   filter: blur(24px);
   transform: translate3d(0, 0, 0) scale(1.02);
-  animation: ambient-projector 36s ease-in-out infinite alternate;
 }
 
 .cinema-page--home {
@@ -179,20 +178,11 @@ a {
   --ambient-texture-opacity: 0.62;
 }
 
-@keyframes ambient-projector {
-  0% {
-    transform: translate3d(-1.5vw, -0.8vh, 0) scale(1.02);
-  }
-
-  100% {
-    transform: translate3d(1.4vw, 1vh, 0) scale(1.055);
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .cinema-page::after {
-    animation: none;
-  }
+/* Long lists of poster/person cards: skip layout & paint for off-screen cards.
+   `contain-intrinsic-size` reserves a stable placeholder height until painted. */
+.media-card-cv {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 340px;
 }
 
 .site-header {
@@ -587,6 +577,12 @@ textarea.field {
 
 .field::placeholder {
   color: var(--color-text-secondary);
+}
+
+/* Hide the browser's native search clear button; we render our own consistent one. */
+input[type="search"]::-webkit-search-cancel-button {
+  -webkit-appearance: none;
+  appearance: none;
 }
 
 .field:focus {

@@ -3,21 +3,27 @@ import { Link } from 'react-router-dom'
 import { EmptyState } from '../components/feedback/EmptyState/EmptyState'
 import { ErrorState } from '../components/feedback/ErrorState/ErrorState'
 import { LoadingSkeleton } from '../components/feedback/LoadingSkeleton/LoadingSkeleton'
+import { useConfirm } from '../components/feedback/ConfirmDialog/ConfirmDialog'
 import { toast } from '../components/feedback/Toast/toastStore'
 import { VisibilityChip } from '../features/user-content/components/VisibilityChip'
 import { useCreateList, useDeleteList, useMyLists } from '../features/user-content/hooks/useUserContent'
 import type { UserList, Visibility } from '../features/user-content/types/userContent.types'
+import { PaginationFooter } from '../components/ui/PaginationFooter'
+import { useClientPagination } from '../components/ui/useClientPagination'
+import { InlineError } from '../components/feedback/InlineError/InlineError'
 import { PublicLayout } from '../layouts/PublicLayout'
 import { getErrorMessage } from '../services/apiError'
 
 export function MyListsPage() {
   const { data, isError, isLoading } = useMyLists()
+  const pager = useClientPagination(data ?? [], 12)
   const createList = useCreateList()
   const deleteList = useDeleteList()
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
   const [visibility, setVisibility] = useState<Visibility>('Public')
   const [actionError, setActionError] = useState<string | null>(null)
+  const { confirm, confirmDialog } = useConfirm()
 
   async function submitList() {
     if (!title.trim()) {
@@ -41,6 +47,17 @@ export function MyListsPage() {
   }
 
   async function removeList(id: string) {
+    const confirmed = await confirm({
+      title: 'Eliminar lista',
+      message: 'Se va a borrar la lista y todo su contenido de forma permanente. Esta acción no se puede deshacer.',
+      confirmLabel: 'Eliminar',
+      tone: 'danger',
+    })
+
+    if (!confirmed) {
+      return
+    }
+
     setActionError(null)
 
     try {
@@ -61,18 +78,24 @@ export function MyListsPage() {
 
         <section className="surface-panel mb-8 p-5">
           <h2 className="text-xl font-semibold">Crear lista</h2>
-          <div className="mt-4 grid gap-3 md:grid-cols-[1fr_1fr_auto_auto]">
-            <input value={title} onChange={(event) => setTitle(event.target.value)} placeholder="Título" className="field" />
-            <input value={description} onChange={(event) => setDescription(event.target.value)} placeholder="Descripción" className="field" />
-            <select value={visibility} onChange={(event) => setVisibility(event.target.value as Visibility)} className="field">
+          <form
+            onSubmit={(event) => {
+              event.preventDefault()
+              void submitList()
+            }}
+            className="mt-4 grid gap-3 md:grid-cols-[1fr_1fr_auto_auto]"
+          >
+            <input value={title} onChange={(event) => setTitle(event.target.value)} placeholder="Título" aria-label="Título de la lista" className="field" />
+            <input value={description} onChange={(event) => setDescription(event.target.value)} placeholder="Descripción" aria-label="Descripción de la lista" className="field" />
+            <select value={visibility} onChange={(event) => setVisibility(event.target.value as Visibility)} aria-label="Visibilidad de la lista" className="field">
               <option value="Public">Pública</option>
               <option value="FriendsOnly">Solo amigos</option>
               <option value="Private">Privada</option>
             </select>
-            <button onClick={() => void submitList()} className="primary-action">
+            <button type="submit" disabled={!title.trim() || createList.isPending} className="primary-action">
               Crear
             </button>
-          </div>
+          </form>
           {actionError ? <ActionError message={actionError} /> : null}
         </section>
 
@@ -80,11 +103,13 @@ export function MyListsPage() {
         {isError ? <ErrorState /> : null}
         {!isLoading && !isError && data?.length === 0 ? <EmptyState title="Sin listas" message="Creá tu primera lista." /> : null}
         <div className="grid gap-4 md:grid-cols-2">
-          {data?.map((list) => (
+          {pager.pagedItems.map((list) => (
             <ListCard key={list.id} list={list} isDeleting={deleteList.isPending} onRemove={() => void removeList(list.id)} />
           ))}
         </div>
+        <PaginationFooter pager={pager} unit="listas" />
       </main>
+      {confirmDialog}
     </PublicLayout>
   )
 }
@@ -116,7 +141,7 @@ function ListCard({ list, isDeleting, onRemove }: { list: UserList; isDeleting: 
           type="button"
           onClick={onRemove}
           disabled={isDeleting}
-          className="inline-flex min-h-9 items-center justify-center gap-2 rounded-[var(--radius-sm)] border border-red-300/20 bg-red-500/10 px-3 py-2 text-xs font-semibold text-red-100 transition hover:bg-red-500/15 disabled:cursor-not-allowed disabled:opacity-60"
+          className="danger-action min-h-9 gap-2 px-3 py-2 text-xs"
         >
           <TrashIcon />
           Eliminar
@@ -131,7 +156,7 @@ function formatTitleCount(count: number) {
 }
 
 function ActionError({ message }: { message: string }) {
-  return <p className="mt-4 rounded-[var(--radius-sm)] border border-red-300/20 bg-red-950/25 px-3 py-2 text-sm text-red-200">{message}</p>
+  return <InlineError message={message} className="mt-4" />
 }
 
 function ListIcon(props: SVGProps<SVGSVGElement>) {

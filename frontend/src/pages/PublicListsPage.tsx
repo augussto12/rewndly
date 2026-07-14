@@ -9,6 +9,8 @@ import type { PublicList } from '../features/social/types/social.types'
 import { useCreateList } from '../features/user-content/hooks/useUserContent'
 import type { Visibility } from '../features/user-content/types/userContent.types'
 import { flattenUniqueArrayPages } from '../lib/pagination'
+import { LoadMoreButton } from '../components/ui/LoadMoreButton'
+import { InlineError } from '../components/feedback/InlineError/InlineError'
 import { PublicLayout } from '../layouts/PublicLayout'
 import { getErrorMessage } from '../services/apiError'
 
@@ -57,18 +59,24 @@ export function PublicListsPage() {
             <p className="mt-2 text-sm leading-6 text-[var(--color-text-secondary)]">
               Creá una lista pública, privada o solo para amigos. Después podés sumar películas y series desde cada detalle.
             </p>
-            <div className="mt-4 grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_11rem_auto]">
-              <input value={title} onChange={(event) => setTitle(event.target.value)} placeholder="Título" className="field" />
-              <input value={description} onChange={(event) => setDescription(event.target.value)} placeholder="Descripción" className="field" />
-              <select value={visibility} onChange={(event) => setVisibility(event.target.value as Visibility)} className="field">
+            <form
+              onSubmit={(event) => {
+                event.preventDefault()
+                void submitList()
+              }}
+              className="mt-4 grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_11rem_auto]"
+            >
+              <input value={title} onChange={(event) => setTitle(event.target.value)} placeholder="Título" aria-label="Título de la lista" className="field" />
+              <input value={description} onChange={(event) => setDescription(event.target.value)} placeholder="Descripción" aria-label="Descripción de la lista" className="field" />
+              <select value={visibility} onChange={(event) => setVisibility(event.target.value as Visibility)} aria-label="Visibilidad de la lista" className="field">
                 <option value="Public">Pública</option>
                 <option value="FriendsOnly">Solo amigos</option>
                 <option value="Private">Privada</option>
               </select>
-              <button onClick={() => void submitList()} disabled={!title.trim() || createList.isPending} className="primary-action">
+              <button type="submit" disabled={!title.trim() || createList.isPending} className="primary-action">
                 Crear
               </button>
-            </div>
+            </form>
             {actionError ? <ActionError message={actionError} /> : null}
           </section>
         ) : null}
@@ -89,19 +97,6 @@ export function PublicListsPage() {
 }
 
 function ActionError({ message }: { message: string }) {
-  return <p className="mt-4 rounded-[var(--radius-sm)] border border-red-300/20 bg-red-950/25 px-3 py-2 text-sm text-red-200">{message}</p>
+  return <InlineError message={message} className="mt-4" />
 }
 
-function LoadMoreButton({ hasMore, isLoading, onClick }: { hasMore: boolean; isLoading: boolean; onClick: () => void }) {
-  if (!hasMore) {
-    return null
-  }
-
-  return (
-    <div className="mt-8 flex justify-center">
-      <button type="button" onClick={onClick} disabled={isLoading} className="secondary-action">
-        {isLoading ? 'Cargando...' : 'Mostrar más'}
-      </button>
-    </div>
-  )
-}

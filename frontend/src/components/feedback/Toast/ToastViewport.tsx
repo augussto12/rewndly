@@ -42,13 +42,13 @@ export function ToastViewport() {
           <button
             type="button"
             onClick={() => dismissToast(message.id)}
-            className="grid h-8 w-8 shrink-0 place-items-center rounded-[var(--radius-sm)] border border-white/10 bg-white/[0.08] text-sm font-semibold text-white/70 transition hover:bg-white/[0.14] hover:text-white"
-            aria-label="Cerrar notificacion"
+            className="grid h-8 w-8 shrink-0 place-items-center rounded-[var(--radius-sm)] border border-white/10 bg-white/[0.08] text-white/70 transition hover:bg-white/[0.14] hover:text-white"
+            aria-label="Cerrar notificación"
           >
-            x
+            <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18M6 6l12 12" /></svg>
           </button>
           {message.tone === 'loading' ? (
-            <span className="absolute inset-x-0 bottom-0 h-px overflow-hidden bg-white/8">
+            <span className="absolute inset-x-0 bottom-0 h-px overflow-hidden bg-white/[0.08]">
               <span className="block h-full w-1/2 animate-pulse bg-violet-200/70" />
             </span>
           ) : null}

@@ -5,6 +5,7 @@ import { LoadingSkeleton } from '../components/feedback/LoadingSkeleton/LoadingS
 import { toast } from '../components/feedback/Toast/toastStore'
 import { FriendRequestCard } from '../features/social/components/FriendRequestCard'
 import { useAcceptFriendRequest, useFriendRequests, useRejectFriendRequest, useSendFriendRequest } from '../features/social/hooks/useSocial'
+import { InlineError } from '../components/feedback/InlineError/InlineError'
 import { PublicLayout } from '../layouts/PublicLayout'
 import { getErrorMessage } from '../services/apiError'
 
@@ -38,7 +39,7 @@ export function FriendRequestsPage() {
     try {
       await acceptRequest.mutateAsync(id)
     } catch (error) {
-      setActionError(getErrorMessage(error, 'No se pudo aceptar la solicitud. Puede que ya no este pendiente.'))
+      setActionError(getErrorMessage(error, 'No se pudo aceptar la solicitud. Puede que ya no esté pendiente.'))
     }
   }
 
@@ -48,7 +49,7 @@ export function FriendRequestsPage() {
     try {
       await rejectRequest.mutateAsync(id)
     } catch (error) {
-      setActionError(getErrorMessage(error, 'No se pudo rechazar la solicitud. Puede que ya no este pendiente.'))
+      setActionError(getErrorMessage(error, 'No se pudo rechazar la solicitud. Puede que ya no esté pendiente.'))
     }
   }
 
@@ -60,12 +61,24 @@ export function FriendRequestsPage() {
           <h1 className="mt-3 text-4xl font-semibold">Solicitudes de amistad</h1>
           <p className="mt-3 text-[var(--color-text-secondary)]">Invitá por usuario y aceptá conexiones con criterio.</p>
         </header>
-        <section className="surface-panel mb-8 flex flex-col gap-3 p-4 sm:flex-row">
-          <input value={username} onChange={(event) => setUsername(event.target.value)} placeholder="username" className="field min-w-0 flex-1" />
-          <button onClick={() => void submit()} className="primary-action">
+        <form
+          onSubmit={(event) => {
+            event.preventDefault()
+            void submit()
+          }}
+          className="surface-panel mb-8 flex flex-col gap-3 p-4 sm:flex-row"
+        >
+          <input
+            value={username}
+            onChange={(event) => setUsername(event.target.value)}
+            placeholder="Usuario"
+            aria-label="Usuario a invitar"
+            className="field min-w-0 flex-1"
+          />
+          <button type="submit" disabled={sendRequest.isPending} className="primary-action">
             Enviar
           </button>
-        </section>
+        </form>
         {isLoading ? <LoadingSkeleton /> : null}
         {isError ? <ErrorState /> : null}
         {actionError ? <ActionError message={actionError} /> : null}
@@ -86,5 +99,5 @@ export function FriendRequestsPage() {
 }
 
 function ActionError({ message }: { message: string }) {
-  return <p className="mb-6 rounded-[var(--radius-sm)] border border-red-300/20 bg-red-950/25 px-3 py-2 text-sm text-red-200">{message}</p>
+  return <InlineError message={message} className="mb-6" />
 }

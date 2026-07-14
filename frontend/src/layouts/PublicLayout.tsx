@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, type PropsWithChildren, type SVGProps } from 'react'
 import { Link, NavLink } from 'react-router-dom'
 import { GlobalSearch } from '../components/search/GlobalSearch/GlobalSearch'
+import { BackToTop } from '../components/ui/BackToTop'
 import { UserAvatar } from '../components/user/UserAvatar'
 import { useAuth } from '../features/auth/useAuth'
 
@@ -188,6 +189,7 @@ export function PublicLayout({ children, ambient = 'default' }: PublicLayoutProp
   const [isAvatarMenuOpen, setIsAvatarMenuOpen] = useState(false)
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
   const avatarMenuRef = useRef<HTMLDivElement>(null)
+  const sidebarCloseRef = useRef<HTMLButtonElement>(null)
 
   const isAdmin = user?.role === 'Admin'
 
@@ -215,9 +217,12 @@ export function PublicLayout({ children, ambient = 'default' }: PublicLayoutProp
     return () => document.removeEventListener('keydown', handleKey)
   }, [])
 
-  // Lock body scroll when sidebar is open
+  // Lock body scroll and move focus into the drawer when the sidebar opens
   useEffect(() => {
     document.body.style.overflow = isSidebarOpen ? 'hidden' : ''
+    if (isSidebarOpen) {
+      sidebarCloseRef.current?.focus()
+    }
     return () => { document.body.style.overflow = '' }
   }, [isSidebarOpen])
 
@@ -281,7 +286,7 @@ export function PublicLayout({ children, ambient = 'default' }: PublicLayoutProp
 
                 {/* Dropdown menu */}
                 <div
-                  role="menu"
+                  inert={!isAvatarMenuOpen}
                   className={`nav-dropdown ${isAvatarMenuOpen ? 'nav-dropdown--open' : ''}`}
                 >
                   {/* User header */}
@@ -336,8 +341,7 @@ export function PublicLayout({ children, ambient = 'default' }: PublicLayoutProp
                     </NavLink>
                     <button
                       type="button"
-                      role="menuitem"
-                      onClick={() => { closeDropdown(); logout() }}
+                                           onClick={() => { closeDropdown(); logout() }}
                       className="flex w-full items-center gap-2.5 rounded-[var(--radius-sm)] px-2.5 py-2 text-sm text-[#f87171] transition hover:bg-white/[0.05]"
                     >
                       <IconLogOut /> Cerrar sesión
@@ -364,6 +368,9 @@ export function PublicLayout({ children, ambient = 'default' }: PublicLayoutProp
               <button
                 type="button"
                 aria-label="Abrir menú"
+                aria-expanded={isSidebarOpen}
+                aria-haspopup="menu"
+                aria-controls="mobile-sidebar"
                 onClick={() => setIsSidebarOpen(true)}
                 className="flex items-center gap-2 rounded-[var(--radius-sm)] px-2 py-1.5 text-sm text-[var(--color-text-secondary)] transition hover:bg-white/[0.06] hover:text-white"
               >
@@ -376,6 +383,9 @@ export function PublicLayout({ children, ambient = 'default' }: PublicLayoutProp
               <button
                 type="button"
                 aria-label="Abrir menú"
+                aria-expanded={isSidebarOpen}
+                aria-haspopup="menu"
+                aria-controls="mobile-sidebar"
                 onClick={() => setIsSidebarOpen(true)}
                 className="inline-grid h-9 w-9 place-items-center rounded-[var(--radius-sm)] border border-white/10 bg-white/[0.06] text-[var(--color-text-secondary)] transition hover:bg-white/[0.1] hover:text-white"
               >
@@ -397,8 +407,9 @@ export function PublicLayout({ children, ambient = 'default' }: PublicLayoutProp
 
       {/* ═══════════════════ SIDEBAR DRAWER ═══════════════════ */}
       <aside
+        id="mobile-sidebar"
         aria-label="Menú lateral"
-        aria-hidden={!isSidebarOpen}
+        inert={!isSidebarOpen}
         className={`fixed inset-y-0 right-0 z-50 flex w-72 flex-col border-l border-white/[0.09] bg-[rgba(13,15,28,0.98)] shadow-2xl backdrop-blur-xl transition-transform duration-300 ease-out lg:hidden ${
           isSidebarOpen ? 'translate-x-0' : 'translate-x-full'
         }`}
@@ -416,6 +427,7 @@ export function PublicLayout({ children, ambient = 'default' }: PublicLayoutProp
             <span>Rewndly</span>
           </Link>
           <button
+            ref={sidebarCloseRef}
             type="button"
             aria-label="Cerrar menú"
             onClick={closeSidebar}
@@ -521,6 +533,8 @@ export function PublicLayout({ children, ambient = 'default' }: PublicLayoutProp
 
       {/* ═══════════════════ PAGE CONTENT ═══════════════════ */}
       <div className="flex-1">{children}</div>
+
+      <BackToTop />
 
       {/* ═══════════════════ FOOTER ═══════════════════ */}
       <footer className="border-t border-white/10 bg-black/20">

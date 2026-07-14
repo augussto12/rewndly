@@ -145,7 +145,7 @@ Development email/password reset endpoints return dev tokens only in Development
 
 Do not deploy with development secrets or the development admin password.
 
-Current deploy state: Fase 10 is approved as preparation only. Rewndly is ready for a controlled trial deploy, but it has not been deployed remotely. Fase 10B and final production remain pending.
+Current deploy state: Fase 10B is approved as a controlled VPS trial deploy at `rewndly.com`. Final production remains pending.
 
 For a VPS that already runs Nginx Proxy Manager, use `/opt/rewndly`, keep `.env.production` on the server only, and proxy `rewndly.com` to `127.0.0.1:18080`. The NPM flow serves the frontend through its container and proxies `/api/*` internally to the ASP.NET Core API, so the API and PostgreSQL are not exposed publicly.
 

@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import { InlineError } from '../components/feedback/InlineError/InlineError'
 import { PasswordField } from '../components/forms/PasswordField'
 import { useAuth } from '../features/auth/useAuth'
 import { APP_VERSION } from '../lib/appVersion'
@@ -45,7 +46,7 @@ export function LoginPage() {
           <input value={identifier} onChange={(event) => setIdentifier(event.target.value)} className="field mt-2" autoComplete="username" />
         </label>
         <PasswordField label="Contraseña" value={password} onChange={setPassword} autoComplete="current-password" className="mt-4" />
-        {error ? <p className="mt-4 rounded-[var(--radius-sm)] border border-red-300/20 bg-red-950/25 px-3 py-2 text-sm text-red-200">{error}</p> : null}
+        {error ? <InlineError message={error} className="mt-4" /> : null}
         <button className="primary-action mt-6 w-full">Entrar</button>
         <Link to="/register" className="mt-4 block text-center text-sm text-[var(--color-text-secondary)] hover:text-white">
           Crear cuenta

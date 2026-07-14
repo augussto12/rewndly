@@ -4,7 +4,7 @@ This guide prepares a controlled VPS trial deploy. It is not a final production 
 
 Do not paste real secrets into chat and do not commit `.env.production`.
 
-Current status: Fase 10 is approved as preparation only. Rewndly is ready for a controlled trial deploy, but the real remote VPS deploy is paused until explicit approval. Fase 10B and final production remain pending.
+Current status: Fase 10B is approved as a controlled VPS trial deploy at `rewndly.com`. Final production remains pending.
 
 Public product name:
 

@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { EmptyState } from '../components/feedback/EmptyState/EmptyState'
 import { ErrorState } from '../components/feedback/ErrorState/ErrorState'
-import { LoadingSkeleton } from '../components/feedback/LoadingSkeleton/LoadingSkeleton'
+import { MediaGridSkeleton } from '../components/feedback/GridSkeleton/GridSkeleton'
 import { FilterChip } from '../components/filters/FilterChip'
 import { MediaGrid } from '../components/media/MediaGrid/MediaGrid'
 import { discoverMovies, discoverSeries } from '../features/public-media/services/publicMediaApi'
@@ -12,9 +12,13 @@ import {
   useMovieRanking,
   useTopRatedMovies,
 } from '../features/public-media/hooks/usePublicMedia'
+import { useLibraryRecommendations } from '../features/public-media/hooks/useLibraryRecommendations'
+import { useBestMoviesOfYear } from '../features/public-media/hooks/useBestMoviesOfYear'
 import type { DiscoverFilters, MediaSummary, RankedMediaSummary } from '../features/public-media/types/publicMedia.types'
 import { exploreMoodCollections, getMovieDiscoveryCollection } from '../features/public-media/utils/discoveryCollections'
-import { flattenUniquePages } from '../lib/pagination'
+import { fillGridRows, flattenUniquePages } from '../lib/pagination'
+import { LoadMoreButton } from '../components/ui/LoadMoreButton'
+import { SegmentedControl } from '../components/ui/SegmentedControl'
 import { PublicLayout } from '../layouts/PublicLayout'
 
 const movieSortOptions = [
@@ -71,6 +75,12 @@ export function DiscoverPage() {
     .slice(0, 12)
   const gemsItems = flattenUniquePages<MediaSummary>(gems.data, (item) => `${item.mediaType}-${item.tmdbId}`).slice(0, 12)
   const classicsItems = flattenUniquePages<MediaSummary>(classics.data, (item) => `${item.mediaType}-${item.tmdbId}`).slice(0, 12)
+  const currentYear = new Date().getFullYear()
+  const yearOptions = useMemo(() => Array.from({ length: currentYear - 1969 }, (_, index) => currentYear - index), [currentYear])
+  const [bestYear, setBestYear] = useState(currentYear)
+  const bestOfYear = useBestMoviesOfYear(bestYear)
+  const bestOfYearItems = bestOfYear.items
+  const recommendations = useLibraryRecommendations()
 
   function changeMediaType(value: 'Movie' | 'Series') {
     setActiveMood('')
@@ -150,14 +160,16 @@ export function DiscoverPage() {
             <div className="mt-5 grid gap-4 border-t border-white/10 pt-5 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-[auto_1fr_1fr_1fr_1fr_12rem]">
               <div>
                 <span className="block text-sm text-[var(--color-text-secondary)]">Tipo</span>
-                <div className="mt-2 grid grid-cols-2 gap-2 rounded-[var(--radius-sm)] border border-white/10 bg-black/20 p-1">
-                  <FilterChip active={mediaType === 'Movie'} onClick={() => changeMediaType('Movie')} className="w-full">
-                    Películas
-                  </FilterChip>
-                  <FilterChip active={mediaType === 'Series'} onClick={() => changeMediaType('Series')} className="w-full">
-                    Series
-                  </FilterChip>
-                </div>
+                <SegmentedControl
+                  ariaLabel="Tipo de contenido"
+                  className="mt-2"
+                  value={mediaType}
+                  onChange={changeMediaType}
+                  options={[
+                    { value: 'Movie', label: 'Películas' },
+                    { value: 'Series', label: 'Series' },
+                  ]}
+                />
               </div>
 
               <label className="text-sm text-[var(--color-text-secondary)]">
@@ -263,14 +275,19 @@ export function DiscoverPage() {
               ) : null}
             </div>
           </div>
-          {results.isLoading ? <LoadingSkeleton /> : null}
-          {results.isError ? <ErrorState title="No pudimos cargar discovery" /> : null}
+          {results.isLoading ? <MediaGridSkeleton /> : null}
+          {results.isError ? (
+            <ErrorState
+              title="No pudimos cargar discovery"
+              action={<button type="button" onClick={() => void results.refetch()} className="secondary-action">Reintentar</button>}
+            />
+          ) : null}
           {!results.isLoading && !results.isError && data.length === 0 ? (
             <EmptyState title="Sin resultados" message="Probá otro ánimo o tocá Afinar para cambiar filtros." />
           ) : null}
           {!results.isLoading && !results.isError && data.length > 0 ? (
             <>
-              <MediaGrid items={data} />
+              <MediaGrid items={fillGridRows(data, Boolean(results.hasNextPage))} />
               <LoadMoreButton
                 hasMore={Boolean(results.hasNextPage)}
                 isLoading={results.isFetchingNextPage}
@@ -278,6 +295,52 @@ export function DiscoverPage() {
               />
             </>
           ) : null}
+        </section>
+
+        {recommendations.isAuthenticated && (recommendations.hasSeeds || recommendations.isLoading) ? (
+          <section className="mt-12">
+            <div className="mb-6">
+              <p className="kicker">Para vos</p>
+              <h2 className="mt-2 text-2xl font-semibold">Recomendado según tu biblioteca</h2>
+              <p className="mt-2 text-sm text-[var(--color-text-secondary)]">
+                Cruzamos lo que marcaste como visto, favorito o puntuaste alto para sugerirte pelis que todavía no tenés.
+              </p>
+            </div>
+            {recommendations.isLoading ? (
+              <MediaGridSkeleton />
+            ) : recommendations.recommendations.length > 0 ? (
+              <MediaGrid items={recommendations.recommendations.slice(0, 12)} />
+            ) : (
+              <EmptyState title="Todavía sin recomendaciones" message="Marcá algunas pelis como vistas o favoritas y vas a ver sugerencias personalizadas acá." />
+            )}
+          </section>
+        ) : null}
+
+        <section className="mt-12">
+          <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
+            <div>
+              <p className="kicker">Ranking</p>
+              <h2 className="mt-2 text-2xl font-semibold">Mejores películas del año</h2>
+              <p className="mt-2 text-sm text-[var(--color-text-secondary)]">Las mejor puntuadas de cada año, para cuando no sabés qué ver.</p>
+            </div>
+            <label className="flex items-center gap-2 text-sm text-[var(--color-text-secondary)]">
+              Año
+              <select value={bestYear} onChange={(event) => setBestYear(Number(event.target.value))} className="field w-28" aria-label="Año">
+                {yearOptions.map((option) => (
+                  <option key={option} value={option}>
+                    {option}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
+          {bestOfYear.isLoading ? (
+            <MediaGridSkeleton />
+          ) : bestOfYearItems.length > 0 ? (
+            <MediaGrid items={bestOfYearItems} />
+          ) : (
+            <EmptyState title="Sin resultados" message="No encontramos películas mejor puntuadas para ese año." />
+          )}
         </section>
 
         <QuickShelf kicker="Radar Rewndly" title="Joyas modernas" items={gemsItems} viewAllHref="/movies/search?category=gems" />
@@ -307,20 +370,6 @@ function QuickShelf({ kicker, title, items, viewAllHref }: { kicker: string; tit
       </div>
       <MediaGrid items={items.slice(0, 12)} />
     </section>
-  )
-}
-
-function LoadMoreButton({ hasMore, isLoading, onClick }: { hasMore: boolean; isLoading: boolean; onClick: () => void }) {
-  if (!hasMore) {
-    return null
-  }
-
-  return (
-    <div className="mt-8 flex justify-center">
-      <button type="button" onClick={onClick} disabled={isLoading} className="secondary-action">
-        {isLoading ? 'Cargando...' : 'Mostrar más'}
-      </button>
-    </div>
   )
 }
 

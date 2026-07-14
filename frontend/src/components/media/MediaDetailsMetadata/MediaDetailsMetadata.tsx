@@ -156,7 +156,7 @@ function ImagesTab({ images }: { images: MediaImage[] }) {
   return (
     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
       {images.map((image) => (
-        <a key={image.url} href={image.url} target="_blank" rel="noreferrer" className="group block overflow-hidden rounded-[var(--radius-md)] border border-white/10 bg-black/30">
+        <a key={image.url} href={image.url} target="_blank" rel="noreferrer" aria-label={`Abrir ${translateTmdbLabel(image.type)} en tamaño completo`} className="group block overflow-hidden rounded-[var(--radius-md)] border border-white/10 bg-black/30">
           <div className={image.type === 'Poster' ? 'aspect-[2/3]' : 'aspect-video'}>
             <img src={image.url} alt="" className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.035]" loading="lazy" />
           </div>

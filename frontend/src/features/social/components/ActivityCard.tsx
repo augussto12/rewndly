@@ -2,15 +2,15 @@ import { Link } from 'react-router-dom'
 import type { ActivityEvent } from '../types/social.types'
 
 const labels: Record<string, string> = {
-  AddedToWatchlist: 'agrego a su lista',
-  MarkedAsWatched: 'marco como vista',
-  Rated: 'puntuo',
-  Reviewed: 'reseno',
-  CreatedList: 'creo una lista',
-  AddedToList: 'agrego contenido a una lista',
-  Favorited: 'marco como favorita',
-  FriendRequestAccepted: 'acepto una solicitud',
-  FriendAdded: 'sumo una amistad',
+  AddedToWatchlist: 'agregó a su lista',
+  MarkedAsWatched: 'marcó como vista',
+  Rated: 'puntuó',
+  Reviewed: 'reseñó',
+  CreatedList: 'creó una lista',
+  AddedToList: 'agregó contenido a una lista',
+  Favorited: 'marcó como favorita',
+  FriendRequestAccepted: 'aceptó una solicitud',
+  FriendAdded: 'sumó una amistad',
 }
 
 export function ActivityCard({ activity }: { activity: ActivityEvent }) {

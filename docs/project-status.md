@@ -35,15 +35,15 @@ Fase 8: aprobada
 Fase 9: aprobada parcialmente por entorno
 Fase 9B: aprobada con PostgreSQL real
 Fase 10: aprobada como preparacion de deploy VPS
-Fase 10B: pendiente
+Fase 10B: aprobada como deploy de prueba controlado en VPS
 Produccion final: pendiente
 ```
 
 ## Deploy State
 
-Rewndly is ready for a controlled trial deploy, but it has not been deployed remotely.
+Rewndly is deployed remotely as a controlled VPS trial behind Nginx Proxy Manager at `rewndly.com`.
 
-Infrastructure and VPS work are paused until explicit approval.
+Fase 10B smoke tests passed on June 16, 2026. Final production remains pending.
 
 Prepared remote repository target:
 
@@ -72,13 +72,11 @@ Rewndly.DbMigrator uses MigrationConnectionStrings__DefaultConnection
 Rewndly.Api uses ConnectionStrings__DefaultConnection
 ```
 
-Before Fase 10B, verify on the target database that `rewndly_app` cannot create, alter or drop schema objects.
+Fase 10B verified on the target database that `rewndly_app` cannot create schema objects.
 
 Do not:
 
 ```txt
-Advance to Fase 10B
-Connect to the VPS
 Ask for secrets in chat
 Modify real production configuration
 Declare the system production-ready
@@ -93,6 +91,8 @@ Domain strategy
 Visual design
 Functional improvements
 Planning for future phases
+Post-deploy monitoring
+Mobile app preparation
 ```
 
 ## Secrets Rule

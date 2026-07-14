@@ -340,11 +340,7 @@ export function PosterGamePage() {
               </div>
 
               <div className="mt-5 flex flex-wrap gap-3">
-                <button
-                  type="button"
-                  onClick={resetLocalGame}
-                  className="inline-flex min-h-10 items-center justify-center rounded-[var(--radius-sm)] border border-red-300/25 bg-red-500/10 px-4 py-2 text-sm font-semibold text-red-100 transition hover:border-red-200/45 hover:bg-red-500/15"
-                >
+                <button type="button" onClick={resetLocalGame} className="danger-action">
                   Reiniciar
                 </button>
                 <button type="button" onClick={startAnotherMovie} className="secondary-action">

@@ -3,6 +3,7 @@ import { EmptyState } from '../components/feedback/EmptyState/EmptyState'
 import { ErrorState } from '../components/feedback/ErrorState/ErrorState'
 import { LoadingSkeleton } from '../components/feedback/LoadingSkeleton/LoadingSkeleton'
 import { MediaGrid } from '../components/media/MediaGrid/MediaGrid'
+import { BackButton } from '../components/navigation/BackButton'
 import { useNetworkDetails } from '../features/public-media/hooks/usePublicMedia'
 import { formatCountryName, getEntityInitials } from '../features/public-media/utils/tmdbLabels'
 import { PublicLayout } from '../layouts/PublicLayout'
@@ -28,6 +29,7 @@ export function NetworkDetailsPage() {
 
       {!isLoading && !isError && data ? (
         <main className="page-shell">
+          <BackButton fallbackHref="/discover" className="mb-6" />
           <section className="grid gap-6 md:grid-cols-[8rem_1fr]">
             <div className="grid h-28 w-28 place-items-center rounded-[var(--radius-md)] border border-white/10 bg-white/[0.045] p-4 md:h-32 md:w-32">
               {data.logoUrl ? <img src={data.logoUrl} alt="" className="max-h-full max-w-full object-contain" /> : <span className="text-center text-xl font-semibold text-violet-100/85">{getEntityInitials(data.name)}</span>}
@@ -46,7 +48,7 @@ export function NetworkDetailsPage() {
             </div>
           </section>
 
-          <section className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
+          <section className="mt-10 grid gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
             <div className="surface-panel p-4 sm:p-5">
               <p className="kicker">Catálogo</p>
               <h2 className="mt-2 text-2xl font-semibold">Series populares</h2>

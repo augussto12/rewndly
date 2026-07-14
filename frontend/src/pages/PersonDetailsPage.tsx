@@ -4,8 +4,8 @@ import { EmptyState } from '../components/feedback/EmptyState/EmptyState'
 import { ErrorState } from '../components/feedback/ErrorState/ErrorState'
 import { LoadingSkeleton } from '../components/feedback/LoadingSkeleton/LoadingSkeleton'
 import { FilterChip } from '../components/filters/FilterChip'
+import { DetailHero } from '../components/media/DetailHero/DetailHero'
 import { MediaGrid } from '../components/media/MediaGrid/MediaGrid'
-import { BackButton } from '../components/navigation/BackButton'
 import { usePersonDetails } from '../features/public-media/hooks/usePublicMedia'
 import type { MediaExternalLink, MediaSummary, MediaTranslation, PersonImage, PersonTaggedImage } from '../features/public-media/types/publicMedia.types'
 import { PublicLayout } from '../layouts/PublicLayout'
@@ -48,47 +48,37 @@ export function PersonDetailsPage() {
 
       {!isLoading && !isError && data ? (
         <main>
-          <section className="mx-auto max-w-7xl px-4 py-12 sm:px-6 md:py-16">
-            <BackButton fallbackHref="/people/search" className="mb-7" />
-            <div className="grid gap-8 md:grid-cols-[16rem_1fr]">
-              <div className="w-44 md:w-full">
-                <div className="aspect-[2/3] overflow-hidden rounded-[var(--radius-md)] border border-white/[0.12] bg-[var(--color-surface-elevated)] shadow-[var(--shadow-poster)]">
-                  {data.profileUrl ? (
-                    <img src={data.profileUrl} alt={data.name} className="h-full w-full object-cover" />
-                  ) : (
-                    <div className="grid h-full place-items-center text-sm text-[var(--color-text-secondary)]">Sin foto</div>
-                  )}
-                </div>
-              </div>
-
-              <div className="min-w-0 self-end">
-                <p className="kicker">{data.knownForDepartment || 'Persona'}</p>
-                <h1 className="text-resilient mt-3 text-4xl font-semibold leading-tight sm:text-6xl">{data.name}</h1>
-                <p className="text-resilient mt-3 text-sm text-[var(--color-text-secondary)]">
-                  {[formatDate(data.birthday), data.placeOfBirth].filter(Boolean).join(' / ')}
-                </p>
-                {data.biography ? (
-                  <p className="mt-6 max-w-3xl text-base leading-7 text-[var(--color-text-secondary)]">{data.biography}</p>
-                ) : (
-                  <p className="mt-6 max-w-3xl text-base leading-7 text-[var(--color-text-secondary)]">
-                    Todavía no hay biografía disponible.
-                  </p>
-                )}
-                <div className="mt-6 flex flex-wrap gap-3">
-                  {safeExternalUrl(data.homepage) ? (
-                    <a href={safeExternalUrl(data.homepage) ?? undefined} target="_blank" rel="noreferrer" className="secondary-action">
-                      Sitio oficial
-                    </a>
-                  ) : null}
-                  {data.imdbId ? (
-                    <a href={`https://www.imdb.com/name/${data.imdbId}/`} target="_blank" rel="noreferrer" className="secondary-action">
-                      IMDb
-                    </a>
-                  ) : null}
-                </div>
-              </div>
-            </div>
-          </section>
+          <DetailHero
+            eyebrow={data.knownForDepartment || 'Persona'}
+            title={data.name}
+            poster={{ url: data.profileUrl, alt: data.name, fallback: 'Sin foto' }}
+            backHref="/people/search"
+            actions={
+              <>
+                {safeExternalUrl(data.homepage) ? (
+                  <a href={safeExternalUrl(data.homepage) ?? undefined} target="_blank" rel="noreferrer" className="secondary-action">
+                    Sitio oficial
+                  </a>
+                ) : null}
+                {data.imdbId ? (
+                  <a href={`https://www.imdb.com/name/${data.imdbId}/`} target="_blank" rel="noreferrer" className="secondary-action">
+                    IMDb
+                  </a>
+                ) : null}
+              </>
+            }
+          >
+            {formatDate(data.birthday) || data.placeOfBirth ? (
+              <p className="text-resilient text-sm text-[var(--color-text-secondary)]">
+                {[formatDate(data.birthday), data.placeOfBirth].filter(Boolean).join(' / ')}
+              </p>
+            ) : null}
+            {data.biography ? (
+              <Biography text={data.biography} />
+            ) : (
+              <p className="mt-4 text-base leading-7 text-[var(--color-text-secondary)]">Todavía no hay biografía disponible.</p>
+            )}
+          </DetailHero>
 
           <PersonDeepDive
             tabs={tabs}
@@ -105,6 +95,26 @@ export function PersonDetailsPage() {
         </main>
       ) : null}
     </PublicLayout>
+  )
+}
+
+function Biography({ text }: { text: string }) {
+  const [expanded, setExpanded] = useState(false)
+  const isLong = text.length > 480
+
+  return (
+    <div className="mt-4">
+      <p className={`text-base leading-7 text-[var(--color-text-secondary)] ${!expanded && isLong ? 'line-clamp-5' : ''}`}>{text}</p>
+      {isLong ? (
+        <button
+          type="button"
+          onClick={() => setExpanded((value) => !value)}
+          className="mt-2 text-sm font-semibold text-violet-200 transition hover:text-violet-100"
+        >
+          {expanded ? 'Ver menos' : 'Ver más'}
+        </button>
+      ) : null}
+    </div>
   )
 }
 
@@ -183,7 +193,7 @@ function PersonImages({ images }: { images: PersonImage[] }) {
   return (
     <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
       {images.map((image) => (
-        <a key={image.url} href={image.url} target="_blank" rel="noreferrer" className="group overflow-hidden rounded-[var(--radius-md)] border border-white/10 bg-black/30">
+        <a key={image.url} href={image.url} target="_blank" rel="noreferrer" aria-label="Abrir imagen en tamaño completo" className="group overflow-hidden rounded-[var(--radius-md)] border border-white/10 bg-black/30">
           <div className="aspect-[2/3]">
             <img src={image.url} alt="" className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.035]" loading="lazy" />
           </div>

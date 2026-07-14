@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { useQueries, useQuery } from '@tanstack/react-query'
+import { ClearButton } from '../components/ui/ClearButton'
 import { PublicLayout } from '../layouts/PublicLayout'
 import { getMovieDetails, getSeriesDetails, searchMovies, searchSeries } from '../features/public-media/services/publicMediaApi'
 import type { ExternalRating, MediaPerson, MediaSummary, MovieDetails, SeriesDetails, WatchProvider } from '../features/public-media/types/publicMedia.types'
@@ -110,14 +111,16 @@ export function ComparePage() {
               <label htmlFor="compare-search" className="text-sm font-semibold text-white">
                 Buscar título
               </label>
-              <div className="mt-2">
+              <div className="relative mt-2">
                 <input
                   id="compare-search"
+                  type="search"
                   value={query}
                   onChange={(event) => setQuery(event.target.value)}
                   placeholder="Buscar película o serie"
-                  className="field min-h-12"
+                  className={`field min-h-12 ${query ? 'pr-11' : ''}`}
                 />
+                {query ? <ClearButton onClick={() => setQuery('')} label="Borrar búsqueda" className="right-2" /> : null}
               </div>
               {canSearch || isSearching || hasSearchError ? (
                 <div className="mt-4">
@@ -227,6 +230,7 @@ export function ComparePage() {
               </div>
 
               <div className="surface-panel overflow-hidden">
+                <CompareTableHead items={compareItems} />
                 <CompareRow label="IMDb" items={compareItems} render={(detail) => <RatingCell rating={ratingBySource(detail.externalRatings, 'IMDb')} fallback="Sin dato" />} />
                 <CompareRow label="Crítica" items={compareItems} render={(detail) => <CriticCell ratings={detail.externalRatings} />} />
                 <CompareRow label="Duración" items={compareItems} render={(detail) => <TextCell value={formatDuration(detail)} />} />
@@ -331,6 +335,28 @@ function CompareHeroCard({
   )
 }
 
+function compareColumnsClass(count: number) {
+  return count >= 3 ? 'grid-cols-3' : 'grid-cols-2'
+}
+
+function CompareTableHead({ items }: { items: Array<{ selection: CompareSelection; detail: CompareDetails | undefined }> }) {
+  return (
+    <div className="grid border-b border-white/10 bg-white/[0.03] lg:grid-cols-[11rem_1fr]">
+      <div className="hidden lg:block" aria-hidden="true" />
+      <div className={`grid ${compareColumnsClass(items.length)} lg:grid-flow-col lg:auto-cols-fr lg:grid-cols-none`}>
+        {items.map((item, index) => (
+          <div key={index} className="flex items-center gap-2 border-l border-white/10 px-3 py-2.5 first:border-l-0">
+            <PosterThumb src={item.detail?.posterUrl ?? null} title={item.detail ? getTitle(item.detail) : ''} small />
+            <span className="line-clamp-2 text-xs font-semibold leading-tight text-white">
+              {item.detail ? getTitle(item.detail) : item.selection.mediaType === 'Movie' ? 'Película' : 'Serie'}
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
 function CompareRow({
   label,
   items,
@@ -341,25 +367,29 @@ function CompareRow({
   render: (detail: CompareDetails) => ReactNode
 }) {
   return (
-    <div className="grid border-b border-white/10 last:border-b-0 lg:grid-cols-[11rem_1fr]">
+    <div className="border-b border-white/10 last:border-b-0 lg:grid lg:grid-cols-[11rem_1fr]">
       <div className="hidden bg-white/[0.035] px-4 py-3 text-sm font-semibold text-white lg:block lg:border-r lg:border-white/10">{label}</div>
-      <div className="grid gap-0 sm:grid-cols-2 lg:grid-flow-col lg:auto-cols-fr lg:grid-cols-none">
-        {items.map((item, index) => (
-          <div key={index} className="min-h-16 border-t border-white/10 px-4 py-3 lg:border-l lg:border-t-0 lg:first:border-l-0">
-            <span className="mb-2 block text-[0.66rem] font-semibold uppercase tracking-[0.12em] text-[var(--color-text-secondary)] lg:hidden">{label}</span>
-            {item.isLoading ? <span className="text-sm text-[var(--color-text-secondary)]">Cargando...</span> : null}
-            {item.isError ? <span className="text-sm text-red-100">Sin datos</span> : null}
-            {!item.isLoading && !item.isError && item.detail ? render(item.detail) : null}
-          </div>
-        ))}
+      <div>
+        <span className="block px-3 pt-2.5 text-[0.62rem] font-semibold uppercase tracking-[0.12em] text-[var(--color-text-secondary)] lg:hidden">{label}</span>
+        <div className={`grid ${compareColumnsClass(items.length)} lg:grid-flow-col lg:auto-cols-fr lg:grid-cols-none`}>
+          {items.map((item, index) => (
+            <div key={index} className="min-h-14 border-l border-white/10 px-3 py-2.5 first:border-l-0 lg:first:border-l-0">
+              {item.isLoading ? <span className="text-sm text-[var(--color-text-secondary)]">Cargando...</span> : null}
+              {item.isError ? <span className="text-sm text-red-100">Sin datos</span> : null}
+              {!item.isLoading && !item.isError && item.detail ? render(item.detail) : null}
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   )
 }
 
-function PosterThumb({ src, title, large = false }: { src: string | null; title: string; large?: boolean }) {
+function PosterThumb({ src, title, large = false, small = false }: { src: string | null; title: string; large?: boolean; small?: boolean }) {
+  const size = large ? 'h-32 w-24' : small ? 'h-11 w-8' : 'h-14 w-10'
+
   return (
-    <span className={`grid shrink-0 place-items-center overflow-hidden rounded-[var(--radius-sm)] bg-white/[0.06] ${large ? 'h-32 w-24' : 'h-14 w-10'}`}>
+    <span className={`grid shrink-0 place-items-center overflow-hidden rounded-[var(--radius-sm)] bg-white/[0.06] ${size}`}>
       {src ? <img src={src} alt="" className="h-full w-full object-cover" loading="lazy" /> : <span className="px-1 text-center text-[10px] text-[var(--color-text-secondary)]">Sin póster</span>}
       <span className="sr-only">{title}</span>
     </span>

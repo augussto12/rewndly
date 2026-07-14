@@ -1,15 +1,16 @@
-import { useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { EmptyState } from '../components/feedback/EmptyState/EmptyState'
 import { ErrorState } from '../components/feedback/ErrorState/ErrorState'
-import { LoadingSkeleton } from '../components/feedback/LoadingSkeleton/LoadingSkeleton'
+import { MediaGridSkeleton } from '../components/feedback/GridSkeleton/GridSkeleton'
 import { FilterChip } from '../components/filters/FilterChip'
 import { PersonGrid } from '../components/media/PersonGrid/PersonGrid'
 import { SearchInput } from '../components/media/SearchInput/SearchInput'
 import { usePeopleBrowse, usePeopleSearchPages } from '../features/public-media/hooks/usePublicMedia'
 import type { PeopleBrowseCategory } from '../features/public-media/hooks/usePublicMedia'
 import type { PersonSummary } from '../features/public-media/types/publicMedia.types'
-import { flattenUniquePages } from '../lib/pagination'
+import { fillGridRows, flattenUniquePages } from '../lib/pagination'
+import { LoadMoreButton } from '../components/ui/LoadMoreButton'
 import { PublicLayout } from '../layouts/PublicLayout'
 
 const categories: Array<{ value: PeopleBrowseCategory; label: string }> = [
@@ -19,7 +20,7 @@ const categories: Array<{ value: PeopleBrowseCategory; label: string }> = [
 
 export function PeopleSearchPage() {
   const [searchParams, setSearchParams] = useSearchParams()
-  const [category, setCategory] = useState<PeopleBrowseCategory>('popular')
+  const category: PeopleBrowseCategory = searchParams.get('cat') === 'trending' ? 'trending' : 'popular'
   const query = searchParams.get('q') ?? ''
   const normalizedQuery = useMemo(() => query.trim(), [query])
   const canSearch = normalizedQuery.length >= 2
@@ -27,6 +28,7 @@ export function PeopleSearchPage() {
   const search = usePeopleSearchPages(normalizedQuery)
   const activeQuery = canSearch ? search : browse
   const items = flattenUniquePages<PersonSummary>(activeQuery.data, (person) => String(person.tmdbId))
+  const totalResults = getPeopleTotal(activeQuery.data)
   const title = canSearch ? `Resultados para "${normalizedQuery}"` : categories.find((item) => item.value === category)?.label ?? 'Personas'
 
   function changeQuery(value: string) {
@@ -39,6 +41,22 @@ export function PeopleSearchPage() {
         next.delete('q')
       }
 
+      return next
+    })
+  }
+
+  function changeCategory(value: PeopleBrowseCategory) {
+    setSearchParams((current) => {
+      const next = new URLSearchParams(current)
+      next.set('cat', value)
+      return next
+    })
+  }
+
+  function clearSearch() {
+    setSearchParams((current) => {
+      const next = new URLSearchParams(current)
+      next.delete('q')
       return next
     })
   }
@@ -58,30 +76,42 @@ export function PeopleSearchPage() {
           <div className="max-w-2xl">
             <SearchInput value={query} placeholder="Buscar por nombre" onChange={changeQuery} />
           </div>
-          {!canSearch ? (
+          {canSearch ? (
+            <button type="button" onClick={clearSearch} className="secondary-action min-h-11 px-4 py-2 text-sm lg:w-fit">
+              Limpiar
+            </button>
+          ) : (
             <div className="flex flex-wrap gap-2">
               {categories.map((option) => (
-                <FilterChip key={option.value} active={category === option.value} onClick={() => setCategory(option.value)}>
+                <FilterChip key={option.value} active={category === option.value} onClick={() => changeCategory(option.value)}>
                   {option.label}
                 </FilterChip>
               ))}
             </div>
-          ) : null}
+          )}
         </div>
 
         <section className="mt-10">
           <div className="mb-5">
             <p className="kicker">{canSearch ? 'Búsqueda' : 'Catálogo'}</p>
             <h2 className="mt-2 text-2xl font-semibold">{title}</h2>
+            {!activeQuery.isLoading && !activeQuery.isError && totalResults !== null ? (
+              <p className="mt-2 text-sm text-[var(--color-text-secondary)]">{formatResultCount(totalResults)}</p>
+            ) : null}
           </div>
-          {activeQuery.isLoading ? <LoadingSkeleton /> : null}
-          {activeQuery.isError ? <ErrorState /> : null}
+          {activeQuery.isLoading ? <MediaGridSkeleton /> : null}
+          {activeQuery.isError ? (
+            <ErrorState action={<button type="button" onClick={() => void activeQuery.refetch()} className="secondary-action">Reintentar</button>} />
+          ) : null}
           {!activeQuery.isLoading && !activeQuery.isError && items.length === 0 ? (
-            <EmptyState title="Sin resultados" message="No encontramos personas para esa búsqueda." />
+            <EmptyState
+              title="Sin resultados"
+              message={canSearch ? 'No encontramos personas para esa búsqueda.' : 'No hay personas para mostrar por ahora.'}
+            />
           ) : null}
           {!activeQuery.isLoading && !activeQuery.isError && items.length > 0 ? (
             <>
-              <PersonGrid items={items} />
+              <PersonGrid items={fillGridRows(items, Boolean(activeQuery.hasNextPage))} />
               <LoadMoreButton
                 hasMore={Boolean(activeQuery.hasNextPage)}
                 isLoading={activeQuery.isFetchingNextPage}
@@ -95,16 +125,12 @@ export function PeopleSearchPage() {
   )
 }
 
-function LoadMoreButton({ hasMore, isLoading, onClick }: { hasMore: boolean; isLoading: boolean; onClick: () => void }) {
-  if (!hasMore) {
-    return null
-  }
-
-  return (
-    <div className="mt-8 flex justify-center">
-      <button type="button" onClick={onClick} disabled={isLoading} className="secondary-action">
-        {isLoading ? 'Cargando...' : 'Mostrar más'}
-      </button>
-    </div>
-  )
+function getPeopleTotal(data: unknown) {
+  const total = (data as { pages?: Array<{ totalResults?: number }> } | undefined)?.pages?.[0]?.totalResults
+  return typeof total === 'number' ? total : null
 }
+
+function formatResultCount(count: number) {
+  return count === 1 ? '1 resultado encontrado' : `${count.toLocaleString('es-AR')} resultados encontrados`
+}
+

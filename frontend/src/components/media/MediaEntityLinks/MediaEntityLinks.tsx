@@ -23,7 +23,7 @@ export function MediaEntityLinks({ collection, companies = [], networks = [], wa
   }
 
   return (
-    <section className="relative z-10 mx-auto -mt-10 max-w-7xl px-4 pb-12 pt-16 sm:-mt-14 sm:px-6 sm:pt-20">
+    <section className="relative z-10 mx-auto -mt-10 max-w-[90rem] px-4 pb-12 pt-16 sm:-mt-14 sm:px-6 sm:pt-20">
       <div className="surface-panel overflow-hidden p-4 sm:p-5">
         <div className="flex items-center gap-3">
           <span className="h-px flex-1 bg-gradient-to-r from-transparent via-white/12 to-transparent" aria-hidden="true" />

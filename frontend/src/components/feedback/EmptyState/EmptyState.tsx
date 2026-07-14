@@ -1,9 +1,12 @@
+import type { ReactNode } from 'react'
+
 type EmptyStateProps = {
   title: string
   message: string
+  action?: ReactNode
 }
 
-export function EmptyState({ title, message }: EmptyStateProps) {
+export function EmptyState({ title, message, action }: EmptyStateProps) {
   return (
     <div className="surface-panel relative overflow-hidden p-7 text-center sm:p-9">
       <div className="absolute inset-x-10 top-0 h-px bg-gradient-to-r from-transparent via-[var(--color-accent-light)] to-transparent opacity-50" />
@@ -15,6 +18,7 @@ export function EmptyState({ title, message }: EmptyStateProps) {
       </div>
       <h2 className="text-xl font-semibold">{title}</h2>
       <p className="mx-auto mt-2 max-w-xl text-sm leading-6 text-[var(--color-text-secondary)]">{message}</p>
+      {action ? <div className="mt-6 flex flex-wrap justify-center gap-3">{action}</div> : null}
     </div>
   )
 }

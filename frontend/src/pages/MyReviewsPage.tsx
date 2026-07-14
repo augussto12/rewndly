@@ -1,11 +1,15 @@
 import { useState, type FormEvent, type SVGProps } from 'react'
 import { Link } from 'react-router-dom'
+import { useConfirm } from '../components/feedback/ConfirmDialog/ConfirmDialog'
 import { EmptyState } from '../components/feedback/EmptyState/EmptyState'
 import { ErrorState } from '../components/feedback/ErrorState/ErrorState'
 import { LoadingSkeleton } from '../components/feedback/LoadingSkeleton/LoadingSkeleton'
 import { VisibilityChip } from '../features/user-content/components/VisibilityChip'
 import { useDeleteReview, useMyReviews, useUpdateReview } from '../features/user-content/hooks/useUserContent'
 import type { Review, Visibility } from '../features/user-content/types/userContent.types'
+import { PaginationFooter } from '../components/ui/PaginationFooter'
+import { useClientPagination } from '../components/ui/useClientPagination'
+import { InlineError } from '../components/feedback/InlineError/InlineError'
 import { PublicLayout } from '../layouts/PublicLayout'
 import { getErrorMessage } from '../services/apiError'
 
@@ -19,11 +23,13 @@ type ReviewEditValues = {
 
 export function MyReviewsPage() {
   const { data, isError, isLoading } = useMyReviews()
+  const pager = useClientPagination(data ?? [], 12)
   const deleteReview = useDeleteReview()
   const updateReview = useUpdateReview()
   const [actionError, setActionError] = useState<string | null>(null)
   const [expandedReviewIds, setExpandedReviewIds] = useState<Set<string>>(() => new Set())
   const [editingReview, setEditingReview] = useState<Review | null>(null)
+  const { confirm, confirmDialog } = useConfirm()
 
   function toggleExpanded(id: string) {
     setExpandedReviewIds((current) => {
@@ -40,6 +46,17 @@ export function MyReviewsPage() {
   }
 
   async function removeReview(id: string) {
+    const confirmed = await confirm({
+      title: 'Eliminar reseña',
+      message: 'Se va a borrar tu reseña de forma permanente. Esta acción no se puede deshacer.',
+      confirmLabel: 'Eliminar',
+      tone: 'danger',
+    })
+
+    if (!confirmed) {
+      return
+    }
+
     setActionError(null)
 
     try {
@@ -88,7 +105,7 @@ export function MyReviewsPage() {
           <EmptyState title="Sin reseñas" message="Creá una reseña desde el detalle de una película o serie." />
         ) : null}
         <div className="grid gap-4">
-          {data?.map((review) => (
+          {pager.pagedItems.map((review) => (
             <ReviewCard
               key={review.id}
               review={review}
@@ -100,6 +117,7 @@ export function MyReviewsPage() {
             />
           ))}
         </div>
+        <PaginationFooter pager={pager} unit="reseñas" />
       </main>
 
       {editingReview ? (
@@ -110,6 +128,7 @@ export function MyReviewsPage() {
           onSave={saveReviewEdit}
         />
       ) : null}
+      {confirmDialog}
     </PublicLayout>
   )
 }
@@ -186,7 +205,7 @@ function ReviewCard({
             type="button"
             onClick={onRemove}
             disabled={isDeleting}
-            className="inline-flex min-h-9 items-center justify-center gap-2 rounded-[var(--radius-sm)] border border-red-300/20 bg-red-500/10 px-3 py-2 text-xs font-semibold text-red-100 transition hover:bg-red-500/15 disabled:cursor-not-allowed disabled:opacity-60"
+            className="danger-action min-h-9 gap-2 px-3 py-2 text-xs"
           >
             <TrashIcon />
             Eliminar
@@ -334,7 +353,7 @@ function formatDate(value: string) {
 }
 
 function ActionError({ message }: { message: string }) {
-  return <p className="mb-6 rounded-[var(--radius-sm)] border border-red-300/20 bg-red-950/25 px-3 py-2 text-sm text-red-200">{message}</p>
+  return <InlineError message={message} className="mb-6" />
 }
 
 function StarIcon(props: SVGProps<SVGSVGElement>) {

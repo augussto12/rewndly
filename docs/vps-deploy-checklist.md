@@ -161,8 +161,8 @@ Con Nginx Proxy Manager existente, usar:
 
 ```bash
 cd /opt/rewndly
-docker compose -f docker-compose.npm.yml --env-file .env.production build
-docker compose -f docker-compose.npm.yml --env-file .env.production up -d frontend api postgres
+chmod +x scripts/*.sh
+bash scripts/deploy-npm.sh
 docker compose -f docker-compose.npm.yml --env-file .env.production ps
 ```
 
@@ -179,11 +179,12 @@ Servicios ops bajo profile:
 
 ## 8. Migraciones
 
-Ejecutar migraciones con usuario owner, no con usuario runtime:
+`scripts/deploy-npm.sh` ya ejecuta migraciones con usuario owner, no con usuario runtime.
+Si necesitás correrlas manualmente:
 
 ```bash
 cd /opt/rewndly
-bash scripts/run-migrations.sh
+COMPOSE_FILE=docker-compose.npm.yml bash scripts/run-migrations.sh
 ```
 
 Equivalente:
@@ -194,11 +195,12 @@ docker compose -f docker-compose.npm.yml --env-file .env.production --profile op
 
 ## 9. Seed admin
 
-Ejecutar solo despues de migraciones:
+`scripts/deploy-npm.sh` ya ejecuta el seed admin despues de migraciones.
+Si necesitás correrlo manualmente:
 
 ```bash
 cd /opt/rewndly
-bash scripts/seed-admin.sh
+COMPOSE_FILE=docker-compose.npm.yml bash scripts/seed-admin.sh
 ```
 
 Equivalente:
@@ -213,7 +215,7 @@ Confirmar usuario activo:
 
 ```bash
 cd /opt/rewndly
-docker compose -f docker-compose.npm.yml --env-file .env.production exec postgres \
+docker compose -f docker-compose.npm.yml --env-file .env.production exec -T postgres \
   sh -c 'PGPASSWORD="$REWNDLY_APP_DB_PASSWORD" psql -h localhost -U "$REWNDLY_APP_DB_USER" -d "$POSTGRES_DB" -c "select current_user;"'
 ```
 
@@ -227,7 +229,7 @@ Confirmar que no puede crear tablas:
 
 ```bash
 cd /opt/rewndly
-docker compose -f docker-compose.npm.yml --env-file .env.production exec postgres \
+docker compose -f docker-compose.npm.yml --env-file .env.production exec -T postgres \
   sh -c 'PGPASSWORD="$REWNDLY_APP_DB_PASSWORD" psql -h localhost -U "$REWNDLY_APP_DB_USER" -d "$POSTGRES_DB" -v ON_ERROR_STOP=1 -c "create table should_fail(id int);"'
 ```
 
@@ -348,7 +350,7 @@ Backup manual:
 
 ```bash
 cd /opt/rewndly
-bash scripts/backup-db.sh
+COMPOSE_FILE=docker-compose.npm.yml bash scripts/backup-db.sh
 ls -lh backups/
 ```
 
@@ -368,14 +370,14 @@ crontab -e
 Ejemplo diario:
 
 ```cron
-15 3 * * * cd /opt/rewndly && bash scripts/backup-db.sh >> /opt/rewndly/backups/backup.log 2>&1
+15 3 * * * cd /opt/rewndly && COMPOSE_FILE=docker-compose.npm.yml bash scripts/backup-db.sh >> /opt/rewndly/backups/backup.log 2>&1
 ```
 
 ## 16. Restore
 
 ```bash
 cd /opt/rewndly
-bash scripts/restore-db.sh backups/<archivo>.dump
+COMPOSE_FILE=docker-compose.npm.yml bash scripts/restore-db.sh backups/<archivo>.dump
 ```
 
 Luego validar:
@@ -404,7 +406,7 @@ docker compose -f docker-compose.npm.yml --env-file .env.production up -d fronte
 Si hubo migracion incompatible, restaurar backup:
 
 ```bash
-bash scripts/restore-db.sh backups/<backup-previo>.dump
+COMPOSE_FILE=docker-compose.npm.yml bash scripts/restore-db.sh backups/<backup-previo>.dump
 ```
 
 Volver a main despues:

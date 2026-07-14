@@ -112,7 +112,7 @@ export function MePage() {
               </p>
             ) : null}
 
-            <nav className="mt-6 grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
+            <nav className="mt-6 grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
               <Link to="/me/library" className={accountLinkClass}>
                 <LibraryIcon />
                 Biblioteca
@@ -124,10 +124,6 @@ export function MePage() {
               <Link to="/me/lists" className={accountLinkClass}>
                 <ListIcon />
                 Listas
-              </Link>
-              <Link to="/me/tmdb" className={accountLinkClass}>
-                <TmdbIcon />
-                TMDB
               </Link>
             </nav>
           </section>
@@ -226,15 +222,6 @@ function ListIcon(props: SVGProps<SVGSVGElement>) {
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" {...props}>
       <path d="M8 6h13M8 12h13M8 18h13" />
       <path d="M3 6h.01M3 12h.01M3 18h.01" />
-    </svg>
-  )
-}
-
-function TmdbIcon(props: SVGProps<SVGSVGElement>) {
-  return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" {...props}>
-      <circle cx="12" cy="12" r="10" />
-      <path d="M8 15V9l4 3 4-3v6" />
     </svg>
   )
 }

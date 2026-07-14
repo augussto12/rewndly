@@ -2,7 +2,7 @@ import { useMemo } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { EmptyState } from '../components/feedback/EmptyState/EmptyState'
 import { ErrorState } from '../components/feedback/ErrorState/ErrorState'
-import { LoadingSkeleton } from '../components/feedback/LoadingSkeleton/LoadingSkeleton'
+import { MediaGridSkeleton } from '../components/feedback/GridSkeleton/GridSkeleton'
 import { FilterChip } from '../components/filters/FilterChip'
 import { MediaGrid } from '../components/media/MediaGrid/MediaGrid'
 import { PlatformFilter } from '../components/media/PlatformFilter/PlatformFilter'
@@ -11,7 +11,8 @@ import { SearchInput } from '../components/media/SearchInput/SearchInput'
 import { useDiscoverMediaPages, useDiscoverOptions, useMovieBrowse, useMovieRanking, useMovieSearchPages } from '../features/public-media/hooks/usePublicMedia'
 import type { DiscoverFilters, MediaSummary, RankedMediaSummary } from '../features/public-media/types/publicMedia.types'
 import { getMovieDiscoveryCollection, movieDiscoveryCollections, type MovieDiscoveryView } from '../features/public-media/utils/discoveryCollections'
-import { flattenUniquePages } from '../lib/pagination'
+import { fillGridRows, flattenUniquePages } from '../lib/pagination'
+import { LoadMoreButton } from '../components/ui/LoadMoreButton'
 import { PublicLayout } from '../layouts/PublicLayout'
 
 export function MoviesSearchPage() {
@@ -55,11 +56,11 @@ export function MoviesSearchPage() {
   const isLoading = activeQuery.isLoading
   const hasResults = collection.kind === 'ranking' && !canSearch && !hasPlatformFilter ? rankedItems.length > 0 : items.length > 0
   const totalResults = getTotalResults(activeQuery.data)
-  const activeFilterLabels = [
-    canSearch ? `Búsqueda: "${normalizedQuery}"` : '',
-    !canSearch && view !== 'popular' ? `Categoría: ${collection.label}` : '',
-    selectedProvider ? `Plataforma: ${selectedProvider.name}` : hasPlatformFilter ? 'Plataforma seleccionada' : '',
-  ].filter(Boolean)
+  const activeFilters = [
+    ...(canSearch ? [{ label: `Búsqueda: "${normalizedQuery}"`, remove: () => changeQuery('') }] : []),
+    ...(!canSearch && view !== 'popular' ? [{ label: `Categoría: ${collection.label}`, remove: () => changeCategory('popular') }] : []),
+    ...(hasPlatformFilter ? [{ label: selectedProvider ? `Plataforma: ${selectedProvider.name}` : 'Plataforma seleccionada', remove: () => changeProvider('') }] : []),
+  ]
 
   function changeCategory(value: MovieDiscoveryView) {
     setSearchParams((current) => {
@@ -139,29 +140,43 @@ export function MoviesSearchPage() {
                 <p className="mt-2 text-sm text-[var(--color-text-secondary)]">{formatResultCount(totalResults)}</p>
               ) : null}
             </div>
-            {activeFilterLabels.length > 0 ? (
+            {activeFilters.length > 0 ? (
               <button type="button" onClick={clearFilters} className="secondary-action min-h-9 px-3 py-2 text-xs">
                 Limpiar filtros
               </button>
             ) : null}
           </div>
-          {activeFilterLabels.length > 0 ? (
+          {activeFilters.length > 0 ? (
             <div className="mb-5 flex flex-wrap gap-2">
-              {activeFilterLabels.map((label) => (
-                <span key={label} className="rounded-[var(--radius-sm)] border border-white/10 bg-white/[0.045] px-3 py-1 text-xs text-violet-100">
-                  {label}
+              {activeFilters.map((filter) => (
+                <span key={filter.label} className="inline-flex items-center gap-1 rounded-[var(--radius-sm)] border border-white/10 bg-white/[0.045] py-1 pl-3 pr-1 text-xs text-violet-100">
+                  {filter.label}
+                  <button
+                    type="button"
+                    onClick={filter.remove}
+                    aria-label={`Quitar filtro ${filter.label}`}
+                    className="grid h-7 w-7 place-items-center rounded-full text-violet-100/70 transition hover:bg-white/10 hover:text-white"
+                  >
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12" /></svg>
+                  </button>
                 </span>
               ))}
             </div>
           ) : null}
-          {isLoading ? <LoadingSkeleton /> : null}
-          {activeQuery.isError ? <ErrorState /> : null}
+          {isLoading ? <MediaGridSkeleton /> : null}
+          {activeQuery.isError ? (
+            <ErrorState action={<button type="button" onClick={() => void activeQuery.refetch()} className="secondary-action">Reintentar</button>} />
+          ) : null}
           {!isLoading && !activeQuery.isError && !hasResults ? (
             <EmptyState title="Sin resultados" message={getEmptyMessage(canSearch, hasPlatformFilter, collection.kind)} />
           ) : null}
           {!isLoading && !activeQuery.isError && hasResults ? (
             <>
-              {collection.kind === 'ranking' && !canSearch && !hasPlatformFilter ? <RankedMediaGrid items={rankedItems} /> : <MediaGrid items={items} />}
+              {collection.kind === 'ranking' && !canSearch && !hasPlatformFilter ? (
+                <RankedMediaGrid items={fillGridRows(rankedItems, Boolean(activeQuery.hasNextPage))} />
+              ) : (
+                <MediaGrid items={fillGridRows(items, Boolean(activeQuery.hasNextPage))} />
+              )}
               <LoadMoreButton
                 hasMore={Boolean(activeQuery.hasNextPage)}
                 isLoading={activeQuery.isFetchingNextPage}
@@ -202,20 +217,6 @@ function getEmptyMessage(canSearch: boolean, hasPlatformFilter: boolean, kind: s
   }
 
   return 'No encontramos películas para esa búsqueda.'
-}
-
-function LoadMoreButton({ hasMore, isLoading, onClick }: { hasMore: boolean; isLoading: boolean; onClick: () => void }) {
-  if (!hasMore) {
-    return null
-  }
-
-  return (
-    <div className="mt-8 flex justify-center">
-      <button type="button" onClick={onClick} disabled={isLoading} className="secondary-action">
-        {isLoading ? 'Cargando...' : 'Mostrar más'}
-      </button>
-    </div>
-  )
 }
 
 function getTotalResults(data: unknown) {

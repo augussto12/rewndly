@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import { InlineError } from '../components/feedback/InlineError/InlineError'
 import { PasswordField } from '../components/forms/PasswordField'
 import { useAuth } from '../features/auth/useAuth'
 import { getErrorMessage } from '../services/apiError'
@@ -45,7 +46,7 @@ export function RegisterPage() {
           <input type="email" value={email} onChange={(event) => setEmail(event.target.value)} className="field mt-2" autoComplete="email" />
         </label>
         <PasswordField label="Contraseña" value={password} onChange={setPassword} autoComplete="new-password" className="mt-4" />
-        {error ? <p className="mt-4 rounded-[var(--radius-sm)] border border-red-300/20 bg-red-950/25 px-3 py-2 text-sm text-red-200">{error}</p> : null}
+        {error ? <InlineError message={error} className="mt-4" /> : null}
         <button className="primary-action mt-6 w-full">Registrarse</button>
         <Link to="/login" className="mt-4 block text-center text-sm text-[var(--color-text-secondary)] hover:text-white">
           Ya tengo cuenta

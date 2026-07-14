@@ -1,5 +1,5 @@
-import { useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useEffect, useMemo, useState } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
 import { EmptyState } from '../components/feedback/EmptyState/EmptyState'
 import { ErrorState } from '../components/feedback/ErrorState/ErrorState'
 import { LoadingSkeleton } from '../components/feedback/LoadingSkeleton/LoadingSkeleton'
@@ -12,6 +12,11 @@ import {
   type ExternalRatingSource,
 } from '../features/public-media/utils/externalRatings'
 import { useDeleteLibraryItem, useMyLibrary, useUpdateLibraryItem } from '../features/user-content/hooks/useUserContent'
+import { formatLibraryRating, libraryRatingOptions, parseLibraryRating } from '../features/user-content/utils/ratingOptions'
+import { ClearButton } from '../components/ui/ClearButton'
+import { SegmentedControl } from '../components/ui/SegmentedControl'
+import { useClientPagination } from '../components/ui/useClientPagination'
+import { PaginationFooter } from '../components/ui/PaginationFooter'
 import { PublicLayout } from '../layouts/PublicLayout'
 import type { LibraryItem, WatchStatus } from '../features/user-content/types/userContent.types'
 import type { WatchProvider } from '../features/public-media/types/publicMedia.types'
@@ -26,7 +31,7 @@ const STATUS_LABELS: Record<string, string> = {
   WantToWatch: 'Quiero ver',
   Watching: 'Viendo',
   Watched: 'Vista',
-  Dropped: 'Quiero ver',
+  Dropped: 'Abandonada',
 }
 
 const STATUS_TABS: Array<{ value: StatusFilter; label: string }> = [
@@ -61,7 +66,7 @@ export function MyLibraryPage() {
   const [ratingModal, setRatingModal] = useState<{ item: LibraryItem; markWatched: boolean } | null>(null)
 
   const externalSortSource = sort.startsWith('external-') ? (sort.replace('external-', '') as ExternalRatingSource) : null
-  const libraryItems = data ?? []
+  const libraryItems = useMemo(() => data ?? [], [data])
 
   const statusCounts = useMemo(() => {
     const c = { all: libraryItems.length, WantToWatch: 0, Watching: 0, Watched: 0 }
@@ -108,13 +113,7 @@ export function MyLibraryPage() {
     })
   }, [filteredItems, ratingsMap, sort, externalSortSource])
 
-  const watchProviderItems = useMemo(() => sortedItems.slice(0, 12), [sortedItems])
-  const watchProviderKeys = useMemo(
-    () => new Set(watchProviderItems.map((item) => mediaProviderKey(item.mediaType, item.tmdbId))),
-    [watchProviderItems],
-  )
-  const watchProviders = useWatchProvidersBatch(watchProviderItems)
-  const watchProvidersMap = useMemo(() => toWatchProvidersMap(watchProviders.data), [watchProviders.data])
+  const pager = useClientPagination(sortedItems, 24)
 
   async function handleStatusChange(item: LibraryItem, newStatus: WatchStatus) {
     setOpenMenuId(null)
@@ -181,7 +180,15 @@ export function MyLibraryPage() {
         {isError && <ErrorState />}
 
         {!isLoading && !isError && data?.length === 0 && (
-          <EmptyState title="Biblioteca vacía" message="Guardá contenido desde el detalle de una película o serie." />
+          <EmptyState
+            title="Biblioteca vacía"
+            message="Guardá contenido desde el detalle de una película o serie."
+            action={
+              <Link to="/discover" className="primary-action">
+                Explorar catálogo
+              </Link>
+            }
+          />
         )}
 
         {hasData && (
@@ -226,8 +233,9 @@ export function MyLibraryPage() {
                   placeholder="Buscar título..."
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  className="field w-full pl-8"
+                  className={`field w-full pl-8 ${search ? 'pr-10' : ''}`}
                 />
+                {search ? <ClearButton onClick={() => setSearch('')} label="Borrar búsqueda" className="right-1.5" /> : null}
               </div>
               <select value={typeFilter} onChange={(e) => setTypeFilter(e.target.value as TypeFilter)} className="field">
                 <option value="all">Tipo: Todos</option>
@@ -257,35 +265,38 @@ export function MyLibraryPage() {
                   ? formatTitleCount(libraryItems.length)
                   : `${filteredItems.length} de ${libraryItems.length}`}
               </span>
-              <div className="ml-auto grid grid-cols-2 rounded-[var(--radius-sm)] border border-white/10 bg-black/20 p-1">
-                <button type="button" onClick={() => setViewMode('grid')} className={`rounded px-3 py-1.5 text-xs font-semibold ${viewMode === 'grid' ? 'bg-white/10 text-white' : 'text-[var(--color-text-secondary)]'}`}>
-                  Grilla
-                </button>
-                <button type="button" onClick={() => setViewMode('list')} className={`rounded px-3 py-1.5 text-xs font-semibold ${viewMode === 'list' ? 'bg-white/10 text-white' : 'text-[var(--color-text-secondary)]'}`}>
-                  Lista
-                </button>
-              </div>
+              <SegmentedControl
+                ariaLabel="Vista"
+                className="ml-auto"
+                value={viewMode}
+                onChange={setViewMode}
+                options={[
+                  { value: 'grid', label: 'Grilla' },
+                  { value: 'list', label: 'Lista' },
+                ]}
+              />
             </div>
 
             {filteredItems.length === 0 ? (
               <EmptyState title="Sin resultados" message="Cambiá los filtros para ver otros títulos." />
             ) : (
-              <div className={viewMode === 'grid' ? 'grid gap-3 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4' : 'grid gap-3'}>
-                {sortedItems.map((item) => (
-                  <LibraryCard
-                    key={item.id}
-                    item={item}
-                    viewMode={viewMode}
-                    menuOpen={openMenuId === item.id}
-                    onMenuToggle={() => setOpenMenuId((prev) => (prev === item.id ? null : item.id))}
-                    onStatusChange={handleStatusChange}
-                    onEditRating={handleEditRating}
-                    onRemove={handleRemove}
-                    providers={watchProvidersMap.get(mediaProviderKey(item.mediaType, item.tmdbId))}
-                    providersLoading={watchProviders.isLoading && watchProviderKeys.has(mediaProviderKey(item.mediaType, item.tmdbId))}
-                  />
-                ))}
-              </div>
+              <>
+                <div className={viewMode === 'grid' ? 'grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5' : 'grid gap-3'}>
+                  {pager.pagedItems.map((item) => (
+                    <LibraryCard
+                      key={item.id}
+                      item={item}
+                      viewMode={viewMode}
+                      menuOpen={openMenuId === item.id}
+                      onMenuToggle={() => setOpenMenuId((prev) => (prev === item.id ? null : item.id))}
+                      onStatusChange={handleStatusChange}
+                      onEditRating={handleEditRating}
+                      onRemove={handleRemove}
+                    />
+                  ))}
+                </div>
+                <PaginationFooter pager={pager} unit="títulos" />
+              </>
             )}
           </>
         )}
@@ -324,8 +335,6 @@ function LibraryCard({
   onStatusChange,
   onEditRating,
   onRemove,
-  providers,
-  providersLoading,
 }: {
   item: LibraryItem
   viewMode: 'grid' | 'list'
@@ -334,14 +343,19 @@ function LibraryCard({
   onStatusChange: (item: LibraryItem, status: WatchStatus) => void
   onEditRating: (item: LibraryItem) => void
   onRemove: (id: string) => void
-  providers: WatchProvider[] | undefined
-  providersLoading: boolean
 }) {
   const navigate = useNavigate()
+  const [providersOpen, setProvidersOpen] = useState(false)
   const mediaHref = item.mediaType === 'Movie' ? `/movies/${item.tmdbId}` : `/series/${item.tmdbId}`
+  const isGrid = viewMode === 'grid'
   const vs = visibleStatus(item.status)
   const isActive = (s: WatchStatus) => item.status === s || (s === 'WantToWatch' && item.status === 'Dropped')
   const openMedia = () => navigate(mediaHref)
+  const watchProviders = useWatchProvidersBatch(
+    [{ mediaType: item.mediaType, tmdbId: item.tmdbId }],
+    providersOpen,
+  )
+  const providers = watchProviders.data?.[0]?.providers
 
   return (
     <article
@@ -354,11 +368,11 @@ function LibraryCard({
           openMedia()
         }
       }}
-      className={`surface-panel group relative flex cursor-pointer gap-3 p-3 hover:border-violet-200/28 ${viewMode === 'list' ? 'sm:min-h-28' : ''}`}
+      className={`surface-panel group relative cursor-pointer p-3 hover:border-violet-200/28 ${isGrid ? 'flex flex-col gap-3' : 'flex gap-3 sm:min-h-28'}`}
     >
       {/* Poster */}
       <div
-        className={`${viewMode === 'list' ? 'h-[6.25rem] w-[4.15rem]' : 'h-[7.5rem] w-[5rem]'} shrink-0 overflow-hidden rounded-[var(--radius-sm)] border border-white/10 bg-white/5`}
+        className={`shrink-0 overflow-hidden rounded-[var(--radius-sm)] border border-white/10 bg-white/5 ${isGrid ? 'aspect-[2/3] w-full' : 'h-[6.25rem] w-[4.15rem] sm:h-[7.5rem] sm:w-[5rem]'}`}
       >
         {item.posterUrl ? (
           <img src={item.posterUrl} alt="" className="h-full w-full object-cover transition duration-200 group-hover:scale-[1.025]" loading="lazy" />
@@ -375,14 +389,14 @@ function LibraryCard({
       {/* Content */}
       <div className="flex min-w-0 flex-1 flex-col gap-1.5">
         {/* Three-dot menu */}
-        <div className="absolute right-2 top-2 z-20">
+        <div className={`absolute z-20 ${isGrid ? 'right-4 top-4' : 'right-2 top-2'}`}>
           <button
             type="button"
             onClick={(e) => {
               e.stopPropagation()
               onMenuToggle()
             }}
-            className="flex h-7 w-7 items-center justify-center rounded-md text-white/35 transition hover:bg-white/10 hover:text-white"
+            className={`flex h-7 w-7 items-center justify-center rounded-md transition hover:text-white ${isGrid ? 'bg-black/55 text-white/80 hover:bg-black/70' : 'text-white/35 hover:bg-white/10'}`}
           >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
               <circle cx="12" cy="5" r="2" />
@@ -393,7 +407,7 @@ function LibraryCard({
 
           {menuOpen && (
             <div
-              className="absolute right-0 top-8 w-44 overflow-hidden rounded-[var(--radius)] border border-white/10 bg-[#18152e] py-1 shadow-2xl"
+              className="absolute right-0 top-8 w-44 overflow-hidden rounded-[var(--radius-md)] border border-white/10 bg-[#18152e] py-1 shadow-2xl"
               onClick={(e) => e.stopPropagation()}
             >
               {STATUS_OPTIONS.map((s) => (
@@ -442,7 +456,7 @@ function LibraryCard({
         </div>
 
         {/* Title */}
-        <h2 className="line-clamp-2 pr-8 text-sm font-semibold leading-snug transition group-hover:text-white">{item.title}</h2>
+        <h2 className={`line-clamp-2 text-sm font-semibold leading-snug transition group-hover:text-white ${isGrid ? '' : 'pr-8'}`}>{item.title}</h2>
 
         {/* Badges */}
         <div className="flex flex-wrap items-center gap-1.5">
@@ -482,41 +496,129 @@ function LibraryCard({
           )}
         </button>
 
-        <ProviderPreview providers={providers} isLoading={providersLoading} />
+        <ProviderPreview
+          providers={providers}
+          isError={watchProviders.isError}
+          isLoading={providersOpen && (watchProviders.isLoading || watchProviders.isFetching)}
+          isOpen={providersOpen}
+          onToggle={() => setProvidersOpen((prev) => !prev)}
+        />
       </div>
     </article>
   )
 }
 
-function ProviderPreview({ providers, isLoading }: { providers: WatchProvider[] | undefined; isLoading: boolean }) {
+function ProviderPreview({
+  providers,
+  isError,
+  isLoading,
+  isOpen,
+  onToggle,
+}: {
+  providers: WatchProvider[] | undefined
+  isError: boolean
+  isLoading: boolean
+  isOpen: boolean
+  onToggle: () => void
+}) {
+  const isInitialLoading = isLoading && providers === undefined
+
+  return (
+    <div className="mt-1 flex min-w-0 flex-col items-start gap-1.5" onClick={(event) => event.stopPropagation()}>
+      <button
+        type="button"
+        onClick={(event) => {
+          event.stopPropagation()
+          onToggle()
+        }}
+        aria-busy={isInitialLoading}
+        aria-expanded={isOpen}
+        className="inline-flex h-[1.15rem] items-center gap-1 rounded border border-white/10 bg-white/[0.025] px-1.5 py-0 text-[0.58rem] font-medium leading-none text-white/58 transition hover:border-violet-300/30 hover:bg-violet-400/10 hover:text-violet-100 sm:h-6 sm:px-2 sm:text-[0.64rem] sm:font-semibold"
+      >
+        {isInitialLoading ? (
+          <span className="h-2 w-2 animate-spin rounded-full border border-current border-t-transparent sm:h-2.5 sm:w-2.5" />
+        ) : (
+          <svg className="h-2 w-2 sm:h-2.5 sm:w-2.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M3 11h18M5 7h14M7 15h10M9 19h6" />
+          </svg>
+        )}
+        <span>{isInitialLoading ? '...' : isOpen ? 'Cerrar' : 'Donde ver'}</span>
+      </button>
+
+      {isOpen ? <ProviderResults providers={providers} isError={isError} isLoading={isLoading} /> : null}
+    </div>
+  )
+}
+
+function ProviderResults({
+  providers,
+  isError,
+  isLoading,
+}: {
+  providers: WatchProvider[] | undefined
+  isError: boolean
+  isLoading: boolean
+}) {
+  const [showAllProviders, setShowAllProviders] = useState(false)
+
   if (isLoading && providers === undefined) {
-    return <span className="mt-1 h-6 w-32 animate-pulse rounded-[var(--radius-sm)] bg-white/[0.055]" />
+    return (
+      <div className="flex max-w-full items-center gap-1.5 rounded-[var(--radius-sm)] border border-white/[0.06] bg-black/20 px-1.5 py-1 text-[0.68rem] text-white/42 sm:gap-2 sm:px-2 sm:py-1.5 sm:text-xs">
+        <span className="h-3 w-3 animate-spin rounded-full border border-violet-200/70 border-t-transparent sm:h-3.5 sm:w-3.5" />
+        <span>Consultando proveedores...</span>
+      </div>
+    )
+  }
+
+  if (isError) {
+    return <span className="text-xs text-red-300/70">No se pudo consultar.</span>
   }
 
   if (!providers || providers.length === 0) {
-    return null
+    return <span className="text-xs text-white/35">Sin plataformas para verla por ahora.</span>
   }
 
-  const visibleProviders = compactProviders(providers)
-  const hiddenCount = Math.max(0, providers.length - visibleProviders.length)
+  const sortedProviders = sortProviders(providers)
+  const visibleProviders = showAllProviders ? sortedProviders : sortedProviders.slice(0, 3)
+  const hiddenCount = Math.max(0, sortedProviders.length - visibleProviders.length)
+  const hasHiddenProviders = sortedProviders.length > 3
 
   return (
-    <div className="mt-1 flex min-w-0 flex-wrap items-center gap-1.5">
+    <div className="flex min-w-0 flex-wrap items-center gap-1.5">
       <span className="text-[0.65rem] font-semibold uppercase tracking-[0.11em] text-white/35">Ver en</span>
       {visibleProviders.map((provider) => (
         <span
           key={`${provider.type}-${provider.providerId}`}
-          className="inline-flex max-w-full items-center gap-1.5 rounded-[var(--radius-sm)] border border-white/10 bg-black/20 px-1.5 py-1 text-[0.68rem] font-medium text-white/72"
+          className="inline-flex max-w-full items-center gap-1 rounded-[var(--radius-sm)] border border-white/10 bg-black/20 px-1.5 py-0.5 text-[0.66rem] font-medium text-white/72 sm:gap-1.5 sm:py-1 sm:text-[0.68rem]"
           title={`${provider.name} (${provider.type})`}
         >
-          {provider.logoUrl ? <img src={provider.logoUrl} alt="" className="h-4 w-4 rounded object-cover" loading="lazy" /> : null}
-          <span className="max-w-[6rem] truncate">{provider.name}</span>
+          {provider.logoUrl ? <img src={provider.logoUrl} alt="" className="h-3.5 w-3.5 rounded object-cover sm:h-4 sm:w-4" loading="lazy" /> : null}
+          <span className="max-w-[5.25rem] truncate sm:max-w-[6rem]">{provider.name}</span>
         </span>
       ))}
       {hiddenCount > 0 ? (
-        <span className="rounded-[var(--radius-sm)] border border-white/10 bg-white/[0.04] px-1.5 py-1 text-[0.68rem] font-medium text-white/42">
-          +{hiddenCount}
-        </span>
+        <button
+          type="button"
+          onClick={(event) => {
+            event.stopPropagation()
+            setShowAllProviders(true)
+          }}
+          className="rounded-[var(--radius-sm)] border border-violet-300/25 bg-violet-400/10 px-2 py-1 text-[0.66rem] font-semibold text-violet-100/80 transition hover:border-violet-300/45 hover:bg-violet-400/20 hover:text-violet-100 sm:text-[0.68rem]"
+          aria-label={`Mostrar ${hiddenCount} plataformas más`}
+        >
+          +{hiddenCount} más
+        </button>
+      ) : hasHiddenProviders ? (
+        <button
+          type="button"
+          onClick={(event) => {
+            event.stopPropagation()
+            setShowAllProviders(false)
+          }}
+          className="rounded-[var(--radius-sm)] border border-white/10 bg-white/[0.04] px-2 py-1 text-[0.66rem] font-medium text-white/52 transition hover:border-white/20 hover:text-white/80 sm:text-[0.68rem]"
+        >
+          Ver menos
+        </button>
       ) : null}
     </div>
   )
@@ -533,84 +635,44 @@ function RatingModal({
   onConfirm: (rating: number | null) => void
   onCancel: () => void
 }) {
-  const initialRating = splitRating(markWatched ? null : item.rating)
-  const [whole, setWhole] = useState<number | null>(initialRating.whole)
-  const [decimal, setDecimal] = useState(initialRating.decimal)
-  const selected = whole === null ? null : whole === 10 ? 10 : Number((whole + decimal / 10).toFixed(1))
+  const [rating, setRating] = useState(formatLibraryRating(markWatched ? null : item.rating))
+  const heading = markWatched ? 'Marcar como vista' : 'Puntuación'
+
+  useEffect(() => {
+    function onEscape(event: KeyboardEvent) {
+      if (event.key === 'Escape') {
+        onCancel()
+      }
+    }
+
+    document.addEventListener('keydown', onEscape)
+    return () => document.removeEventListener('keydown', onEscape)
+  }, [onCancel])
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/65 p-4 backdrop-blur-sm">
-      <div className="surface-panel w-full max-w-xs p-6">
-        <h2 className="text-base font-semibold">
-          {markWatched ? 'Marcar como vista' : 'Puntuación'}
-        </h2>
+    <div className="fixed inset-0 z-[80] grid place-items-end sm:place-items-center">
+      <button type="button" aria-label="Cerrar" className="absolute inset-0 cursor-default bg-black/62 backdrop-blur-sm" onClick={onCancel} />
+      <div role="dialog" aria-modal="true" aria-label={heading} className="relative m-3 w-full max-w-xs rounded-[var(--radius-md)] border border-white/12 bg-[var(--color-surface)] p-6 shadow-2xl sm:m-0">
+        <h2 className="text-base font-semibold">{heading}</h2>
         <p className="mt-0.5 truncate text-sm text-[var(--color-text-secondary)]">{item.title}</p>
 
-        <p className="mt-3 text-sm text-[var(--color-text-secondary)]">
-          {markWatched ? '¿Qué puntuación le das?' : 'Cambiá tu puntuación.'}{' '}
-          <span className="opacity-60">Podés dejar vacío.</span>
-        </p>
-
-        {/* 1–10 grid */}
-        <div className="mt-4 grid grid-cols-5 gap-1.5">
-          {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((n) => (
-            <button
-              key={n}
-              type="button"
-              onClick={() => {
-                setWhole((prev) => (prev === n ? null : n))
-                if (n === 10) setDecimal(0)
-              }}
-              className={[
-                'rounded-[var(--radius-sm)] border py-2 text-sm font-semibold transition',
-                whole === n
-                  ? 'border-amber-400/50 bg-amber-400/15 text-amber-300'
-                  : 'border-white/10 bg-white/[0.04] text-[var(--color-text-secondary)] hover:border-white/25 hover:text-white',
-              ].join(' ')}
-            >
-              {n}
-            </button>
-          ))}
-        </div>
-
-        {whole !== null ? (
-          <div className="mt-4">
-            <div className="mb-2 flex items-center justify-between gap-3">
-              <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[var(--color-text-secondary)]">Decimal</p>
-              <p className="rounded-[var(--radius-sm)] bg-amber-400/10 px-2 py-1 text-xs font-semibold text-amber-200">
-                {formatRatingValue(selected)}
-              </p>
-            </div>
-            <div className="grid grid-cols-5 gap-1.5">
-              {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9].map((n) => {
-                const disabled = whole === 10 && n > 0
-                return (
-                  <button
-                    key={n}
-                    type="button"
-                    onClick={() => setDecimal(n)}
-                    disabled={disabled}
-                    className={[
-                      'rounded-[var(--radius-sm)] border py-2 text-sm font-semibold transition',
-                      decimal === n
-                        ? 'border-violet-300/50 bg-violet-400/15 text-violet-100'
-                        : 'border-white/10 bg-white/[0.04] text-[var(--color-text-secondary)] hover:border-white/25 hover:text-white',
-                      disabled ? 'opacity-35' : '',
-                    ].join(' ')}
-                  >
-                    {n}
-                  </button>
-                )
-              })}
-            </div>
-          </div>
-        ) : null}
+        <label className="mt-4 block text-sm text-[var(--color-text-secondary)]">
+          {markWatched ? '¿Qué puntuación le das?' : 'Tu puntuación'} <span className="opacity-60">Podés dejar vacío.</span>
+          <select value={rating} onChange={(event) => setRating(event.target.value)} className="field mt-2" autoFocus>
+            <option value="">Sin puntuación</option>
+            {libraryRatingOptions.map((option) => (
+              <option key={option} value={option}>
+                {option}
+              </option>
+            ))}
+          </select>
+        </label>
 
         <div className="mt-5 flex gap-2">
           <button onClick={onCancel} className="secondary-action flex-1 py-2 text-sm">
             Cancelar
           </button>
-          <button onClick={() => onConfirm(selected)} className="primary-action flex-1 py-2 text-sm">
+          <button onClick={() => onConfirm(parseLibraryRating(rating))} className="primary-action flex-1 py-2 text-sm">
             {markWatched ? 'Marcar vista' : 'Guardar'}
           </button>
         </div>
@@ -619,19 +681,7 @@ function RatingModal({
   )
 }
 
-function mediaProviderKey(mediaType: string, tmdbId: number) {
-  return `${mediaType}:${tmdbId}`
-}
-
-function toWatchProvidersMap(items: Array<{ mediaType: string; tmdbId: number; providers: WatchProvider[] }> | undefined) {
-  const map = new Map<string, WatchProvider[]>()
-  for (const item of items ?? []) {
-    map.set(mediaProviderKey(item.mediaType, item.tmdbId), item.providers)
-  }
-  return map
-}
-
-function compactProviders(providers: WatchProvider[]) {
+function sortProviders(providers: WatchProvider[]) {
   const order: Record<string, number> = {
     Streaming: 0,
     Alquiler: 1,
@@ -640,23 +690,6 @@ function compactProviders(providers: WatchProvider[]) {
 
   return [...providers]
     .sort((a, b) => (order[a.type] ?? 9) - (order[b.type] ?? 9) || a.name.localeCompare(b.name))
-    .slice(0, 3)
-}
-
-function splitRating(value: number | null) {
-  if (value === null) {
-    return { whole: null, decimal: 0 }
-  }
-
-  const clamped = Math.min(10, Math.max(1, value))
-  const whole = Math.trunc(clamped)
-  const decimal = Math.round((clamped - whole) * 10)
-
-  if (whole >= 10 || decimal >= 10) {
-    return { whole: 10, decimal: 0 }
-  }
-
-  return { whole, decimal }
 }
 
 function formatRatingValue(value: number | null) {

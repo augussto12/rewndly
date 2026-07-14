@@ -1,16 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { toast } from '../../../components/feedback/Toast/toastStore'
+import { InlineError } from '../../../components/feedback/InlineError/InlineError'
 import { getErrorMessage } from '../../../services/apiError'
 import { useAuth } from '../../auth/useAuth'
-import {
-  useDeleteTmdbRating,
-  useSetTmdbFavorite,
-  useSetTmdbRating,
-  useSetTmdbWatchlist,
-  useTmdbConnectionStatus,
-  useTmdbMediaState,
-} from '../hooks/useTmdbAccount'
 import {
   useAddListItem,
   useCreateList,
@@ -184,7 +177,7 @@ export function MediaQuickActions({ mediaType, tmdbId, title }: MediaActionsPane
                 Destino
                 <select value={destination} onChange={(event) => setDestination(event.target.value as 'library' | 'list')} className="field mt-2">
                   <option value="library">Biblioteca: estado, favorita y rating</option>
-                  <option value="list">Lista: coleccion personalizada</option>
+                  <option value="list">Lista: colección personalizada</option>
                 </select>
               </label>
 
@@ -250,8 +243,6 @@ export function MediaQuickActions({ mediaType, tmdbId, title }: MediaActionsPane
 export function MediaActionsPanel({ mediaType, tmdbId, title }: MediaActionsPanelProps) {
   const { isAuthenticated } = useAuth()
   const { data: library } = useMyLibrary(isAuthenticated)
-  const { data: tmdbConnection } = useTmdbConnectionStatus(isAuthenticated)
-  const { data: tmdbState } = useTmdbMediaState(mediaType, tmdbId, isAuthenticated && Boolean(tmdbConnection?.isConnected))
   const { data: reviews, isLoading: reviewsLoading, isError: reviewsError } = useMediaReviews(mediaType, tmdbId)
   const createReview = useCreateReview()
 
@@ -285,14 +276,6 @@ export function MediaActionsPanel({ mediaType, tmdbId, title }: MediaActionsPane
 
   return (
     <section className="mx-auto max-w-7xl space-y-6 px-4 pb-16 sm:px-6">
-      <TmdbMediaControls
-        key={`${tmdbConnection?.isConnected ? 'connected' : 'disconnected'}-${tmdbState?.rating ?? 'none'}`}
-        mediaType={mediaType}
-        tmdbId={tmdbId}
-        isConnected={Boolean(tmdbConnection?.isConnected)}
-        state={tmdbState}
-      />
-
       <ReviewComposer
         mediaType={mediaType}
         tmdbId={tmdbId}
@@ -456,7 +439,7 @@ function ReviewComposer({
     <div className="surface-panel p-5">
       <h2 className="text-xl font-semibold">Crear reseña</h2>
       <div className="mt-4 grid gap-3">
-        <input value={reviewTitle} onChange={(event) => setReviewTitle(event.target.value)} placeholder="Titulo" className="field" />
+        <input value={reviewTitle} onChange={(event) => setReviewTitle(event.target.value)} placeholder="Título" className="field" />
         <textarea value={reviewBody} onChange={(event) => setReviewBody(event.target.value)} placeholder="Tu reseña" rows={5} className="field" />
         <div className="flex flex-wrap items-center gap-4">
           <select value={reviewVisibility} onChange={(event) => setReviewVisibility(event.target.value as Visibility)} className="field w-auto">
@@ -485,103 +468,8 @@ function ReviewComposer({
   )
 }
 
-function TmdbMediaControls({
-  mediaType,
-  tmdbId,
-  isConnected,
-  state,
-}: {
-  mediaType: MediaKind
-  tmdbId: number
-  isConnected: boolean
-  state: { favorite: boolean; watchlist: boolean; rating: number | null } | undefined
-}) {
-  const favorite = useSetTmdbFavorite()
-  const watchlist = useSetTmdbWatchlist()
-  const rate = useSetTmdbRating()
-  const deleteRating = useDeleteTmdbRating()
-  const [rating, setRating] = useState(formatRatingValue(state?.rating ?? null))
-  const [error, setError] = useState<string | null>(null)
-  const parsedRating = parseRatingInput(rating)
-  const ratingIsValid = parsedRating !== null && Number.isFinite(parsedRating) && parsedRating >= 0.5 && parsedRating <= 10
-
-  async function runTmdbAction(action: () => Promise<unknown>) {
-    setError(null)
-
-    try {
-      await action()
-    } catch (actionError) {
-      setError(getErrorMessage(actionError, 'No se pudo sincronizar con TMDB. Probá nuevamente.'))
-    }
-  }
-
-  if (!isConnected) {
-    return (
-      <div className="surface-panel p-5">
-        <p className="kicker">TMDB</p>
-        <h2 className="mt-2 text-xl font-semibold">Cuenta no conectada</h2>
-        <p className="mt-3 text-sm leading-6 text-[var(--color-text-secondary)]">
-          Conecta TMDB para marcar favorito, watchlist y rating tambien en tu cuenta remota.
-        </p>
-        <Link to="/me/tmdb" className="secondary-action mt-5 inline-flex">
-          Conectar TMDB
-        </Link>
-      </div>
-    )
-  }
-
-  return (
-    <div className="surface-panel p-5">
-      <p className="kicker">TMDB</p>
-      <h2 className="mt-2 text-xl font-semibold">Sincronizar con TMDB</h2>
-      <div className="mt-4 flex flex-wrap gap-3">
-        <button
-          onClick={() => void runTmdbAction(() => favorite.mutateAsync({ mediaType, tmdbId, value: !state?.favorite }))}
-          disabled={favorite.isPending}
-          className={state?.favorite ? 'primary-action' : 'secondary-action'}
-        >
-          {state?.favorite ? 'Quitar favorito' : 'Favorito'}
-        </button>
-        <button
-          onClick={() => void runTmdbAction(() => watchlist.mutateAsync({ mediaType, tmdbId, value: !state?.watchlist }))}
-          disabled={watchlist.isPending}
-          className={state?.watchlist ? 'primary-action' : 'secondary-action'}
-        >
-          {state?.watchlist ? 'Quitar watchlist' : 'Watchlist'}
-        </button>
-      </div>
-      <div className="mt-4 flex flex-col gap-3 sm:flex-row">
-        <input
-          value={rating}
-          onChange={(event) => setRating(event.target.value)}
-          inputMode="decimal"
-          placeholder="Rating TMDB"
-          className="field min-w-0 flex-1"
-        />
-        <button
-          onClick={() => void runTmdbAction(() => rate.mutateAsync({ mediaType, tmdbId, value: parsedRating ?? 0 }))}
-          disabled={!ratingIsValid || rate.isPending}
-          className="secondary-action"
-        >
-          Puntuar
-        </button>
-        {state?.rating ? (
-          <button
-            onClick={() => void runTmdbAction(() => deleteRating.mutateAsync({ mediaType, tmdbId }))}
-            disabled={deleteRating.isPending}
-            className="secondary-action"
-          >
-            Borrar rating
-          </button>
-        ) : null}
-      </div>
-      {error ? <ActionError message={error} /> : null}
-    </div>
-  )
-}
-
 function ActionError({ message }: { message: string }) {
-  return <p className="mt-4 rounded-[var(--radius-sm)] border border-red-300/20 bg-red-950/25 px-3 py-2 text-sm text-red-200">{message}</p>
+  return <InlineError message={message} className="mt-4" />
 }
 
 function ReviewsBlock({
@@ -616,19 +504,4 @@ function ReviewsBlock({
       </div>
     </div>
   )
-}
-
-function parseRatingInput(value: string) {
-  const normalized = value.trim().replace(',', '.')
-
-  if (!normalized) {
-    return null
-  }
-
-  const parsed = Number(normalized)
-  return Number.isFinite(parsed) ? Math.round(parsed * 10) / 10 : Number.NaN
-}
-
-function formatRatingValue(value: number | null) {
-  return value === null ? '' : String(value)
 }
