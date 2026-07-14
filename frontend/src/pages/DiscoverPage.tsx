@@ -14,6 +14,7 @@ import {
 } from '../features/public-media/hooks/usePublicMedia'
 import { useLibraryRecommendations } from '../features/public-media/hooks/useLibraryRecommendations'
 import { useBestMoviesOfYear } from '../features/public-media/hooks/useBestMoviesOfYear'
+import { useGems } from '../features/public-media/hooks/useGems'
 import type { DiscoverFilters, MediaSummary, RankedMediaSummary } from '../features/public-media/types/publicMedia.types'
 import { exploreMoodCollections, getMovieDiscoveryCollection } from '../features/public-media/utils/discoveryCollections'
 import { fillGridRows, flattenUniquePages } from '../lib/pagination'
@@ -65,15 +66,14 @@ export function DiscoverPage() {
   const { genres, watchProviders } = useDiscoverOptions(mediaType)
   const topRatedMovies = useTopRatedMovies()
   const criticRanking = useMovieRanking('critics')
-  const gemsCollection = getMovieDiscoveryCollection('gems')
   const classicsCollection = getMovieDiscoveryCollection('classics')
-  const gems = useDiscoverMediaPages(gemsCollection.filters ?? { mediaType: 'Movie' })
+  const gems = useGems(12)
   const classics = useDiscoverMediaPages(classicsCollection.filters ?? { mediaType: 'Movie' })
   const sortOptions = mediaType === 'Movie' ? movieSortOptions : seriesSortOptions
   const criticPicks = flattenUniquePages<RankedMediaSummary>(criticRanking.data, (item) => `${item.media.mediaType}-${item.media.tmdbId}`)
     .map((item) => item.media)
     .slice(0, 12)
-  const gemsItems = flattenUniquePages<MediaSummary>(gems.data, (item) => `${item.mediaType}-${item.tmdbId}`).slice(0, 12)
+  const gemsItems = gems.items
   const classicsItems = flattenUniquePages<MediaSummary>(classics.data, (item) => `${item.mediaType}-${item.tmdbId}`).slice(0, 12)
   const currentYear = new Date().getFullYear()
   const yearOptions = useMemo(() => Array.from({ length: currentYear - 1969 }, (_, index) => currentYear - index), [currentYear])
@@ -299,12 +299,17 @@ export function DiscoverPage() {
 
         {recommendations.isAuthenticated && (recommendations.hasSeeds || recommendations.isLoading) ? (
           <section className="mt-12">
-            <div className="mb-6">
-              <p className="kicker">Para vos</p>
-              <h2 className="mt-2 text-2xl font-semibold">Recomendado según tu biblioteca</h2>
-              <p className="mt-2 text-sm text-[var(--color-text-secondary)]">
-                Cruzamos lo que marcaste como visto, favorito o puntuaste alto para sugerirte pelis que todavía no tenés.
-              </p>
+            <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
+              <div>
+                <p className="kicker">Para vos</p>
+                <h2 className="mt-2 text-2xl font-semibold">Recomendado según tu biblioteca</h2>
+                <p className="mt-2 text-sm text-[var(--color-text-secondary)]">
+                  Cruzamos lo que marcaste como visto, favorito o puntuaste alto para sugerirte pelis que todavía no tenés.
+                </p>
+              </div>
+              <Link to="/recomendados" className="secondary-action min-h-9 shrink-0 px-3 py-2 text-xs">
+                Ver todo
+              </Link>
             </div>
             {recommendations.isLoading ? (
               <MediaGridSkeleton />
@@ -323,16 +328,21 @@ export function DiscoverPage() {
               <h2 className="mt-2 text-2xl font-semibold">Mejores películas del año</h2>
               <p className="mt-2 text-sm text-[var(--color-text-secondary)]">Las mejor puntuadas de cada año, para cuando no sabés qué ver.</p>
             </div>
-            <label className="flex items-center gap-2 text-sm text-[var(--color-text-secondary)]">
-              Año
-              <select value={bestYear} onChange={(event) => setBestYear(Number(event.target.value))} className="field w-28" aria-label="Año">
-                {yearOptions.map((option) => (
-                  <option key={option} value={option}>
-                    {option}
-                  </option>
-                ))}
-              </select>
-            </label>
+            <div className="flex flex-wrap items-center gap-3">
+              <label className="flex items-center gap-2 text-sm text-[var(--color-text-secondary)]">
+                Año
+                <select value={bestYear} onChange={(event) => setBestYear(Number(event.target.value))} className="field w-28" aria-label="Año">
+                  {yearOptions.map((option) => (
+                    <option key={option} value={option}>
+                      {option}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <Link to="/recomendados" className="secondary-action min-h-9 px-3 py-2 text-xs">
+                Ver todo
+              </Link>
+            </div>
           </div>
           {bestOfYear.isLoading ? (
             <MediaGridSkeleton />

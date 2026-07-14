@@ -65,6 +65,25 @@ export function externalQualityScore(ratings: ExternalRating[] | undefined): num
   return values.length > 0 ? average(values) : null
 }
 
+/**
+ * Sorts media by IMDb + Rotten Tomatoes quality (best first); items without any
+ * IMDb/RT data fall to the back rather than polluting the top. Stable for ties.
+ */
+export function sortByExternalQuality<T extends { mediaType: 'Movie' | 'Series'; tmdbId: number }>(
+  items: T[],
+  ratingsMap: Map<string, ExternalRating[]>,
+): T[] {
+  return items
+    .map((item) => ({ item, score: externalQualityScore(ratingsMap.get(getRatingsKey(item.mediaType, item.tmdbId))) }))
+    .sort((left, right) => {
+      if (left.score === null && right.score === null) return 0
+      if (left.score === null) return 1
+      if (right.score === null) return -1
+      return right.score - left.score
+    })
+    .map((entry) => entry.item)
+}
+
 export function filterByQuality(items: MediaSummary[], ratingsMap: Map<string, ExternalRating[]>, filter: QualityFilter) {
   const option = qualityFilterOptions.find((candidate) => candidate.value === filter)
   if (!option?.source || option.min === undefined) {

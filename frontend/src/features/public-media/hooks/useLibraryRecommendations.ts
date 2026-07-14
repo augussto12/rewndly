@@ -11,7 +11,6 @@ import { useExternalRatingsPool } from './useExternalRatingsPool'
 const SEED_LIMIT = 6
 const POOL_SIZE = 24
 const RESULT_LIMIT = 18
-const MIN_SEED_RATING = 7
 
 type TasteEntry = { item: MediaSummary; tasteScore: number }
 
@@ -19,10 +18,12 @@ type TasteEntry = { item: MediaSummary; tasteScore: number }
  * Recommends movies from the user's own library: takes their favorite or highly-rated
  * (>= MIN_SEED_RATING) movies as seeds, pulls each seed's TMDB `recommendations` + `similar`,
  * aggregates how strongly the library points at each candidate (the "taste" signal),
- * then re-ranks by IMDb + Rotten Tomatoes so quality — not TMDB's score — decides the
- * order. Anything already in the library is excluded.
+ * then re-ranks the top candidates by IMDb + Rotten Tomatoes so quality — not TMDB's
+ * score — decides the order. Anything already in the library is excluded. The top
+ * POOL_SIZE are IMDb/RT-ranked; beyond that (for a bigger `limit`) the tail stays in
+ * taste order since the ratings endpoint is capped.
  */
-export function useLibraryRecommendations() {
+export function useLibraryRecommendations(limit = RESULT_LIMIT) {
   const { isAuthenticated } = useAuth()
   const { data: library } = useMyLibrary(isAuthenticated)
 
@@ -30,7 +31,6 @@ export function useLibraryRecommendations() {
 
   const seedQueries = useQueries({
     queries: seeds.map((seed) => ({
-      // Same key as useMovieDetails so the cache is shared with detail pages.
       queryKey: ['movie-details', seed.tmdbId],
       queryFn: () => getMovieDetails(seed.tmdbId),
       staleTime: 1000 * 60 * 10,
@@ -40,22 +40,27 @@ export function useLibraryRecommendations() {
   const seedsLoading = seeds.length > 0 && seedQueries.some((query) => query.isLoading)
   const seedSignature = seedQueries.map((query) => query.dataUpdatedAt).join(',')
 
-  // Stage 1 — taste relevance from the library graph.
+  // Stage 1 — full taste-relevance ranking from the library graph.
   const tasteRanked = useMemo(() => {
     if (seeds.length === 0) {
       return [] as TasteEntry[]
     }
 
     const details = seedQueries.map((query) => query.data as MovieDetails | undefined)
-    return aggregateByTaste(details, seeds, library ?? []).slice(0, POOL_SIZE)
+    return aggregateByTaste(details, seeds, library ?? [])
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [seedSignature, seeds, library])
 
-  // Stage 2 — quality re-ranking by IMDb + Rotten Tomatoes.
-  const poolItems = useMemo(() => tasteRanked.map((entry) => ({ mediaType: entry.item.mediaType, tmdbId: entry.item.tmdbId })), [tasteRanked])
+  // Stage 2 — quality re-ranking (IMDb + RT) of the top slice; the rest keeps taste order.
+  const externalPool = useMemo(() => tasteRanked.slice(0, POOL_SIZE), [tasteRanked])
+  const poolItems = useMemo(() => externalPool.map((entry) => ({ mediaType: entry.item.mediaType, tmdbId: entry.item.tmdbId })), [externalPool])
   const { ratingsMap, isLoading: ratingsLoading } = useExternalRatingsPool(poolItems, poolItems.length > 0, POOL_SIZE)
 
-  const recommendations = useMemo(() => rankByExternalBlend(tasteRanked, ratingsMap).slice(0, RESULT_LIMIT), [tasteRanked, ratingsMap])
+  const recommendations = useMemo(() => {
+    const top = rankByExternalBlend(externalPool, ratingsMap)
+    const tail = tasteRanked.slice(POOL_SIZE).map((entry) => entry.item)
+    return [...top, ...tail].slice(0, limit)
+  }, [externalPool, ratingsMap, tasteRanked, limit])
 
   const isLoading = seedsLoading || (tasteRanked.length > 0 && ratingsLoading && ratingsMap.size === 0)
 
@@ -72,6 +77,8 @@ function pickSeeds(library: LibraryItem[]): LibraryItem[] {
     .slice(0, SEED_LIMIT)
     .map((entry) => entry.item)
 }
+
+const MIN_SEED_RATING = 7
 
 // Seeds are already "liked"; order them so the best-rated titles seed first, with a
 // bump for favorites (a favorite with no rating still counts as a strong signal).
