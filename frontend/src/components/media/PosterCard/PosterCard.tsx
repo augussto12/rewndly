@@ -164,7 +164,7 @@ function LibraryQuickPanel({ item, existingItem, onClose }: { item: MediaSummary
         className="absolute inset-0 cursor-default bg-black/62 backdrop-blur-sm"
         onClick={onClose}
       />
-      <div className="absolute inset-x-0 bottom-0 mx-auto max-h-[calc(100svh-1rem)] w-full overflow-y-auto rounded-t-[var(--radius-md)] border border-white/12 bg-[var(--color-surface)] p-4 shadow-2xl sm:inset-x-4 sm:bottom-6 sm:max-w-md sm:rounded-[var(--radius-md)] sm:p-5 md:left-1/2 md:top-1/2 md:bottom-auto md:-translate-x-1/2 md:-translate-y-1/2">
+      <div className="absolute inset-x-0 bottom-0 mx-auto max-h-[calc(100svh-1rem)] w-full overflow-y-auto rounded-t-[var(--radius-md)] border border-white/12 bg-[var(--color-surface)] p-4 shadow-2xl sm:inset-x-4 sm:bottom-6 sm:max-w-md sm:rounded-[var(--radius-md)] sm:p-5 md:left-1/2 md:right-auto md:top-1/2 md:bottom-auto md:mx-0 md:-translate-x-1/2 md:-translate-y-1/2">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
             <p className="kicker">Biblioteca</p>

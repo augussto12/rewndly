@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { toast } from '../../../components/feedback/Toast/toastStore'
 import { InlineError } from '../../../components/feedback/InlineError/InlineError'
@@ -40,7 +40,6 @@ const visibilityOptions: Array<{ value: Visibility; label: string }> = [
 ]
 
 export function MediaQuickActions({ mediaType, tmdbId, title }: MediaActionsPanelProps) {
-  const rootRef = useRef<HTMLDivElement>(null)
   const { isAuthenticated } = useAuth()
   const { data: library } = useMyLibrary(isAuthenticated)
   const { data: lists } = useMyLists(isAuthenticated)
@@ -73,18 +72,8 @@ export function MediaQuickActions({ mediaType, tmdbId, title }: MediaActionsPane
       }
     }
 
-    function closeOnOutsideClick(event: MouseEvent) {
-      if (!rootRef.current?.contains(event.target as Node)) {
-        setIsOpen(false)
-      }
-    }
-
     document.addEventListener('keydown', closeOnEscape)
-    document.addEventListener('mousedown', closeOnOutsideClick)
-    return () => {
-      document.removeEventListener('keydown', closeOnEscape)
-      document.removeEventListener('mousedown', closeOnOutsideClick)
-    }
+    return () => document.removeEventListener('keydown', closeOnEscape)
   }, [isOpen])
 
   async function submitListItem() {
@@ -133,7 +122,7 @@ export function MediaQuickActions({ mediaType, tmdbId, title }: MediaActionsPane
   }
 
   return (
-    <div ref={rootRef} className="relative">
+    <div>
       <button
         type="button"
         onClick={() => setIsOpen((value) => !value)}
@@ -147,94 +136,112 @@ export function MediaQuickActions({ mediaType, tmdbId, title }: MediaActionsPane
       </button>
 
       {isOpen ? (
-        <>
+        <div className="fixed inset-0 z-[80]">
           <button
             type="button"
-            aria-label="Cerrar agregar"
-            className="fixed inset-0 z-40 cursor-default bg-black/38 backdrop-blur-[1px] md:hidden"
+            aria-label="Cerrar"
+            className="absolute inset-0 cursor-default bg-black/62 backdrop-blur-sm"
             onClick={() => setIsOpen(false)}
           />
-          <div className="quick-actions-menu">
-          {!isAuthenticated ? (
-            <div>
-              <p className="kicker">Tu espacio</p>
-              <h2 className="mt-2 text-base font-semibold">Guardalo cuando quieras</h2>
-              <p className="mt-2 text-sm leading-6 text-[var(--color-text-secondary)]">
-                La biblioteca guarda tu estado y rating. Las listas son colecciones privadas o públicas.
-              </p>
-              <div className="mt-4 grid gap-2 sm:grid-cols-2">
-                <Link to="/login" className="primary-action min-h-10">
-                  Iniciar sesión
-                </Link>
-                <Link to="/register" className="secondary-action min-h-10">
-                  Crear cuenta
-                </Link>
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-label={`Guardar ${title}`}
+            className="absolute inset-x-0 bottom-0 mx-auto max-h-[calc(100svh-1rem)] w-full overflow-y-auto rounded-t-[var(--radius-md)] border border-white/12 bg-[var(--color-surface)] p-4 shadow-2xl sm:inset-x-4 sm:bottom-6 sm:max-w-md sm:rounded-[var(--radius-md)] sm:p-5 md:left-1/2 md:right-auto md:top-1/2 md:bottom-auto md:mx-0 md:-translate-x-1/2 md:-translate-y-1/2"
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <p className="kicker">Guardar</p>
+                <h2 className="mt-2 line-clamp-2 text-lg font-semibold">{title}</h2>
               </div>
+              <button
+                type="button"
+                onClick={() => setIsOpen(false)}
+                className="grid h-9 w-9 shrink-0 place-items-center rounded-[var(--radius-sm)] border border-white/10 bg-white/[0.06] text-sm font-semibold text-white/80 hover:bg-white/[0.12]"
+                aria-label="Cerrar"
+              >
+                <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+              </button>
             </div>
-          ) : (
-            <div className="grid gap-4">
-              <label className="text-sm text-[var(--color-text-secondary)]">
-                Destino
-                <select value={destination} onChange={(event) => setDestination(event.target.value as 'library' | 'list')} className="field mt-2">
-                  <option value="library">Biblioteca: estado, favorita y rating</option>
-                  <option value="list">Lista: colección personalizada</option>
-                </select>
-              </label>
 
-              {destination === 'library' ? (
-                <QuickLibraryForm
-                  key={existingItem?.id ?? `new-${mediaType}-${tmdbId}`}
-                  mediaType={mediaType}
-                  tmdbId={tmdbId}
-                  existingItem={existingItem}
-                  createPending={createLibraryItem.isPending}
-                  updatePending={updateLibraryItem.isPending}
-                  onCreate={(request) => createLibraryItem.mutateAsync(request)}
-                  onUpdate={(id, request) => updateLibraryItem.mutateAsync({ id, request })}
-                  onSaved={() => setIsOpen(false)}
-                />
-              ) : (
-                <div>
-                  {lists && lists.length > 0 ? (
-                    <div className="grid gap-3">
-                      <select value={selectedListId} onChange={(event) => setSelectedListId(event.target.value)} className="field">
-                        <option value="">Elegir lista</option>
-                        {lists.map((list) => (
-                          <option key={list.id} value={list.id}>
-                            {list.title} ({visibilityLabel(list.visibility)})
-                          </option>
-                        ))}
-                      </select>
-                      <button onClick={() => void submitListItem()} disabled={!selectedListId || addListItem.isPending} className="primary-action">
-                        Agregar a lista
-                      </button>
-                    </div>
-                  ) : (
-                    <p className="text-sm leading-6 text-[var(--color-text-secondary)]">Todavía no tenés listas. Creá una acá mismo.</p>
-                  )}
-
-                  <div className="mt-4 grid gap-3 border-t border-white/10 pt-4">
-                    <input value={newListTitle} onChange={(event) => setNewListTitle(event.target.value)} placeholder="Nueva lista" className="field" />
-                    <div className="grid gap-3 sm:grid-cols-[1fr_auto]">
-                      <select value={newListVisibility} onChange={(event) => setNewListVisibility(event.target.value as Visibility)} className="field">
-                        {visibilityOptions.map((option) => (
-                          <option key={option.value} value={option.value}>
-                            {option.label}
-                          </option>
-                        ))}
-                      </select>
-                      <button onClick={() => void submitQuickList()} disabled={!newListTitle.trim() || createList.isPending} className="secondary-action">
-                        Crear
-                      </button>
-                    </div>
-                  </div>
-                  {listError ? <ActionError message={listError} /> : null}
+            {!isAuthenticated ? (
+              <div className="mt-5 grid gap-4">
+                <p className="text-sm leading-6 text-[var(--color-text-secondary)]">
+                  Entrá a tu cuenta para guardarla en tu biblioteca o en una lista.
+                </p>
+                <div className="grid gap-2 sm:grid-cols-2">
+                  <Link to="/login" className="primary-action">
+                    Iniciar sesión
+                  </Link>
+                  <Link to="/register" className="secondary-action">
+                    Crear cuenta
+                  </Link>
                 </div>
-              )}
-            </div>
-          )}
+              </div>
+            ) : (
+              <div className="mt-5 grid gap-4">
+                <label className="text-sm text-[var(--color-text-secondary)]">
+                  Destino
+                  <select value={destination} onChange={(event) => setDestination(event.target.value as 'library' | 'list')} className="field mt-2">
+                    <option value="library">Biblioteca: estado, favorita y rating</option>
+                    <option value="list">Lista: colección personalizada</option>
+                  </select>
+                </label>
+
+                {destination === 'library' ? (
+                  <QuickLibraryForm
+                    key={existingItem?.id ?? `new-${mediaType}-${tmdbId}`}
+                    mediaType={mediaType}
+                    tmdbId={tmdbId}
+                    existingItem={existingItem}
+                    createPending={createLibraryItem.isPending}
+                    updatePending={updateLibraryItem.isPending}
+                    onCreate={(request) => createLibraryItem.mutateAsync(request)}
+                    onUpdate={(id, request) => updateLibraryItem.mutateAsync({ id, request })}
+                    onSaved={() => setIsOpen(false)}
+                  />
+                ) : (
+                  <div>
+                    {lists && lists.length > 0 ? (
+                      <div className="grid gap-3">
+                        <select value={selectedListId} onChange={(event) => setSelectedListId(event.target.value)} className="field">
+                          <option value="">Elegir lista</option>
+                          {lists.map((list) => (
+                            <option key={list.id} value={list.id}>
+                              {list.title} ({visibilityLabel(list.visibility)})
+                            </option>
+                          ))}
+                        </select>
+                        <button onClick={() => void submitListItem()} disabled={!selectedListId || addListItem.isPending} className="primary-action">
+                          Agregar a lista
+                        </button>
+                      </div>
+                    ) : (
+                      <p className="text-sm leading-6 text-[var(--color-text-secondary)]">Todavía no tenés listas. Creá una acá mismo.</p>
+                    )}
+
+                    <div className="mt-4 grid gap-3 border-t border-white/10 pt-4">
+                      <input value={newListTitle} onChange={(event) => setNewListTitle(event.target.value)} placeholder="Nueva lista" className="field" />
+                      <div className="grid gap-3 sm:grid-cols-[1fr_auto]">
+                        <select value={newListVisibility} onChange={(event) => setNewListVisibility(event.target.value as Visibility)} className="field">
+                          {visibilityOptions.map((option) => (
+                            <option key={option.value} value={option.value}>
+                              {option.label}
+                            </option>
+                          ))}
+                        </select>
+                        <button onClick={() => void submitQuickList()} disabled={!newListTitle.trim() || createList.isPending} className="secondary-action">
+                          Crear
+                        </button>
+                      </div>
+                    </div>
+                    {listError ? <ActionError message={listError} /> : null}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
-        </>
+        </div>
       ) : null}
     </div>
   )
