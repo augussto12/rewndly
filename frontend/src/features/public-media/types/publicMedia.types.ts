@@ -47,6 +47,20 @@ export type PersonWiki = {
   cachedAt: string | null
 }
 
+export type NewsArticle = {
+  title: string
+  url: string
+  source: string
+  imageUrl: string | null
+  summary: string | null
+  publishedAt: string | null
+}
+
+export type NewsFeed = {
+  articles: NewsArticle[]
+  fetchedAt: string | null
+}
+
 export type PublicHomeResponse = {
   trendingMovies: MediaSummary[]
   nowPlayingMovies: MediaSummary[]

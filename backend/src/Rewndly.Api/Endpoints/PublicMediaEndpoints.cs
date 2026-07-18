@@ -2,6 +2,7 @@ using System.Globalization;
 using Rewndly.Application.Common.Interfaces;
 using Rewndly.Application.Modules.Public;
 using Rewndly.Domain.Media;
+using Rewndly.Infrastructure.ExternalServices.News;
 using Rewndly.Infrastructure.ExternalServices.Tmdb;
 using Rewndly.Infrastructure.ExternalServices.Wikidata;
 
@@ -13,6 +14,11 @@ public static class PublicMediaEndpoints
     {
         app.MapGet("/api/public/home", GetHomeAsync)
             .WithTags("Public")
+            .AllowAnonymous();
+
+        app.MapGet("/api/news", GetNewsAsync)
+            .WithTags("Public")
+            .RequireRateLimiting("external-ratings")
             .AllowAnonymous();
 
         app.MapGet("/api/tmdb/catalog", GetTmdbCatalog)
@@ -351,6 +357,15 @@ public static class PublicMediaEndpoints
 
         var ratings = await ratingsService.GetRatingsAsync(parsedMediaType, tmdbId, cancellationToken);
         return Results.Ok(ratings);
+    }
+
+    private static async Task<IResult> GetNewsAsync(
+        int? limit,
+        RssNewsService newsService,
+        CancellationToken cancellationToken)
+    {
+        var news = await newsService.GetLatestAsync(limit ?? 30, cancellationToken);
+        return Results.Ok(news);
     }
 
     private static async Task<IResult> GetMediaAwardsAsync(

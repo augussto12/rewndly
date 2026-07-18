@@ -83,6 +83,15 @@ function IconTv(props: SVGProps<SVGSVGElement>) {
   )
 }
 
+function IconNews(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" {...props}>
+      <path d="M4 22h16a2 2 0 0 0 2-2V4a1 1 0 0 0-1-1H5a1 1 0 0 0-1 1v16a2 2 0 0 1-2 2 2 2 0 0 1-2-2V7" />
+      <path d="M8 7h8M8 11h8M8 15h5" />
+    </svg>
+  )
+}
+
 function IconCalendar(props: SVGProps<SVGSVGElement>) {
   return (
     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" {...props}>
@@ -156,6 +165,7 @@ const publicLinks = [
   { href: '/series/search', label: 'Series', icon: IconTv },
   { href: '/discover', label: 'Explorar', icon: IconCompass },
   { href: '/calendario', label: 'Calendario', icon: IconCalendar },
+  { href: '/noticias', label: 'Noticias', icon: IconNews },
   { href: '/compare', label: 'Comparar', icon: IconScales },
   { href: '/games/poster', label: 'Juego', icon: IconGamepad },
   { href: '/lists/public', label: 'Listas', icon: IconListMenu },

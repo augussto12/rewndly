@@ -5,6 +5,7 @@ using Rewndly.Application.Common.Interfaces;
 using Rewndly.Infrastructure.ExternalServices;
 using Rewndly.Infrastructure.ExternalServices.Cloudflare;
 using Rewndly.Infrastructure.ExternalServices.MdbList;
+using Rewndly.Infrastructure.ExternalServices.News;
 using Rewndly.Infrastructure.ExternalServices.Wikidata;
 using Rewndly.Infrastructure.Authentication;
 using Rewndly.Infrastructure.ExternalServices.Tmdb;
@@ -103,6 +104,13 @@ public static class DependencyInjection
             client.DefaultRequestHeaders.TryAddWithoutValidation("User-Agent", wikidataOptions.UserAgent);
         });
         services.AddScoped<WikidataEnrichmentService>();
+        services.Configure<RssNewsOptions>(configuration.GetSection(RssNewsOptions.SectionName));
+        services.AddHttpClient<RssNewsService>((serviceProvider, client) =>
+        {
+            var rssOptions = configuration.GetSection(RssNewsOptions.SectionName).Get<RssNewsOptions>() ?? new RssNewsOptions();
+            client.Timeout = TimeSpan.FromSeconds(Math.Clamp(rssOptions.TimeoutSeconds, 1, 30));
+            client.DefaultRequestHeaders.TryAddWithoutValidation("User-Agent", rssOptions.UserAgent);
+        });
         services.AddScoped<IPublicMediaService, EnrichedPublicMediaService>();
         services.AddScoped<ITmdbReadOnlyGateway>(serviceProvider => serviceProvider.GetRequiredService<TmdbClient>());
         services.AddScoped<ITmdbAccountService>(serviceProvider => serviceProvider.GetRequiredService<TmdbClient>());

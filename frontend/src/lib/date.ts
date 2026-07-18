@@ -68,6 +68,34 @@ export function monthLabel(date: Date): string {
   return capitalize(date.toLocaleDateString(LOCALE, { month: 'long', year: 'numeric' }))
 }
 
+/** Antigüedad legible: 'hace 5 min' / 'hace 3 h' / 'hace 2 d' / '14 jul'. */
+export function timeAgo(iso: string | null): string {
+  if (!iso) {
+    return ''
+  }
+  const then = new Date(iso).getTime()
+  if (Number.isNaN(then)) {
+    return ''
+  }
+  const diffSec = Math.round((Date.now() - then) / 1000)
+  if (diffSec < 60) {
+    return 'recién'
+  }
+  const diffMin = Math.round(diffSec / 60)
+  if (diffMin < 60) {
+    return `hace ${diffMin} min`
+  }
+  const diffHr = Math.round(diffMin / 60)
+  if (diffHr < 24) {
+    return `hace ${diffHr} h`
+  }
+  const diffDay = Math.round(diffHr / 24)
+  if (diffDay < 7) {
+    return `hace ${diffDay} d`
+  }
+  return new Date(iso).toLocaleDateString(LOCALE, { day: 'numeric', month: 'short' })
+}
+
 function stripTime(date: Date): Date {
   return new Date(date.getFullYear(), date.getMonth(), date.getDate())
 }

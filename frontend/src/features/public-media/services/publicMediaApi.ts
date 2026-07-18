@@ -9,6 +9,7 @@ import type {
   KeywordDetails,
   MediaAwards,
   MediaSummary,
+  NewsFeed,
   MediaReview,
   MediaRankingResponse,
   MovieDetails,
@@ -26,6 +27,10 @@ import type {
 
 export function getPublicHome() {
   return httpClient<PublicHomeResponse>('/api/public/home')
+}
+
+export function getNews(limit = 30) {
+  return httpClient<NewsFeed>(`/api/news?limit=${limit}`)
 }
 
 export function searchMovies(query: string, page = 1) {

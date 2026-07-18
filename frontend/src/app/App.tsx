@@ -33,6 +33,7 @@ const FriendsPage = lazyPage(() => import('../pages/FriendsPage'), 'FriendsPage'
 const FriendRequestsPage = lazyPage(() => import('../pages/FriendRequestsPage'), 'FriendRequestsPage')
 const DiscoverPage = lazyPage(() => import('../pages/DiscoverPage'), 'DiscoverPage')
 const CalendarioPage = lazyPage(() => import('../pages/CalendarioPage'), 'CalendarioPage')
+const NoticiasPage = lazyPage(() => import('../pages/NoticiasPage'), 'NoticiasPage')
 const RecommendationsPage = lazyPage(() => import('../pages/RecommendationsPage'), 'RecommendationsPage')
 const EpisodeDetailsPage = lazyPage(() => import('../pages/EpisodeDetailsPage'), 'EpisodeDetailsPage')
 const PublicListDetailsPage = lazyPage(() => import('../pages/PublicListDetailsPage'), 'PublicListDetailsPage')
@@ -136,6 +137,10 @@ const routes: RouteObject[] = [
   {
     path: '/calendario',
     element: withScroll(<CalendarioPage />),
+  },
+  {
+    path: '/noticias',
+    element: withScroll(<NoticiasPage />),
   },
   {
     path: '/recomendados',

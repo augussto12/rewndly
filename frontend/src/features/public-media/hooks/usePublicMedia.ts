@@ -8,6 +8,7 @@ import {
   getCollectionDetails,
   getCompanyDetails,
   getMediaAwards,
+  getNews,
   getMovieCalendar,
   getMovieGenres,
   getMovieDetails,
@@ -53,6 +54,14 @@ export function usePublicHome() {
   return useQuery({
     queryKey: ['public-home'],
     queryFn: getPublicHome,
+  })
+}
+
+export function useNews(limit = 30) {
+  return useQuery({
+    queryKey: ['news', limit],
+    queryFn: () => getNews(limit),
+    staleTime: 20 * 60 * 1000,
   })
 }
 

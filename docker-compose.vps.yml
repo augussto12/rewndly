@@ -81,6 +81,7 @@ services:
       Cloudflare__TimeoutSeconds: ${Cloudflare__TimeoutSeconds:-15}
       Wikidata__Enabled: ${Wikidata__Enabled:-true}
       WIKIDATA_USER_AGENT: ${WIKIDATA_USER_AGENT:-}
+      RssNews__Enabled: ${RssNews__Enabled:-true}
       Mail__Provider: ${Mail__Provider:-}
       Mail__ApiKey: ${Mail__ApiKey:-}
     expose:
