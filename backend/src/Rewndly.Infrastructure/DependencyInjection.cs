@@ -3,7 +3,9 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Rewndly.Application.Common.Interfaces;
 using Rewndly.Infrastructure.ExternalServices;
+using Rewndly.Infrastructure.ExternalServices.Cloudflare;
 using Rewndly.Infrastructure.ExternalServices.MdbList;
+using Rewndly.Infrastructure.ExternalServices.Wikidata;
 using Rewndly.Infrastructure.Authentication;
 using Rewndly.Infrastructure.ExternalServices.Tmdb;
 using Rewndly.Infrastructure.Persistence;
@@ -57,6 +59,7 @@ public static class DependencyInjection
             client.BaseAddress = new Uri(tmdbOptions.BaseUrl.TrimEnd('/') + "/");
             client.Timeout = TimeSpan.FromSeconds(tmdbOptions.TimeoutSeconds);
         });
+        services.AddSingleton<MdbListAvailabilityState>();
         services.AddHttpClient<MdbListClient>((serviceProvider, client) =>
         {
             var mdbListOptions = configuration.GetSection(MdbListOptions.SectionName).Get<MdbListOptions>() ?? new MdbListOptions();
@@ -67,6 +70,39 @@ public static class DependencyInjection
         services.AddScoped<MdbListRatingsService>();
         services.AddScoped<IExternalMediaRankingService, MdbListRankingService>();
         services.AddScoped<IExternalMediaRatingsService>(serviceProvider => serviceProvider.GetRequiredService<MdbListRatingsService>());
+        services.Configure<CloudflareOptions>(configuration.GetSection(CloudflareOptions.SectionName));
+        services.PostConfigure<CloudflareOptions>(cloudflareOptions =>
+        {
+            cloudflareOptions.ApiToken = FirstNonBlank(configuration["CLOUDFLARE_API_TOKEN"], cloudflareOptions.ApiToken);
+            cloudflareOptions.ZoneId = FirstNonBlank(configuration["CLOUDFLARE_ZONE_ID"], cloudflareOptions.ZoneId);
+            cloudflareOptions.AccountTag = FirstNonBlank(configuration["CLOUDFLARE_ACCOUNT_TAG"], cloudflareOptions.AccountTag);
+            cloudflareOptions.SiteTag = FirstNonBlank(configuration["CLOUDFLARE_SITE_TAG"], cloudflareOptions.SiteTag);
+            if (cloudflareOptions.Enabled && !cloudflareOptions.HasZoneAnalytics && !cloudflareOptions.HasRumAnalytics)
+            {
+                cloudflareOptions.Enabled = false;
+            }
+        });
+        services.AddHttpClient<CloudflareAnalyticsClient>((serviceProvider, client) =>
+        {
+            var cloudflareOptions = configuration.GetSection(CloudflareOptions.SectionName).Get<CloudflareOptions>() ?? new CloudflareOptions();
+            client.Timeout = TimeSpan.FromSeconds(Math.Clamp(cloudflareOptions.TimeoutSeconds, 1, 30));
+        });
+        services.AddScoped<CloudflareAnalyticsService>();
+        services.Configure<WikidataOptions>(configuration.GetSection(WikidataOptions.SectionName));
+        services.PostConfigure<WikidataOptions>(wikidataOptions =>
+        {
+            wikidataOptions.UserAgent = FirstNonBlank(configuration["WIKIDATA_USER_AGENT"], wikidataOptions.UserAgent);
+        });
+        services.AddSingleton<WikidataAvailabilityState>();
+        services.AddHttpClient<WikidataClient>((serviceProvider, client) =>
+        {
+            var wikidataOptions = configuration.GetSection(WikidataOptions.SectionName).Get<WikidataOptions>() ?? new WikidataOptions();
+            wikidataOptions.UserAgent = FirstNonBlank(configuration["WIKIDATA_USER_AGENT"], wikidataOptions.UserAgent);
+            client.Timeout = TimeSpan.FromSeconds(Math.Clamp(wikidataOptions.TimeoutSeconds, 1, 60));
+            // User-Agent con contacto es OBLIGATORIO para Wikimedia (sin él, 403).
+            client.DefaultRequestHeaders.TryAddWithoutValidation("User-Agent", wikidataOptions.UserAgent);
+        });
+        services.AddScoped<WikidataEnrichmentService>();
         services.AddScoped<IPublicMediaService, EnrichedPublicMediaService>();
         services.AddScoped<ITmdbReadOnlyGateway>(serviceProvider => serviceProvider.GetRequiredService<TmdbClient>());
         services.AddScoped<ITmdbAccountService>(serviceProvider => serviceProvider.GetRequiredService<TmdbClient>());

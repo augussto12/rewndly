@@ -13,12 +13,13 @@ namespace Rewndly.Infrastructure.ExternalServices.MdbList;
 public sealed class MdbListRatingsService(
     AppDbContext dbContext,
     MdbListClient client,
+    MdbListAvailabilityState availabilityState,
     IDateTimeProvider dateTimeProvider,
     IOptions<MdbListOptions> options,
     IServiceScopeFactory scopeFactory,
     ILogger<MdbListRatingsService> logger) : IExternalMediaRatingsService
 {
-    private const string NoDataSource = "__none";
+    private const string NoDataSource = ExternalMediaRating.NoDataSource;
     private static readonly ConcurrentDictionary<string, byte> PendingRefreshes = new(StringComparer.Ordinal);
     private readonly MdbListOptions _options = options.Value;
 
@@ -52,6 +53,7 @@ public sealed class MdbListRatingsService(
         }
 
         var result = await client.GetMediaRatingsAsync(mediaType, tmdbId, cancellationToken);
+        await MdbListSystemEventRecorder.RecordPendingTransitionsAsync(dbContext, availabilityState, dateTimeProvider.UtcNow, cancellationToken);
         if (!result.ShouldCache)
         {
             return;
@@ -64,13 +66,15 @@ public sealed class MdbListRatingsService(
 
         if (result.Ratings.Count == 0)
         {
+            // Sin datos se cachea por menos tiempo que un resultado real: los estrenos
+            // recientes suelen aparecer en MDBList dentro de las horas siguientes.
             dbContext.ExternalMediaRatings.Add(new ExternalMediaRating
             {
                 MediaType = mediaType,
                 TmdbId = tmdbId,
                 Source = NoDataSource,
                 FetchedAt = now,
-                ExpiresAt = expiresAt,
+                ExpiresAt = now.AddHours(Math.Clamp(_options.NoDataCacheHours, 1, 24)),
             });
         }
         else

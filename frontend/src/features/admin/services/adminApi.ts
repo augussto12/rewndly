@@ -1,9 +1,12 @@
 import { httpClient } from '../../../services/httpClient'
 import type {
   AdminActivityEvent,
+  AdminActivitySeries,
   AdminAuditLog,
+  AdminCloudflareAnalytics,
   AdminDashboard,
   AdminList,
+  AdminMdbListStatus,
   AdminPagedResponse,
   AdminReview,
   AdminSystemEvent,
@@ -15,6 +18,18 @@ const pageQuery = 'page=1&pageSize=50'
 
 export function getAdminDashboard() {
   return httpClient<AdminDashboard>('/api/admin/dashboard')
+}
+
+export function getAdminActivitySeries(days: number) {
+  return httpClient<AdminActivitySeries>(`/api/admin/dashboard/activity?days=${days}`)
+}
+
+export function getAdminMdbListStatus() {
+  return httpClient<AdminMdbListStatus>('/api/admin/integrations/mdblist')
+}
+
+export function getAdminCloudflareAnalytics(days: number) {
+  return httpClient<AdminCloudflareAnalytics>(`/api/admin/analytics/cloudflare?days=${days}`)
 }
 
 export function getAdminUsers(search = '') {

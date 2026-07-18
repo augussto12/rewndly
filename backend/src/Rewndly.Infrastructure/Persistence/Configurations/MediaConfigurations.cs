@@ -89,6 +89,27 @@ public sealed class ExternalMediaRatingConfiguration : IEntityTypeConfiguration<
     }
 }
 
+public sealed class WikidataEnrichmentCacheConfiguration : IEntityTypeConfiguration<WikidataEnrichmentCache>
+{
+    public void Configure(EntityTypeBuilder<WikidataEnrichmentCache> builder)
+    {
+        builder.ToTable("wikidata_enrichment_cache");
+
+        builder.ConfigureUuidPrimaryKey();
+
+        builder.Property(cache => cache.EntityType).HasConversion<string>().HasMaxLength(20).IsRequired();
+        builder.Property(cache => cache.WikidataId).HasMaxLength(32);
+        builder.Property(cache => cache.AwardsJson).HasColumnType("jsonb");
+        builder.Property(cache => cache.BioSourceTitle).HasMaxLength(400);
+        builder.Property(cache => cache.BioSourceUrl).HasMaxLength(1000);
+        builder.Property(cache => cache.BioThumbnailUrl).HasMaxLength(1000);
+        builder.Property(cache => cache.FetchedAt).HasPrecision(3).IsRequired();
+        builder.Property(cache => cache.ExpiresAt).HasPrecision(3).IsRequired();
+
+        builder.HasIndex(cache => new { cache.EntityType, cache.TmdbId }).IsUnique();
+    }
+}
+
 public sealed class ExternalMediaRankingItemConfiguration : IEntityTypeConfiguration<ExternalMediaRankingItem>
 {
     public void Configure(EntityTypeBuilder<ExternalMediaRankingItem> builder)

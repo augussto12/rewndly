@@ -7,9 +7,13 @@ import {
   getAiringTodaySeries,
   getCollectionDetails,
   getCompanyDetails,
+  getMediaAwards,
+  getMovieCalendar,
   getMovieGenres,
   getMovieDetails,
   getMovieRanking,
+  getPersonWiki,
+  getSeriesCalendar,
   getMovieWatchProviders,
   getNowPlayingMovies,
   getTrendingMovies,
@@ -95,6 +99,44 @@ export function useMovieBrowse(category: MovieBrowseCategory, enabled = true) {
     initialPageParam: 1,
     enabled,
     getNextPageParam: (lastPage) => (lastPage.hasMore ? lastPage.page + 1 : undefined),
+  })
+}
+
+export function useMovieCalendarPages(from: string, to: string, enabled = true) {
+  return useInfiniteQuery({
+    queryKey: ['movie-calendar', from, to],
+    queryFn: ({ pageParam }) => getMovieCalendar(from, to, pageParam),
+    initialPageParam: 1,
+    enabled,
+    getNextPageParam: (lastPage) => (lastPage.hasMore ? lastPage.page + 1 : undefined),
+  })
+}
+
+export function useSeriesCalendarPages(from: string, to: string, enabled = true) {
+  return useInfiniteQuery({
+    queryKey: ['series-calendar', from, to],
+    queryFn: ({ pageParam }) => getSeriesCalendar(from, to, pageParam),
+    initialPageParam: 1,
+    enabled,
+    getNextPageParam: (lastPage) => (lastPage.hasMore ? lastPage.page + 1 : undefined),
+  })
+}
+
+export function useMediaAwards(mediaType: 'Movie' | 'Series', tmdbId: number, enabled = true) {
+  return useQuery({
+    queryKey: ['media-awards', mediaType, tmdbId],
+    queryFn: () => getMediaAwards(mediaType, tmdbId),
+    enabled: enabled && tmdbId > 0,
+    staleTime: 24 * 60 * 60 * 1000,
+  })
+}
+
+export function usePersonWiki(tmdbId: number, enabled = true) {
+  return useQuery({
+    queryKey: ['person-wiki', tmdbId],
+    queryFn: () => getPersonWiki(tmdbId),
+    enabled: enabled && tmdbId > 0,
+    staleTime: 24 * 60 * 60 * 1000,
   })
 }
 

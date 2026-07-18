@@ -4,6 +4,8 @@ namespace Rewndly.Domain.Media;
 
 public sealed class ExternalMediaRating : Entity
 {
+    public const string NoDataSource = "__none";
+
     public MediaType MediaType { get; set; }
 
     public int TmdbId { get; set; }

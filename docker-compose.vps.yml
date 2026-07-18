@@ -26,6 +26,7 @@ services:
       dockerfile: Dockerfile
       args:
         VITE_API_BASE_URL: ${VITE_API_BASE_URL:-}
+        VITE_CF_BEACON_TOKEN: ${VITE_CF_BEACON_TOKEN:-}
     image: rewndly-frontend:trial
     container_name: rewndly_frontend
     restart: unless-stopped
@@ -66,8 +67,20 @@ services:
       MDBLIST_BASE_URL: ${MDBLIST_BASE_URL:-https://api.mdblist.com}
       MdbList__Enabled: ${MdbList__Enabled:-true}
       MdbList__CacheHours: ${MdbList__CacheHours:-24}
+      MdbList__NoDataCacheHours: ${MdbList__NoDataCacheHours:-6}
+      MdbList__AuthFailureCooldownMinutes: ${MdbList__AuthFailureCooldownMinutes:-60}
+      MdbList__RateLimitCooldownMinutes: ${MdbList__RateLimitCooldownMinutes:-15}
       MdbList__RankingCacheHours: ${MdbList__RankingCacheHours:-24}
       MdbList__TimeoutSeconds: ${MdbList__TimeoutSeconds:-15}
+      Cloudflare__Enabled: ${Cloudflare__Enabled:-false}
+      CLOUDFLARE_API_TOKEN: ${CLOUDFLARE_API_TOKEN:-}
+      CLOUDFLARE_ZONE_ID: ${CLOUDFLARE_ZONE_ID:-}
+      CLOUDFLARE_ACCOUNT_TAG: ${CLOUDFLARE_ACCOUNT_TAG:-}
+      CLOUDFLARE_SITE_TAG: ${CLOUDFLARE_SITE_TAG:-}
+      Cloudflare__CacheMinutes: ${Cloudflare__CacheMinutes:-15}
+      Cloudflare__TimeoutSeconds: ${Cloudflare__TimeoutSeconds:-15}
+      Wikidata__Enabled: ${Wikidata__Enabled:-true}
+      WIKIDATA_USER_AGENT: ${WIKIDATA_USER_AGENT:-}
       Mail__Provider: ${Mail__Provider:-}
       Mail__ApiKey: ${Mail__ApiKey:-}
     expose:

@@ -20,6 +20,62 @@ public sealed record AdminPopularContentResponse(string MediaType, int TmdbId, s
 
 public sealed record AdminTopRatedContentResponse(string MediaType, int TmdbId, string Title, decimal AverageRating, int RatingCount);
 
+public sealed record AdminActivitySeriesResponse(
+    DateOnly From,
+    DateOnly To,
+    int Days,
+    int ActiveUsersToday,
+    int ActiveUsersLast7Days,
+    int ActiveUsersLast30Days,
+    IReadOnlyList<AdminActivityPointResponse> Points);
+
+public sealed record AdminActivityPointResponse(
+    DateOnly Date,
+    int Registrations,
+    int Logins,
+    int ActiveUsers,
+    int FailedLogins,
+    int Reviews,
+    int LibraryItems,
+    int Lists,
+    int Friendships);
+
+public sealed record AdminMdbListStatusResponse(
+    bool Enabled,
+    bool Available,
+    DateTimeOffset? DisabledUntil,
+    string? DisabledReason,
+    int? DailyRequestLimit,
+    int? RequestsUsedToday,
+    string? PatronStatus,
+    int TitlesWithRatings,
+    int TitlesWithoutData);
+
+public sealed record AdminCloudflareResponse(
+    bool Enabled,
+    bool ZoneConfigured,
+    bool RumConfigured,
+    bool Live,
+    DateOnly From,
+    DateOnly To,
+    long? HumanVisitsToday,
+    long? HumanVisitsLast7Days,
+    long TotalRequests,
+    long TotalPageViews,
+    long TotalUniques,
+    IReadOnlyList<AdminCloudflarePointResponse> Points,
+    IReadOnlyList<AdminCloudflareCountryResponse> TopCountries,
+    DateTimeOffset? FetchedAt);
+
+public sealed record AdminCloudflarePointResponse(
+    DateOnly Date,
+    long Requests,
+    long PageViews,
+    long Uniques,
+    long? HumanVisits);
+
+public sealed record AdminCloudflareCountryResponse(string Country, long Requests);
+
 public sealed record AdminPagedResponse<T>(IReadOnlyList<T> Items, int Page, int PageSize, int Total);
 
 public sealed record AdminUserResponse(

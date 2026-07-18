@@ -90,6 +90,61 @@ namespace Rewndly.Infrastructure.Persistence.Migrations
                     b.ToTable("admin_audit_logs", (string)null);
                 });
 
+            modelBuilder.Entity("Rewndly.Domain.Analytics.CloudflareDailySnapshot", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id")
+                        .HasDefaultValueSql("gen_random_uuid()");
+
+                    b.Property<long>("Bytes")
+                        .HasColumnType("bigint")
+                        .HasColumnName("bytes");
+
+                    b.Property<DateOnly>("Date")
+                        .HasColumnType("date")
+                        .HasColumnName("date");
+
+                    b.Property<DateTimeOffset>("FetchedAt")
+                        .HasPrecision(3)
+                        .HasColumnType("timestamp(3) with time zone")
+                        .HasColumnName("fetched_at");
+
+                    b.Property<long?>("HumanPageViews")
+                        .HasColumnType("bigint")
+                        .HasColumnName("human_page_views");
+
+                    b.Property<long?>("HumanVisits")
+                        .HasColumnType("bigint")
+                        .HasColumnName("human_visits");
+
+                    b.Property<long>("PageViews")
+                        .HasColumnType("bigint")
+                        .HasColumnName("page_views");
+
+                    b.Property<long>("Requests")
+                        .HasColumnType("bigint")
+                        .HasColumnName("requests");
+
+                    b.Property<long>("Threats")
+                        .HasColumnType("bigint")
+                        .HasColumnName("threats");
+
+                    b.Property<long>("Uniques")
+                        .HasColumnType("bigint")
+                        .HasColumnName("uniques");
+
+                    b.HasKey("Id")
+                        .HasName("pk_cloudflare_daily_snapshots");
+
+                    b.HasIndex("Date")
+                        .IsUnique()
+                        .HasDatabaseName("ix_cloudflare_daily_snapshots_date");
+
+                    b.ToTable("cloudflare_daily_snapshots", (string)null);
+                });
+
             modelBuilder.Entity("Rewndly.Domain.Events.ActivityEvent", b =>
                 {
                     b.Property<Guid>("Id")
@@ -997,6 +1052,72 @@ namespace Rewndly.Infrastructure.Persistence.Migrations
                         .HasDatabaseName("ix_series_genres_series_id_genre_id");
 
                     b.ToTable("series_genres", (string)null);
+                });
+
+            modelBuilder.Entity("Rewndly.Domain.Media.WikidataEnrichmentCache", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id")
+                        .HasDefaultValueSql("gen_random_uuid()");
+
+                    b.Property<string>("AwardsJson")
+                        .HasColumnType("jsonb")
+                        .HasColumnName("awards_json");
+
+                    b.Property<string>("BioExtract")
+                        .HasColumnType("text")
+                        .HasColumnName("bio_extract");
+
+                    b.Property<string>("BioSourceTitle")
+                        .HasMaxLength(400)
+                        .HasColumnType("character varying(400)")
+                        .HasColumnName("bio_source_title");
+
+                    b.Property<string>("BioSourceUrl")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)")
+                        .HasColumnName("bio_source_url");
+
+                    b.Property<string>("BioThumbnailUrl")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)")
+                        .HasColumnName("bio_thumbnail_url");
+
+                    b.Property<string>("EntityType")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("entity_type");
+
+                    b.Property<DateTimeOffset>("ExpiresAt")
+                        .HasPrecision(3)
+                        .HasColumnType("timestamp(3) with time zone")
+                        .HasColumnName("expires_at");
+
+                    b.Property<DateTimeOffset>("FetchedAt")
+                        .HasPrecision(3)
+                        .HasColumnType("timestamp(3) with time zone")
+                        .HasColumnName("fetched_at");
+
+                    b.Property<int>("TmdbId")
+                        .HasColumnType("integer")
+                        .HasColumnName("tmdb_id");
+
+                    b.Property<string>("WikidataId")
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)")
+                        .HasColumnName("wikidata_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_wikidata_enrichment_cache");
+
+                    b.HasIndex("EntityType", "TmdbId")
+                        .IsUnique()
+                        .HasDatabaseName("ix_wikidata_enrichment_cache_entity_type_tmdb_id");
+
+                    b.ToTable("wikidata_enrichment_cache", (string)null);
                 });
 
             modelBuilder.Entity("Rewndly.Domain.Reviews.Review", b =>

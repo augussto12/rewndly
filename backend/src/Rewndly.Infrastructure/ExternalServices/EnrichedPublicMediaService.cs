@@ -45,6 +45,9 @@ public sealed class EnrichedPublicMediaService(
         CancellationToken cancellationToken) =>
         tmdbClient.DiscoverMoviesAsync(genreId, year, yearFrom, yearTo, watchProviderId, sortBy, minVoteAverage, runtimeMax, page, cancellationToken);
 
+    public Task<PagedResponse<MediaSummaryResponse>> GetMovieCalendarAsync(DateOnly from, DateOnly to, int page, CancellationToken cancellationToken) =>
+        tmdbClient.GetMovieCalendarAsync(from, to, page, cancellationToken);
+
     public async Task<MovieDetailsResponse?> GetMovieDetailsAsync(int tmdbId, CancellationToken cancellationToken)
     {
         var movieTask = tmdbClient.GetMovieDetailsAsync(tmdbId, cancellationToken);
@@ -83,6 +86,9 @@ public sealed class EnrichedPublicMediaService(
 
     public Task<PagedResponse<MediaSummaryResponse>> GetOnTheAirSeriesAsync(int page, CancellationToken cancellationToken) =>
         tmdbClient.GetOnTheAirSeriesAsync(page, cancellationToken);
+
+    public Task<PagedResponse<MediaSummaryResponse>> GetSeriesCalendarAsync(DateOnly from, DateOnly to, int page, CancellationToken cancellationToken) =>
+        tmdbClient.GetSeriesCalendarAsync(from, to, page, cancellationToken);
 
     public Task<PagedResponse<MediaSummaryResponse>> DiscoverSeriesAsync(
         int? genreId,

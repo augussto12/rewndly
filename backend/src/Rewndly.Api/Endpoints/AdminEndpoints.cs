@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
 using Rewndly.Api.Extensions;
 using Rewndly.Application.Common.Interfaces;
 using Rewndly.Application.Modules.Admin;
@@ -11,6 +12,8 @@ using Rewndly.Domain.Lists;
 using Rewndly.Domain.Media;
 using Rewndly.Domain.Reviews;
 using Rewndly.Domain.Users;
+using Rewndly.Infrastructure.ExternalServices.Cloudflare;
+using Rewndly.Infrastructure.ExternalServices.MdbList;
 using Rewndly.Infrastructure.Persistence;
 using ListEntity = Rewndly.Domain.Lists.List;
 
@@ -37,6 +40,9 @@ public static class AdminEndpoints
         group.MapGet("/lists", GetListsAsync).RequireAuthorization(AuthPolicies.CanModerateContent);
         group.MapDelete("/lists/{id:guid}", DeleteListAsync).RequireAuthorization(AuthPolicies.CanModerateContent);
 
+        group.MapGet("/dashboard/activity", GetActivitySeriesAsync).RequireAuthorization(AuthPolicies.CanViewSystemMetrics);
+        group.MapGet("/integrations/mdblist", GetMdbListStatusAsync).RequireAuthorization(AuthPolicies.CanViewSystemMetrics);
+        group.MapGet("/analytics/cloudflare", GetCloudflareAnalyticsAsync).RequireAuthorization(AuthPolicies.CanViewSystemMetrics);
         group.MapGet("/system-events", GetSystemEventsAsync).RequireAuthorization(AuthPolicies.CanViewSystemMetrics);
         group.MapGet("/activity-events", GetActivityEventsAsync).RequireAuthorization(AuthPolicies.CanViewSystemMetrics);
         group.MapGet("/audit-logs", GetAuditLogsAsync).RequireAuthorization(AuthPolicies.CanViewAuditLogs);
@@ -133,6 +139,168 @@ public static class AdminEndpoints
             await dbContext.SystemEvents.CountAsync(systemEvent => systemEvent.EventType == SystemEventType.UserLoginFailed && systemEvent.CreatedAt >= yesterday, cancellationToken),
             mostSavedMovies.Concat(mostSavedSeries).OrderByDescending(item => item.Count).Take(5).ToList(),
             topMovies.Concat(topSeries).OrderByDescending(item => item.AverageRating).Take(5).ToList()));
+    }
+
+    private static async Task<IResult> GetActivitySeriesAsync(
+        int? days,
+        AppDbContext dbContext,
+        CancellationToken cancellationToken)
+    {
+        var windowDays = Math.Clamp(days ?? 30, 7, 90);
+        var todayUtc = DateOnly.FromDateTime(DateTimeOffset.UtcNow.UtcDateTime);
+        var fromDate = todayUtc.AddDays(-(windowDays - 1));
+        var from = new DateTimeOffset(fromDate.ToDateTime(TimeOnly.MinValue), TimeSpan.Zero);
+        var to = new DateTimeOffset(todayUtc.AddDays(1).ToDateTime(TimeOnly.MinValue), TimeSpan.Zero);
+
+        // SystemEvents es la fuente uniforme (sin filtro de soft-delete). Filtramos por
+        // los tipos que graficamos —lo que acota fuerte el volumen: excluye los eventos de
+        // alta frecuencia como RefreshTokenRotated— y con la ventana limitada a 7-90 días
+        // hacemos el bucketing por día en memoria. Así evitamos depender de funciones
+        // específicas de Npgsql (DateTrunc no es accesible desde el proyecto Api) y la
+        // ambigüedad de zona horaria del date_trunc sobre timestamptz.
+        var events = await dbContext.SystemEvents
+            .AsNoTracking()
+            .Where(systemEvent => systemEvent.CreatedAt >= from
+                && systemEvent.CreatedAt < to
+                && ActivityEventTypes.Contains(systemEvent.EventType))
+            .Select(systemEvent => new { systemEvent.CreatedAt, systemEvent.EventType, systemEvent.UserId })
+            .ToListAsync(cancellationToken);
+
+        var countsByDay = new Dictionary<DateOnly, Dictionary<SystemEventType, int>>();
+        var activeUsersByDay = new Dictionary<DateOnly, HashSet<Guid>>();
+        foreach (var systemEvent in events)
+        {
+            var date = DateOnly.FromDateTime(systemEvent.CreatedAt.UtcDateTime);
+
+            var dayCounts = countsByDay.TryGetValue(date, out var existing)
+                ? existing
+                : countsByDay[date] = new Dictionary<SystemEventType, int>();
+            dayCounts[systemEvent.EventType] = dayCounts.GetValueOrDefault(systemEvent.EventType) + 1;
+
+            // Un login fallido no es actividad: no cuenta para DAU.
+            if (systemEvent.UserId is { } userId && systemEvent.EventType != SystemEventType.UserLoginFailed)
+            {
+                (activeUsersByDay.TryGetValue(date, out var users)
+                    ? users
+                    : activeUsersByDay[date] = new HashSet<Guid>()).Add(userId);
+            }
+        }
+
+        var points = new List<AdminActivityPointResponse>(windowDays);
+        for (var offset = 0; offset < windowDays; offset++)
+        {
+            var date = fromDate.AddDays(offset);
+            var counts = countsByDay.GetValueOrDefault(date);
+            points.Add(new AdminActivityPointResponse(
+                date,
+                Count(counts, SystemEventType.UserRegistered),
+                Count(counts, SystemEventType.UserLoggedIn),
+                activeUsersByDay.TryGetValue(date, out var activeSet) ? activeSet.Count : 0,
+                Count(counts, SystemEventType.UserLoginFailed),
+                Count(counts, SystemEventType.ReviewCreated),
+                Count(counts, SystemEventType.LibraryItemCreated),
+                Count(counts, SystemEventType.ListCreated),
+                Count(counts, SystemEventType.FriendshipCreated)));
+        }
+
+        var startOfToday = new DateTimeOffset(todayUtc.ToDateTime(TimeOnly.MinValue), TimeSpan.Zero);
+        var activeUsersToday = await CountActiveUsersAsync(dbContext, startOfToday, cancellationToken);
+        var activeUsers7 = await CountActiveUsersAsync(dbContext, startOfToday.AddDays(-6), cancellationToken);
+        var activeUsers30 = await CountActiveUsersAsync(dbContext, startOfToday.AddDays(-29), cancellationToken);
+
+        return Results.Ok(new AdminActivitySeriesResponse(
+            fromDate,
+            todayUtc,
+            windowDays,
+            activeUsersToday,
+            activeUsers7,
+            activeUsers30,
+            points));
+
+        static int Count(Dictionary<SystemEventType, int>? counts, SystemEventType type)
+            => counts is not null && counts.TryGetValue(type, out var value) ? value : 0;
+    }
+
+    // Tipos que grafica el dashboard de actividad.
+    private static readonly SystemEventType[] ActivityEventTypes =
+    [
+        SystemEventType.UserRegistered,
+        SystemEventType.UserLoggedIn,
+        SystemEventType.UserLoginFailed,
+        SystemEventType.ReviewCreated,
+        SystemEventType.LibraryItemCreated,
+        SystemEventType.ListCreated,
+        SystemEventType.FriendshipCreated,
+    ];
+
+    // Eventos que cuentan como "usuario activo" (excluye logins fallidos y ruido no interactivo).
+    private static readonly SystemEventType[] ActiveUserEventTypes =
+    [
+        SystemEventType.UserRegistered,
+        SystemEventType.UserLoggedIn,
+        SystemEventType.ReviewCreated,
+        SystemEventType.LibraryItemCreated,
+        SystemEventType.ListCreated,
+        SystemEventType.FriendshipCreated,
+    ];
+
+    private static Task<int> CountActiveUsersAsync(AppDbContext dbContext, DateTimeOffset since, CancellationToken cancellationToken)
+    {
+        return dbContext.SystemEvents
+            .AsNoTracking()
+            .Where(systemEvent => systemEvent.CreatedAt >= since
+                && systemEvent.UserId != null
+                && ActiveUserEventTypes.Contains(systemEvent.EventType))
+            .Select(systemEvent => systemEvent.UserId)
+            .Distinct()
+            .CountAsync(cancellationToken);
+    }
+
+    private static async Task<IResult> GetCloudflareAnalyticsAsync(
+        int? days,
+        CloudflareAnalyticsService cloudflareService,
+        CancellationToken cancellationToken)
+    {
+        var response = await cloudflareService.GetAnalyticsAsync(days ?? 30, cancellationToken);
+        return Results.Ok(response);
+    }
+
+    private static async Task<IResult> GetMdbListStatusAsync(
+        AppDbContext dbContext,
+        MdbListClient mdbListClient,
+        MdbListAvailabilityState availabilityState,
+        IOptions<MdbListOptions> mdbListOptions,
+        CancellationToken cancellationToken)
+    {
+        var options = mdbListOptions.Value;
+        var enabled = options.Enabled && !string.IsNullOrWhiteSpace(options.ApiKey);
+        var now = DateTimeOffset.UtcNow;
+
+        var limits = enabled ? await mdbListClient.GetUserLimitsAsync(cancellationToken) : null;
+        await MdbListSystemEventRecorder.RecordPendingTransitionsAsync(dbContext, availabilityState, now, cancellationToken);
+        var (disabledUntil, disabledReason) = availabilityState.Snapshot(now);
+
+        var titlesWithRatings = await dbContext.ExternalMediaRatings
+            .AsNoTracking()
+            .Where(rating => rating.Source != ExternalMediaRating.NoDataSource)
+            .Select(rating => new { rating.MediaType, rating.TmdbId })
+            .Distinct()
+            .CountAsync(cancellationToken);
+
+        var titlesWithoutData = await dbContext.ExternalMediaRatings
+            .AsNoTracking()
+            .CountAsync(rating => rating.Source == ExternalMediaRating.NoDataSource, cancellationToken);
+
+        return Results.Ok(new AdminMdbListStatusResponse(
+            enabled,
+            enabled && availabilityState.IsAvailable(now),
+            disabledUntil,
+            disabledReason?.ToString(),
+            limits?.DailyRequestLimit,
+            limits?.RequestsUsedToday,
+            limits?.PatronStatus,
+            titlesWithRatings,
+            titlesWithoutData));
     }
 
     private static async Task<IResult> GetUsersAsync(

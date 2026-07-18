@@ -12,6 +12,7 @@ namespace Rewndly.Infrastructure.ExternalServices.MdbList;
 public sealed class MdbListRankingService(
     AppDbContext dbContext,
     MdbListClient client,
+    MdbListAvailabilityState availabilityState,
     TmdbClient tmdbClient,
     IOptions<MdbListOptions> options,
     ILogger<MdbListRankingService> logger) : IExternalMediaRankingService
@@ -151,6 +152,8 @@ public sealed class MdbListRankingService(
                     mediaType,
                     sortBy);
             }
+
+            await MdbListSystemEventRecorder.RecordPendingTransitionsAsync(dbContext, availabilityState, now, cancellationToken);
 
             var refreshedItems = new List<ExternalMediaRankingItem>();
             var rank = 1;

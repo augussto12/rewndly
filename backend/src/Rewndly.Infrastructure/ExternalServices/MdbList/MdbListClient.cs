@@ -4,12 +4,15 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Rewndly.Application.Common.Interfaces;
 using Rewndly.Domain.Media;
 
 namespace Rewndly.Infrastructure.ExternalServices.MdbList;
 
 public sealed class MdbListClient(
     HttpClient httpClient,
+    MdbListAvailabilityState availabilityState,
+    IDateTimeProvider dateTimeProvider,
     IOptions<MdbListOptions> options,
     ILogger<MdbListClient> logger)
 {
@@ -34,11 +37,15 @@ public sealed class MdbListClient(
         };
 
     private readonly MdbListOptions _options = options.Value;
-    private bool _disabledByAuthFailure;
+
+    private bool IsUnavailable =>
+        !_options.Enabled ||
+        string.IsNullOrWhiteSpace(_options.ApiKey) ||
+        !availabilityState.IsAvailable(dateTimeProvider.UtcNow);
 
     public async Task<MdbListLookupResult> GetMediaRatingsAsync(MediaType mediaType, int tmdbId, CancellationToken cancellationToken)
     {
-        if (!_options.Enabled || string.IsNullOrWhiteSpace(_options.ApiKey) || _disabledByAuthFailure)
+        if (IsUnavailable)
         {
             return MdbListLookupResult.Skip();
         }
@@ -52,20 +59,22 @@ public sealed class MdbListClient(
 
             if (response.StatusCode == HttpStatusCode.NotFound)
             {
+                availabilityState.ReportSuccess();
                 logger.LogDebug("MDBList returned no data for {MediaType} {TmdbId}.", mediaType, tmdbId);
                 return MdbListLookupResult.NotFound();
             }
 
-            if (response.StatusCode is HttpStatusCode.Unauthorized or HttpStatusCode.Forbidden)
+            if (response.StatusCode == HttpStatusCode.Unauthorized)
             {
-                _disabledByAuthFailure = true;
-                logger.LogWarning("MDBList rejected the configured API key with status {StatusCode}. Disabling MDBList lookups until restart.", (int)response.StatusCode);
+                ReportAuthFailure();
+                logger.LogWarning("MDBList rejected the configured API key with status 401. Pausing MDBList lookups for {CooldownMinutes} minutes.", AuthFailureCooldownMinutes);
                 return MdbListLookupResult.Skip();
             }
 
-            if (response.StatusCode == HttpStatusCode.TooManyRequests)
+            if (response.StatusCode is HttpStatusCode.Forbidden or HttpStatusCode.TooManyRequests)
             {
-                logger.LogWarning("MDBList rate limit reached while fetching {MediaType} {TmdbId}.", mediaType, tmdbId);
+                ReportRateLimit();
+                logger.LogWarning("MDBList quota or rate limit reached (status {StatusCode}) while fetching {MediaType} {TmdbId}. Pausing MDBList lookups for {CooldownMinutes} minutes.", (int)response.StatusCode, mediaType, tmdbId, RateLimitCooldownMinutes);
                 return MdbListLookupResult.Skip();
             }
 
@@ -74,6 +83,8 @@ public sealed class MdbListClient(
                 logger.LogWarning("MDBList lookup failed with status {StatusCode} for {MediaType} {TmdbId}.", (int)response.StatusCode, mediaType, tmdbId);
                 return MdbListLookupResult.Skip();
             }
+
+            availabilityState.ReportSuccess();
 
             using var document = await response.Content.ReadFromJsonAsync<JsonDocument>(cancellationToken: cancellationToken);
             if (document is null)
@@ -95,13 +106,88 @@ public sealed class MdbListClient(
         }
     }
 
+    private int AuthFailureCooldownMinutes => Math.Clamp(_options.AuthFailureCooldownMinutes, 1, 24 * 60);
+
+    private int RateLimitCooldownMinutes => Math.Clamp(_options.RateLimitCooldownMinutes, 1, 24 * 60);
+
+    private void ReportAuthFailure()
+    {
+        availabilityState.ReportOutage(MdbListOutageReason.AuthFailure, dateTimeProvider.UtcNow, TimeSpan.FromMinutes(AuthFailureCooldownMinutes));
+    }
+
+    private void ReportRateLimit()
+    {
+        availabilityState.ReportOutage(MdbListOutageReason.RateLimited, dateTimeProvider.UtcNow, TimeSpan.FromMinutes(RateLimitCooldownMinutes));
+    }
+
+    public async Task<MdbListUserLimits?> GetUserLimitsAsync(CancellationToken cancellationToken)
+    {
+        // Deliberately skips the availability check: this is a low-volume, admin-triggered
+        // probe whose success re-enables the circuit breaker.
+        if (!_options.Enabled || string.IsNullOrWhiteSpace(_options.ApiKey))
+        {
+            return null;
+        }
+
+        var path = $"user/?apikey={Uri.EscapeDataString(_options.ApiKey)}";
+
+        try
+        {
+            using var response = await httpClient.GetAsync(path, cancellationToken);
+
+            if (response.StatusCode == HttpStatusCode.Unauthorized)
+            {
+                ReportAuthFailure();
+                logger.LogWarning("MDBList rejected the configured API key with status 401 while fetching user limits.");
+                return null;
+            }
+
+            if (response.StatusCode is HttpStatusCode.Forbidden or HttpStatusCode.TooManyRequests)
+            {
+                ReportRateLimit();
+                logger.LogWarning("MDBList quota or rate limit reached (status {StatusCode}) while fetching user limits.", (int)response.StatusCode);
+                return null;
+            }
+
+            if (!response.IsSuccessStatusCode)
+            {
+                logger.LogWarning("MDBList user limits lookup failed with status {StatusCode}.", (int)response.StatusCode);
+                return null;
+            }
+
+            availabilityState.ReportSuccess();
+
+            using var document = await response.Content.ReadFromJsonAsync<JsonDocument>(cancellationToken: cancellationToken);
+            if (document is null)
+            {
+                return null;
+            }
+
+            var root = document.RootElement;
+            return new MdbListUserLimits(
+                ReadInt(root, "api_requests", "apiRequests"),
+                ReadInt(root, "api_requests_count", "apiRequestsCount"),
+                ReadString(root, "patron_status", "patronStatus"),
+                ReadString(root, "username"));
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            return null;
+        }
+        catch (Exception exception)
+        {
+            logger.LogWarning(exception, "MDBList user limits lookup failed.");
+            return null;
+        }
+    }
+
     public async Task<MdbListCatalogResult> GetCatalogAsync(
         MediaType mediaType,
         string sortBy,
         int limit,
         CancellationToken cancellationToken)
     {
-        if (!_options.Enabled || string.IsNullOrWhiteSpace(_options.ApiKey) || _disabledByAuthFailure)
+        if (IsUnavailable)
         {
             return MdbListCatalogResult.Skip();
         }
@@ -127,14 +213,20 @@ public sealed class MdbListClient(
                 if (response.StatusCode is HttpStatusCode.Unauthorized or HttpStatusCode.Forbidden)
                 {
                     var body = await response.Content.ReadAsStringAsync(cancellationToken);
-                    if (response.StatusCode == HttpStatusCode.Unauthorized || !body.Contains("Catalog query limit reached", StringComparison.OrdinalIgnoreCase))
+                    if (body.Contains("Catalog query limit reached", StringComparison.OrdinalIgnoreCase))
                     {
-                        _disabledByAuthFailure = true;
-                        logger.LogWarning("MDBList rejected the configured API key while fetching {MediaType} catalog. Disabling MDBList lookups until restart.", mediaType);
+                        // Catalog has its own quota; other MDBList lookups keep working.
+                        logger.LogWarning("MDBList catalog query limit reached while fetching {MediaType} sorted by {SortBy}.", mediaType, sortBy);
+                    }
+                    else if (response.StatusCode == HttpStatusCode.Unauthorized)
+                    {
+                        ReportAuthFailure();
+                        logger.LogWarning("MDBList rejected the configured API key with status 401 while fetching {MediaType} catalog. Pausing MDBList lookups for {CooldownMinutes} minutes.", mediaType, AuthFailureCooldownMinutes);
                     }
                     else
                     {
-                        logger.LogWarning("MDBList catalog query limit reached while fetching {MediaType} sorted by {SortBy}.", mediaType, sortBy);
+                        ReportRateLimit();
+                        logger.LogWarning("MDBList quota or rate limit reached (status 403) while fetching {MediaType} catalog. Pausing MDBList lookups for {CooldownMinutes} minutes.", mediaType, RateLimitCooldownMinutes);
                     }
 
                     return MdbListCatalogResult.Skip();
@@ -142,7 +234,8 @@ public sealed class MdbListClient(
 
                 if (response.StatusCode == HttpStatusCode.TooManyRequests)
                 {
-                    logger.LogWarning("MDBList rate limit reached while fetching {MediaType} catalog sorted by {SortBy}.", mediaType, sortBy);
+                    ReportRateLimit();
+                    logger.LogWarning("MDBList rate limit reached while fetching {MediaType} catalog sorted by {SortBy}. Pausing MDBList lookups for {CooldownMinutes} minutes.", mediaType, sortBy, RateLimitCooldownMinutes);
                     return MdbListCatalogResult.Skip();
                 }
 
@@ -151,6 +244,8 @@ public sealed class MdbListClient(
                     logger.LogWarning("MDBList catalog failed with status {StatusCode} for {MediaType} sorted by {SortBy}.", (int)response.StatusCode, mediaType, sortBy);
                     return MdbListCatalogResult.Skip();
                 }
+
+                availabilityState.ReportSuccess();
 
                 using var document = await response.Content.ReadFromJsonAsync<JsonDocument>(cancellationToken: cancellationToken);
                 if (document is null)
@@ -191,7 +286,7 @@ public sealed class MdbListClient(
         IReadOnlyList<int> tmdbIds,
         CancellationToken cancellationToken)
     {
-        if (!_options.Enabled || string.IsNullOrWhiteSpace(_options.ApiKey) || _disabledByAuthFailure || tmdbIds.Count == 0)
+        if (IsUnavailable || tmdbIds.Count == 0)
         {
             return new Dictionary<int, decimal>();
         }
@@ -207,16 +302,17 @@ public sealed class MdbListClient(
             {
                 using var response = await httpClient.PostAsJsonAsync(path, new { provider = "tmdb", ids = chunk.Select(id => id.ToString(CultureInfo.InvariantCulture)).ToArray() }, cancellationToken);
 
-                if (response.StatusCode is HttpStatusCode.Unauthorized or HttpStatusCode.Forbidden)
+                if (response.StatusCode == HttpStatusCode.Unauthorized)
                 {
-                    _disabledByAuthFailure = true;
-                    logger.LogWarning("MDBList rejected the configured API key while fetching {RatingSource} ratings. Disabling MDBList lookups until restart.", ratingSource);
+                    ReportAuthFailure();
+                    logger.LogWarning("MDBList rejected the configured API key with status 401 while fetching {RatingSource} ratings. Pausing MDBList lookups for {CooldownMinutes} minutes.", ratingSource, AuthFailureCooldownMinutes);
                     break;
                 }
 
-                if (response.StatusCode == HttpStatusCode.TooManyRequests)
+                if (response.StatusCode is HttpStatusCode.Forbidden or HttpStatusCode.TooManyRequests)
                 {
-                    logger.LogWarning("MDBList rate limit reached while fetching {RatingSource} ratings.", ratingSource);
+                    ReportRateLimit();
+                    logger.LogWarning("MDBList quota or rate limit reached (status {StatusCode}) while fetching {RatingSource} ratings. Pausing MDBList lookups for {CooldownMinutes} minutes.", (int)response.StatusCode, ratingSource, RateLimitCooldownMinutes);
                     break;
                 }
 
@@ -225,6 +321,8 @@ public sealed class MdbListClient(
                     logger.LogWarning("MDBList rating batch failed with status {StatusCode} for {RatingSource}.", (int)response.StatusCode, ratingSource);
                     continue;
                 }
+
+                availabilityState.ReportSuccess();
 
                 using var document = await response.Content.ReadFromJsonAsync<JsonDocument>(cancellationToken: cancellationToken);
                 if (document is null || !document.RootElement.TryGetProperty("ratings", out var ratingsElement) || ratingsElement.ValueKind != JsonValueKind.Array)
@@ -260,7 +358,7 @@ public sealed class MdbListClient(
         IReadOnlyList<int> tmdbIds,
         CancellationToken cancellationToken)
     {
-        if (!_options.Enabled || string.IsNullOrWhiteSpace(_options.ApiKey) || _disabledByAuthFailure || tmdbIds.Count == 0)
+        if (IsUnavailable || tmdbIds.Count == 0)
         {
             return [];
         }
@@ -276,16 +374,17 @@ public sealed class MdbListClient(
             {
                 using var response = await httpClient.PostAsJsonAsync(path, new { ids = chunk }, cancellationToken);
 
-                if (response.StatusCode is HttpStatusCode.Unauthorized or HttpStatusCode.Forbidden)
+                if (response.StatusCode == HttpStatusCode.Unauthorized)
                 {
-                    _disabledByAuthFailure = true;
-                    logger.LogWarning("MDBList rejected the configured API key while fetching {MediaType} media batch. Disabling MDBList lookups until restart.", mediaType);
+                    ReportAuthFailure();
+                    logger.LogWarning("MDBList rejected the configured API key with status 401 while fetching {MediaType} media batch. Pausing MDBList lookups for {CooldownMinutes} minutes.", mediaType, AuthFailureCooldownMinutes);
                     break;
                 }
 
-                if (response.StatusCode == HttpStatusCode.TooManyRequests)
+                if (response.StatusCode is HttpStatusCode.Forbidden or HttpStatusCode.TooManyRequests)
                 {
-                    logger.LogWarning("MDBList rate limit reached while fetching {MediaType} media batch.", mediaType);
+                    ReportRateLimit();
+                    logger.LogWarning("MDBList quota or rate limit reached (status {StatusCode}) while fetching {MediaType} media batch. Pausing MDBList lookups for {CooldownMinutes} minutes.", (int)response.StatusCode, mediaType, RateLimitCooldownMinutes);
                     break;
                 }
 
@@ -294,6 +393,8 @@ public sealed class MdbListClient(
                     logger.LogWarning("MDBList media batch failed with status {StatusCode} for {MediaType}.", (int)response.StatusCode, mediaType);
                     continue;
                 }
+
+                availabilityState.ReportSuccess();
 
                 using var document = await response.Content.ReadFromJsonAsync<JsonDocument>(cancellationToken: cancellationToken);
                 if (document is null || document.RootElement.ValueKind != JsonValueKind.Array)
@@ -606,6 +707,12 @@ public sealed class MdbListClient(
 }
 
 public sealed record MdbListRating(string Source, string Label, decimal Value, decimal Scale, int? Votes);
+
+public sealed record MdbListUserLimits(
+    int? DailyRequestLimit,
+    int? RequestsUsedToday,
+    string? PatronStatus,
+    string? Username);
 
 public sealed record MdbListCatalogItem(int TmdbId, string Title, int? Year, decimal? Score);
 

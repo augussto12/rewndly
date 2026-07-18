@@ -18,6 +18,35 @@ export type PagedResponse<TItem> = {
   hasMore: boolean
 }
 
+export type WikidataAward = {
+  status: 'won' | 'nominated'
+  award: string
+  year: number | null
+  detail: string | null
+}
+
+export type MediaAwards = {
+  available: boolean
+  wikidataId: string | null
+  awards: WikidataAward[]
+  cachedAt: string | null
+}
+
+export type WikiBio = {
+  extract: string
+  sourceTitle: string
+  sourceUrl: string
+  thumbnailUrl: string | null
+}
+
+export type PersonWiki = {
+  available: boolean
+  wikidataId: string | null
+  bio: WikiBio | null
+  awards: WikidataAward[]
+  cachedAt: string | null
+}
+
 export type PublicHomeResponse = {
   trendingMovies: MediaSummary[]
   nowPlayingMovies: MediaSummary[]

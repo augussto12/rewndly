@@ -31,6 +31,8 @@ public interface IPublicMediaService
         int page,
         CancellationToken cancellationToken);
 
+    Task<PagedResponse<MediaSummaryResponse>> GetMovieCalendarAsync(DateOnly from, DateOnly to, int page, CancellationToken cancellationToken);
+
     Task<MovieDetailsResponse?> GetMovieDetailsAsync(int tmdbId, CancellationToken cancellationToken);
 
     Task<PagedResponse<MediaSummaryResponse>> SearchSeriesAsync(string query, int page, CancellationToken cancellationToken);
@@ -44,6 +46,8 @@ public interface IPublicMediaService
     Task<PagedResponse<MediaSummaryResponse>> GetAiringTodaySeriesAsync(int page, CancellationToken cancellationToken);
 
     Task<PagedResponse<MediaSummaryResponse>> GetOnTheAirSeriesAsync(int page, CancellationToken cancellationToken);
+
+    Task<PagedResponse<MediaSummaryResponse>> GetSeriesCalendarAsync(DateOnly from, DateOnly to, int page, CancellationToken cancellationToken);
 
     Task<PagedResponse<MediaSummaryResponse>> DiscoverSeriesAsync(
         int? genreId,

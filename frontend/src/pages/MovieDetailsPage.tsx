@@ -1,6 +1,7 @@
 import { Link, useParams } from 'react-router-dom'
 import { ErrorState } from '../components/feedback/ErrorState/ErrorState'
 import { LoadingSkeleton } from '../components/feedback/LoadingSkeleton/LoadingSkeleton'
+import { MediaAwards } from '../components/media/MediaAwards/MediaAwards'
 import { MediaDetailsExtras } from '../components/media/MediaDetailsExtras/MediaDetailsExtras'
 import { MediaDetailsHeader } from '../components/media/MediaDetailsHeader/MediaDetailsHeader'
 import { MediaDetailsMetadata } from '../components/media/MediaDetailsMetadata/MediaDetailsMetadata'
@@ -61,6 +62,7 @@ export function MovieDetailsPage() {
               recommendations={data.recommendations}
               similar={data.similar}
             />
+            <MediaAwards mediaType="Movie" tmdbId={data.tmdbId} />
             <MediaDetailsMetadata
               images={data.images}
               keywords={data.keywords}

@@ -1,7 +1,9 @@
+using System.Globalization;
 using Rewndly.Application.Common.Interfaces;
 using Rewndly.Application.Modules.Public;
 using Rewndly.Domain.Media;
 using Rewndly.Infrastructure.ExternalServices.Tmdb;
+using Rewndly.Infrastructure.ExternalServices.Wikidata;
 
 namespace Rewndly.Api.Endpoints;
 
@@ -54,6 +56,10 @@ public static class PublicMediaEndpoints
             .WithTags("Movies")
             .AllowAnonymous();
 
+        app.MapGet("/api/movies/calendar", GetMovieCalendarAsync)
+            .WithTags("Movies")
+            .AllowAnonymous();
+
         app.MapGet("/api/movies/{tmdbId:int}", GetMovieDetailsAsync)
             .WithTags("Movies")
             .AllowAnonymous();
@@ -70,6 +76,11 @@ public static class PublicMediaEndpoints
 
         app.MapPost("/api/media/watch-providers/batch", GetWatchProvidersBatchAsync)
             .WithTags("Media")
+            .AllowAnonymous();
+
+        app.MapGet("/api/media/{mediaType}/{tmdbId:int}/awards", GetMediaAwardsAsync)
+            .WithTags("Media")
+            .RequireRateLimiting("external-ratings")
             .AllowAnonymous();
 
         app.MapGet("/api/series/search", SearchSeriesAsync)
@@ -105,6 +116,10 @@ public static class PublicMediaEndpoints
             .WithTags("Series")
             .AllowAnonymous();
 
+        app.MapGet("/api/series/calendar", GetSeriesCalendarAsync)
+            .WithTags("Series")
+            .AllowAnonymous();
+
         app.MapGet("/api/series/{tmdbId:int}", GetSeriesDetailsAsync)
             .WithTags("Series")
             .AllowAnonymous();
@@ -131,6 +146,11 @@ public static class PublicMediaEndpoints
 
         app.MapGet("/api/people/{tmdbId:int}", GetPersonDetailsAsync)
             .WithTags("People")
+            .AllowAnonymous();
+
+        app.MapGet("/api/people/{tmdbId:int}/wiki", GetPersonWikiAsync)
+            .WithTags("People")
+            .RequireRateLimiting("external-ratings")
             .AllowAnonymous();
 
         app.MapGet("/api/collections/{collectionId:int}", GetCollectionDetailsAsync)
@@ -261,6 +281,51 @@ public static class PublicMediaEndpoints
         return await ExecuteTmdbAsync(() => mediaService.DiscoverMoviesAsync(genreId, year, yearFrom, yearTo, watchProviderId, sortBy, minVoteAverage, runtimeMax, NormalizePage(page), cancellationToken));
     }
 
+    private static async Task<IResult> GetMovieCalendarAsync(
+        string? from,
+        string? to,
+        IPublicMediaService mediaService,
+        CancellationToken cancellationToken,
+        int page = 1)
+    {
+        var (start, end) = ResolveCalendarWindow(from, to);
+        return await ExecuteTmdbAsync(() => mediaService.GetMovieCalendarAsync(start, end, NormalizePage(page), cancellationToken));
+    }
+
+    private static async Task<IResult> GetSeriesCalendarAsync(
+        string? from,
+        string? to,
+        IPublicMediaService mediaService,
+        CancellationToken cancellationToken,
+        int page = 1)
+    {
+        var (start, end) = ResolveCalendarWindow(from, to);
+        return await ExecuteTmdbAsync(() => mediaService.GetSeriesCalendarAsync(start, end, NormalizePage(page), cancellationToken));
+    }
+
+    // Resuelve la ventana del calendario: por defecto la semana desde hoy, con el rango
+    // acotado a 92 días para no abusar de la API de TMDB.
+    private static (DateOnly From, DateOnly To) ResolveCalendarWindow(string? from, string? to)
+    {
+        const int maxRangeDays = 92;
+        var today = DateOnly.FromDateTime(DateTimeOffset.UtcNow.UtcDateTime);
+
+        var start = DateOnly.TryParse(from, CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsedFrom) ? parsedFrom : today;
+        var end = DateOnly.TryParse(to, CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsedTo) ? parsedTo : start.AddDays(6);
+
+        if (end < start)
+        {
+            (start, end) = (end, start);
+        }
+
+        if (end.DayNumber - start.DayNumber > maxRangeDays)
+        {
+            end = start.AddDays(maxRangeDays);
+        }
+
+        return (start, end);
+    }
+
     private static async Task<IResult> GetMovieDetailsAsync(
         int tmdbId,
         IPublicMediaService mediaService,
@@ -286,6 +351,35 @@ public static class PublicMediaEndpoints
 
         var ratings = await ratingsService.GetRatingsAsync(parsedMediaType, tmdbId, cancellationToken);
         return Results.Ok(ratings);
+    }
+
+    private static async Task<IResult> GetMediaAwardsAsync(
+        string mediaType,
+        int tmdbId,
+        WikidataEnrichmentService wikidataService,
+        CancellationToken cancellationToken)
+    {
+        if (tmdbId <= 0 || !TryParseMediaType(mediaType, out var parsedMediaType))
+        {
+            return Results.BadRequest(new { message = "Media type must be movie or series." });
+        }
+
+        var awards = await wikidataService.GetMediaAwardsAsync(parsedMediaType, tmdbId, cancellationToken);
+        return Results.Ok(awards);
+    }
+
+    private static async Task<IResult> GetPersonWikiAsync(
+        int tmdbId,
+        WikidataEnrichmentService wikidataService,
+        CancellationToken cancellationToken)
+    {
+        if (tmdbId <= 0)
+        {
+            return Results.BadRequest(new { message = "Invalid person id." });
+        }
+
+        var wiki = await wikidataService.GetPersonWikiAsync(tmdbId, cancellationToken);
+        return Results.Ok(wiki);
     }
 
     private static async Task<IResult> GetExternalRatingsBatchAsync(

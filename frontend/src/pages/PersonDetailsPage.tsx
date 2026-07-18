@@ -4,10 +4,11 @@ import { EmptyState } from '../components/feedback/EmptyState/EmptyState'
 import { ErrorState } from '../components/feedback/ErrorState/ErrorState'
 import { LoadingSkeleton } from '../components/feedback/LoadingSkeleton/LoadingSkeleton'
 import { FilterChip } from '../components/filters/FilterChip'
+import { AwardsSection } from '../components/media/AwardsSection/AwardsSection'
 import { DetailHero } from '../components/media/DetailHero/DetailHero'
 import { MediaGrid } from '../components/media/MediaGrid/MediaGrid'
-import { usePersonDetails } from '../features/public-media/hooks/usePublicMedia'
-import type { MediaExternalLink, MediaSummary, MediaTranslation, PersonImage, PersonTaggedImage } from '../features/public-media/types/publicMedia.types'
+import { usePersonDetails, usePersonWiki } from '../features/public-media/hooks/usePublicMedia'
+import type { MediaExternalLink, MediaSummary, MediaTranslation, PersonImage, PersonTaggedImage, WikiBio } from '../features/public-media/types/publicMedia.types'
 import { PublicLayout } from '../layouts/PublicLayout'
 import { safeExternalUrl } from '../lib/safeExternalUrl'
 
@@ -16,6 +17,7 @@ type PersonTab = 'featured' | 'movies' | 'series' | 'images' | 'tagged' | 'data'
 export function PersonDetailsPage() {
   const tmdbId = Number(useParams().tmdbId)
   const { data, isError, isLoading } = usePersonDetails(tmdbId)
+  const wiki = usePersonWiki(tmdbId, Number.isFinite(tmdbId))
   const tabs = useMemo(
     () =>
       data
@@ -75,10 +77,18 @@ export function PersonDetailsPage() {
             ) : null}
             {data.biography ? (
               <Biography text={data.biography} />
+            ) : wiki.data?.bio ? (
+              <WikiBiography bio={wiki.data.bio} />
             ) : (
               <p className="mt-4 text-base leading-7 text-[var(--color-text-secondary)]">Todavía no hay biografía disponible.</p>
             )}
           </DetailHero>
+
+          {wiki.data?.available && wiki.data.awards.length > 0 ? (
+            <section className="mx-auto max-w-7xl px-4 pb-2 sm:px-6">
+              <AwardsSection awards={wiki.data.awards} wikidataId={wiki.data.wikidataId} title="Premios y nominaciones" />
+            </section>
+          ) : null}
 
           <PersonDeepDive
             tabs={tabs}
@@ -114,6 +124,38 @@ function Biography({ text }: { text: string }) {
           {expanded ? 'Ver menos' : 'Ver más'}
         </button>
       ) : null}
+    </div>
+  )
+}
+
+function WikiBiography({ bio }: { bio: WikiBio }) {
+  const [expanded, setExpanded] = useState(false)
+  const isLong = bio.extract.length > 480
+  const sourceUrl = safeExternalUrl(bio.sourceUrl)
+
+  return (
+    <div className="mt-4">
+      <p className={`text-base leading-7 text-[var(--color-text-secondary)] ${!expanded && isLong ? 'line-clamp-5' : ''}`}>{bio.extract}</p>
+      {isLong ? (
+        <button
+          type="button"
+          onClick={() => setExpanded((value) => !value)}
+          className="mt-2 text-sm font-semibold text-violet-200 transition hover:text-violet-100"
+        >
+          {expanded ? 'Ver menos' : 'Ver más'}
+        </button>
+      ) : null}
+      <p className="mt-2 text-xs text-[var(--color-text-secondary)]">
+        Fuente:{' '}
+        {sourceUrl ? (
+          <a href={sourceUrl} target="_blank" rel="noreferrer" className="text-violet-200 hover:text-violet-100">
+            Wikipedia
+          </a>
+        ) : (
+          'Wikipedia'
+        )}{' '}
+        · CC BY-SA
+      </p>
     </div>
   )
 }

@@ -37,5 +37,7 @@ public enum SystemEventType
     AdminViewedUser = 33,
     AdminReviewSoftDeleted = 34,
     AdminListSoftDeleted = 35,
-    PasswordChanged = 36
+    PasswordChanged = 36,
+    ExternalProviderDisabled = 37,
+    ExternalProviderRecovered = 38
 }

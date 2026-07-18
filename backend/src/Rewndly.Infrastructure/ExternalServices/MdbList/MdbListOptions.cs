@@ -12,6 +12,12 @@ public sealed class MdbListOptions
 
     public int CacheHours { get; set; } = 24;
 
+    public int NoDataCacheHours { get; set; } = 6;
+
+    public int AuthFailureCooldownMinutes { get; set; } = 60;
+
+    public int RateLimitCooldownMinutes { get; set; } = 15;
+
     public int RankingCacheHours { get; set; } = 24;
 
     public int RankingLimit { get; set; } = 100;

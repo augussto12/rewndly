@@ -22,6 +22,70 @@ export type AdminDashboard = {
   topRatedContent: Array<{ mediaType: string; tmdbId: number; title: string; averageRating: number; ratingCount: number }>
 }
 
+export type AdminActivityPoint = {
+  date: string
+  registrations: number
+  logins: number
+  activeUsers: number
+  failedLogins: number
+  reviews: number
+  libraryItems: number
+  lists: number
+  friendships: number
+}
+
+export type AdminActivitySeries = {
+  from: string
+  to: string
+  days: number
+  activeUsersToday: number
+  activeUsersLast7Days: number
+  activeUsersLast30Days: number
+  points: AdminActivityPoint[]
+}
+
+export type AdminMdbListStatus = {
+  enabled: boolean
+  available: boolean
+  disabledUntil: string | null
+  disabledReason: string | null
+  dailyRequestLimit: number | null
+  requestsUsedToday: number | null
+  patronStatus: string | null
+  titlesWithRatings: number
+  titlesWithoutData: number
+}
+
+export type AdminCloudflarePoint = {
+  date: string
+  requests: number
+  pageViews: number
+  uniques: number
+  humanVisits: number | null
+}
+
+export type AdminCloudflareCountry = {
+  country: string
+  requests: number
+}
+
+export type AdminCloudflareAnalytics = {
+  enabled: boolean
+  zoneConfigured: boolean
+  rumConfigured: boolean
+  live: boolean
+  from: string
+  to: string
+  humanVisitsToday: number | null
+  humanVisitsLast7Days: number | null
+  totalRequests: number
+  totalPageViews: number
+  totalUniques: number
+  points: AdminCloudflarePoint[]
+  topCountries: AdminCloudflareCountry[]
+  fetchedAt: string | null
+}
+
 export type AdminUser = {
   id: string
   username: string

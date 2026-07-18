@@ -111,6 +111,31 @@ public sealed record ExternalRatingsBatchItemResponse(
     IReadOnlyList<ExternalRatingResponse> Ratings,
     DateTimeOffset? CachedAt);
 
+public sealed record WikidataAwardResponse(
+    string Status,
+    string Award,
+    int? Year,
+    string? Detail);
+
+public sealed record MediaAwardsResponse(
+    bool Available,
+    string? WikidataId,
+    IReadOnlyList<WikidataAwardResponse> Awards,
+    DateTimeOffset? CachedAt);
+
+public sealed record WikiBioResponse(
+    string Extract,
+    string SourceTitle,
+    string SourceUrl,
+    string? ThumbnailUrl);
+
+public sealed record PersonWikiResponse(
+    bool Available,
+    string? WikidataId,
+    WikiBioResponse? Bio,
+    IReadOnlyList<WikidataAwardResponse> Awards,
+    DateTimeOffset? CachedAt);
+
 public sealed record WatchProvidersBatchRequest(
     IReadOnlyList<WatchProvidersBatchItemRequest> Items);
 

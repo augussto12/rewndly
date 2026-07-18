@@ -144,6 +144,17 @@ public sealed class TmdbClient(
         return GetMovieListAsync("tmdb:movies:top-rated", $"movie/top_rated?language={Language}&region={Region}&page={normalizedPage}", normalizedPage, PopularTtl, cancellationToken);
     }
 
+    public Task<PagedResponse<MediaSummaryResponse>> GetMovieCalendarAsync(DateOnly from, DateOnly to, int page, CancellationToken cancellationToken)
+    {
+        // Sin region: TMDB filtra y devuelve el primary_release_date, así la fecha del item
+        // coincide con la ventana pedida (con region=AR el release_date devuelto es el de AR
+        // y puede caer fuera del rango filtrado por primary_release_date).
+        var normalizedPage = NormalizePage(page);
+        var path = $"discover/movie?language={Language}&include_adult=false&sort_by=popularity.desc" +
+            $"&primary_release_date.gte={from:yyyy-MM-dd}&primary_release_date.lte={to:yyyy-MM-dd}&page={normalizedPage}";
+        return GetMovieListAsync($"tmdb:movies:calendar:{from:yyyyMMdd}:{to:yyyyMMdd}", path, normalizedPage, DiscoverTtl, cancellationToken);
+    }
+
     public Task<PagedResponse<MediaSummaryResponse>> DiscoverMoviesAsync(
         int? genreId,
         int? year,
@@ -299,6 +310,14 @@ public sealed class TmdbClient(
     {
         var normalizedPage = NormalizePage(page);
         return GetSeriesListAsync("tmdb:series:on-the-air", $"tv/on_the_air?language={Language}&timezone=America/Argentina/Buenos_Aires&page={normalizedPage}", normalizedPage, PopularTtl, cancellationToken);
+    }
+
+    public Task<PagedResponse<MediaSummaryResponse>> GetSeriesCalendarAsync(DateOnly from, DateOnly to, int page, CancellationToken cancellationToken)
+    {
+        var normalizedPage = NormalizePage(page);
+        var path = $"discover/tv?language={Language}&include_adult=false&sort_by=popularity.desc" +
+            $"&first_air_date.gte={from:yyyy-MM-dd}&first_air_date.lte={to:yyyy-MM-dd}&page={normalizedPage}";
+        return GetSeriesListAsync($"tmdb:series:calendar:{from:yyyyMMdd}:{to:yyyyMMdd}", path, normalizedPage, DiscoverTtl, cancellationToken);
     }
 
     public Task<PagedResponse<MediaSummaryResponse>> DiscoverSeriesAsync(

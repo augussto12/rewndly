@@ -8,9 +8,12 @@ import {
   disableAdminUser,
   enableAdminUser,
   getAdminActivityEvents,
+  getAdminActivitySeries,
   getAdminAuditLogs,
+  getAdminCloudflareAnalytics,
   getAdminDashboard,
   getAdminLists,
+  getAdminMdbListStatus,
   getAdminReviews,
   getAdminSystemEvents,
   getAdminUser,
@@ -19,6 +22,18 @@ import {
 
 export function useAdminDashboard() {
   return useQuery({ queryKey: ['admin-dashboard'], queryFn: getAdminDashboard })
+}
+
+export function useAdminActivitySeries(days: number) {
+  return useQuery({ queryKey: ['admin-activity-series', days], queryFn: () => getAdminActivitySeries(days) })
+}
+
+export function useAdminMdbListStatus() {
+  return useQuery({ queryKey: ['admin-mdblist-status'], queryFn: getAdminMdbListStatus })
+}
+
+export function useAdminCloudflareAnalytics(days: number) {
+  return useQuery({ queryKey: ['admin-cloudflare-analytics', days], queryFn: () => getAdminCloudflareAnalytics(days) })
 }
 
 export function useAdminUsers(search = '') {

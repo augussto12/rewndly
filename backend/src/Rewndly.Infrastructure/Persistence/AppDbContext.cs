@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Rewndly.Domain.Admin;
+using Rewndly.Domain.Analytics;
 using Rewndly.Domain.Events;
 using Rewndly.Domain.Friends;
 using Rewndly.Domain.Library;
@@ -37,6 +38,8 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
 
     public DbSet<ExternalMediaRankingItem> ExternalMediaRankingItems => Set<ExternalMediaRankingItem>();
 
+    public DbSet<WikidataEnrichmentCache> WikidataEnrichmentCaches => Set<WikidataEnrichmentCache>();
+
     public DbSet<MovieGenre> MovieGenres => Set<MovieGenre>();
 
     public DbSet<SeriesGenre> SeriesGenres => Set<SeriesGenre>();
@@ -58,6 +61,8 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
     public DbSet<SystemEvent> SystemEvents => Set<SystemEvent>();
 
     public DbSet<AdminAuditLog> AdminAuditLogs => Set<AdminAuditLog>();
+
+    public DbSet<CloudflareDailySnapshot> CloudflareDailySnapshots => Set<CloudflareDailySnapshot>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

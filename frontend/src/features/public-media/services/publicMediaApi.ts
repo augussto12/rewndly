@@ -7,6 +7,7 @@ import type {
   ExternalRatingsBatchItem,
   Genre,
   KeywordDetails,
+  MediaAwards,
   MediaSummary,
   MediaReview,
   MediaRankingResponse,
@@ -15,6 +16,7 @@ import type {
   PagedResponse,
   PersonDetails,
   PersonSummary,
+  PersonWiki,
   PublicHomeResponse,
   SeasonDetails,
   SeriesDetails,
@@ -58,6 +60,10 @@ export function discoverMovies(filters: Omit<DiscoverFilters, 'mediaType'>, page
   return httpClient<PagedResponse<MediaSummary>>(`/api/movies/discover?${toSearchParams({ ...filters, page })}`)
 }
 
+export function getMovieCalendar(from: string, to: string, page = 1) {
+  return httpClient<PagedResponse<MediaSummary>>(`/api/movies/calendar?from=${from}&to=${to}&page=${page}`)
+}
+
 export function getMovieDetails(tmdbId: number) {
   return httpClient<MovieDetails>(`/api/movies/${tmdbId}`)
 }
@@ -74,6 +80,14 @@ export function getWatchProvidersBatch(items: Array<{ mediaType: 'Movie' | 'Seri
     method: 'POST',
     body: JSON.stringify({ items }),
   })
+}
+
+export function getMediaAwards(mediaType: 'Movie' | 'Series', tmdbId: number) {
+  return httpClient<MediaAwards>(`/api/media/${mediaType.toLowerCase()}/${tmdbId}/awards`)
+}
+
+export function getPersonWiki(tmdbId: number) {
+  return httpClient<PersonWiki>(`/api/people/${tmdbId}/wiki`)
 }
 
 export function searchSeries(query: string, page = 1) {
@@ -106,6 +120,10 @@ export function getOnTheAirSeries(page = 1) {
 
 export function discoverSeries(filters: Omit<DiscoverFilters, 'mediaType'>, page = 1) {
   return httpClient<PagedResponse<MediaSummary>>(`/api/series/discover?${toSearchParams({ ...filters, page })}`)
+}
+
+export function getSeriesCalendar(from: string, to: string, page = 1) {
+  return httpClient<PagedResponse<MediaSummary>>(`/api/series/calendar?from=${from}&to=${to}&page=${page}`)
 }
 
 export function getSeriesDetails(tmdbId: number) {
